@@ -1,15 +1,10 @@
-// UIMiniGamePanelController.cs — manages the Canvas panel mini-game
 using UnityEngine;
 
 public class UIMiniGamePanelController : MonoBehaviour
 {
-    [Header("Panel Root (Canvas child)")]
-    public GameObject panelRoot;     // disable by default
-
-    [Header("Glue to open door when finished")]
-    public DoorController door;
-
-    [Header("Wiring")]
+    public GameObject panelRoot;
+    public DoorController door;                 // vẫn giữ nếu cần animation mở
+    public GameObject sceneTransitionObject;    // ✅ thêm dòng này
     public UIBookDrag[] books;
     public UISlot[] slots;
     public int totalBooks = 6;
@@ -19,6 +14,7 @@ public class UIMiniGamePanelController : MonoBehaviour
     private void Awake()
     {
         if (panelRoot != null) panelRoot.SetActive(false);
+        if (sceneTransitionObject != null) sceneTransitionObject.SetActive(false); // ẩn sẵn
     }
 
     public void OpenPanel()
@@ -38,7 +34,17 @@ public class UIMiniGamePanelController : MonoBehaviour
         if (placedCount >= totalBooks)
         {
             ClosePanel();
-            if (door != null) door.Open();
+
+            // ✅ Thay vì mở cửa → bật object chuyển scene
+            if (sceneTransitionObject != null)
+            {
+                sceneTransitionObject.SetActive(true);
+                if (door != null) door.gameObject.SetActive(false); // ẩn cửa cũ (tùy chọn)
+            }
+            else if (door != null)
+            {
+                door.Open(); // fallback
+            }
         }
     }
 
@@ -46,12 +52,9 @@ public class UIMiniGamePanelController : MonoBehaviour
     {
         placedCount = 0;
         if (slots != null)
-        {
             foreach (var s in slots) if (s != null) s.ResetOccupied();
-        }
+
         if (books != null)
-        {
             foreach (var b in books) if (b != null) b.ResetToStart();
-        }
     }
 }
