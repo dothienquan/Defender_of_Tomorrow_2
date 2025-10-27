@@ -20,7 +20,6 @@ public class UIBookDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     private void Awake()
     {
         RectT = GetComponent<RectTransform>();
-        startAnchored = RectT.anchoredPosition;
         var canvas = GetComponentInParent<Canvas>();
         if (canvas != null)
         {
@@ -38,7 +37,7 @@ public class UIBookDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     public void ResetToStart()
     {
         placed = false;
-        //RectT.anchoredPosition = startAnchored;
+        RectT.anchoredPosition = startAnchored;
     }
 
     public void SetPlaced(bool value) { placed = value; }
