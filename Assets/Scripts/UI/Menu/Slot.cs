@@ -2,5 +2,5 @@ using UnityEngine;
 
 public class Slot : MonoBehaviour
 {
-    public GameObject curentItem;
+    public GameObject currentItem;
 }
