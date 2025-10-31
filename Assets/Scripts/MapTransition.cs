@@ -12,6 +12,15 @@ public class MapTransition : MonoBehaviour
 
     private enum Direction { Up, Down, Left, Right, Teleport }
 
+    private void Start()
+    {
+        if (confiner != null && mapBoundry != null)
+        {
+            confiner.m_BoundingShape2D = mapBoundry;
+            confiner.InvalidateCache();
+        }
+    }
+
     private void Awake()
     {
         // Dự phòng nếu quên gán trong Inspector
@@ -30,7 +39,10 @@ public class MapTransition : MonoBehaviour
         if (!collision.CompareTag("Player")) return;
 
         if (confiner != null && mapBoundry != null)
-            confiner.m_BoundingShape2D = mapBoundry;   // set biên map cho camera
+        {
+            confiner.m_BoundingShape2D = mapBoundry;
+            confiner.InvalidateCache();
+        }
 
         UpdatePlayerPosition(collision.gameObject);
     }

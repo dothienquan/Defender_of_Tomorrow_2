@@ -4531,11 +4531,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4931863193965687631, guid: 7618263d348671f43933f6743578180d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 33.26001
+      value: -10.400024
       objectReference: {fileID: 0}
     - target: {fileID: 4931863193965687631, guid: 7618263d348671f43933f6743578180d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -33.23999
+      value: -0.7999878
       objectReference: {fileID: 0}
     - target: {fileID: 5063261683386012493, guid: 7618263d348671f43933f6743578180d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4593,13 +4593,17 @@ PrefabInstance:
       propertyPath: m_ReactionSettings.m_NoiseOffsets.z
       value: -292.52136
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5606323436592109269, guid: 7618263d348671f43933f6743578180d, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 571851974662486181, guid: 7618263d348671f43933f6743578180d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5413551072210624159}
+    - targetCorrespondingSourceObject: {fileID: 1650649798643045738, guid: 7618263d348671f43933f6743578180d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6782384471797562793}
   m_SourcePrefab: {fileID: 100100000, guid: 7618263d348671f43933f6743578180d, type: 3}
 --- !u!4 &1823147401312195632 stripped
 Transform:
@@ -4627,6 +4631,28 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   m_MaxRayIntersections: 0
+--- !u!1 &4083019610862966853 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1650649798643045738, guid: 7618263d348671f43933f6743578180d, type: 3}
+  m_PrefabInstance: {fileID: 3333092031760207151}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6782384471797562793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4083019610862966853}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2fba25a5cd15594e8f050a11e386c80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineConfiner
+  m_ConfineMode: 0
+  m_BoundingVolume: {fileID: 0}
+  m_BoundingShape2D: {fileID: 0}
+  m_ConfineScreenEdges: 1
+  m_Damping: 0
 --- !u!1001 &5914621625818754770
 PrefabInstance:
   m_ObjectHideFlags: 0

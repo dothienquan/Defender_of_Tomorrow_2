@@ -1,13 +1,11 @@
-// DoorProximityInteractor.cs
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
-public class DoorProximityInteractor : MonoBehaviour
+public class DungeonDoorInteractor : MonoBehaviour
 {
     [Header("References")]
-    public UIMiniGamePanelController panelController;
-    public UIClockMinigameController clockPanelController;
-    public DoorController door;
+    public UIClockMinigameController panelController; // UI panel opener/closer
+    public DoorController door;                        // Optional door to open on success
 
     [Header("Settings")]
     public string playerTag = "Player";
@@ -21,12 +19,32 @@ public class DoorProximityInteractor : MonoBehaviour
     private void Reset()
     {
         var col = GetComponent<Collider2D>();
-        col.isTrigger = true;
+        if (col != null) col.isTrigger = true;
     }
 
     private void OnEnable()
     {
         if (hint != null) hint.SetActive(false);
+        SubscribeToSuccess(true);
+    }
+
+    private void OnDisable()
+    {
+        SubscribeToSuccess(false);
+    }
+
+    private void SubscribeToSuccess(bool add)
+    {
+        if (panelController == null) return;
+        if (add)
+            panelController.onMiniGameSuccess.AddListener(HandleMinigameSuccess);
+        else
+            panelController.onMiniGameSuccess.RemoveListener(HandleMinigameSuccess);
+    }
+
+    private void HandleMinigameSuccess()
+    {
+       // if (door != null) door.OpenDoor();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -50,6 +68,7 @@ public class DoorProximityInteractor : MonoBehaviour
     private void Update()
     {
         if (!playerInRange) return;
+
         if (Input.GetKeyDown(interactKey))
         {
             if (panelController != null)
@@ -58,7 +77,7 @@ public class DoorProximityInteractor : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("[DoorProximityInteractor] panelController not assigned.");
+                Debug.LogWarning("[DungeonDoorInteractor] panelController not assigned.");
             }
         }
     }
