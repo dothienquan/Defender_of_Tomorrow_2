@@ -606,7 +606,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1200983690464946143, guid: a51ced4647c92ec47bdac921d932a83d, type: 3}
       propertyPath: m_ChildCameras.Array.size
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1413494093669671475, guid: a51ced4647c92ec47bdac921d932a83d, type: 3}
       propertyPath: m_AnchorMax.y
@@ -732,6 +732,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5470693120497204499, guid: a51ced4647c92ec47bdac921d932a83d, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -25.10675
+      objectReference: {fileID: 0}
     - target: {fileID: 5787092332593931858, guid: a51ced4647c92ec47bdac921d932a83d, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -836,6 +840,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7651891721804283488, guid: a51ced4647c92ec47bdac921d932a83d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 33.26001
+      objectReference: {fileID: 0}
+    - target: {fileID: 7651891721804283488, guid: a51ced4647c92ec47bdac921d932a83d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -33.23999
+      objectReference: {fileID: 0}
     - target: {fileID: 9156700576456756657, guid: a51ced4647c92ec47bdac921d932a83d, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -863,7 +875,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2023032536542865934, guid: a51ced4647c92ec47bdac921d932a83d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1049349403}
   m_SourcePrefab: {fileID: 100100000, guid: a51ced4647c92ec47bdac921d932a83d, type: 3}
 --- !u!1 &928334215
 GameObject:
@@ -1067,6 +1082,32 @@ Transform:
   - {fileID: 2111091812}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1049349391 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2023032536542865934, guid: a51ced4647c92ec47bdac921d932a83d, type: 3}
+  m_PrefabInstance: {fileID: 622165464}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1049349403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1049349391}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b089dc116c39e754c8c7752d0cfee916, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FireballSkill
+  fireballPrefab: {fileID: 3765327548300010088, guid: 8f6b4e72395bf4a41aa537756835450a, type: 3}
+  firePoint: {fileID: 0}
+  fireballSpeed: 14
+  damage: 1
+  cooldown: 0.25
+  castTrigger: CastFireball
+  castLockDuration: 0.1
+  aimAtMouse: 1
+  defaultFaceLeft: 0
 --- !u!1 &1426410087
 GameObject:
   m_ObjectHideFlags: 0
