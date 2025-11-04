@@ -335,6 +335,7 @@ GameObject:
   - component: {fileID: 2683464192826202591}
   - component: {fileID: 2992700283809608322}
   - component: {fileID: 8072546563615746073}
+  - component: {fileID: 4685298607299856733}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -611,6 +612,23 @@ MonoBehaviour:
   castLockDuration: 0.1
   aimAtMouse: 1
   defaultFaceLeft: 0
+--- !u!114 &4685298607299856733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5622660947806307548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b55f69a48f038634d8f03551e72f51ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShieldSkill
+  key: 99
+  staminaCost: 1
+  cooldown: 0.5
+  shieldPrefab: {fileID: 119691052652871280, guid: ec50fac4ea35356448f8a88c736479ad, type: 3}
+  attachPoint: {fileID: 1032660933921670629}
 --- !u!1 &5651044603791470342
 GameObject:
   m_ObjectHideFlags: 0
