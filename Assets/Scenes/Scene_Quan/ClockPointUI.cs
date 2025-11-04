@@ -1,6 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using DG.Tweening;
+//using DG.Tweening.UI;
 
 public enum ClockPointState { Idle, Highlighted, Locked }
 
@@ -63,10 +65,25 @@ public class ClockPointUI : MonoBehaviour
     public void SetLocked()
     {
         state = ClockPointState.Locked;
-        if (image != null) image.color = lockedColor;
         StopPulse();
         transform.localScale = _baseScale;
-        StartCoroutine(ConfirmBump());
+
+        // Arcade-style VFX Sequence
+        DG.Tweening.Sequence seq = DOTween.Sequence();
+
+        // Flash bright for instant "Perfect!" feedback
+        seq.Append(image.DOColor(Color.white, 0.1f));
+        SparkleBurstUI.Spawn(transform);
+
+        // Punch scale (strong pop)
+        seq.Join(transform.DOPunchScale(Vector3.one * 0.35f, 0.25f, 10, 0.8f));
+
+        // Slight shake
+        seq.Join(transform.DOShakeRotation(0.25f, 25f, 9, 90f));
+
+        // Return to locked color after flash
+        seq.Append(image.DOColor(lockedColor, 0.12f));
+
     }
 
     public void SetDimFromHighlight()
