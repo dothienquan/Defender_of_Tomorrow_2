@@ -1,82 +1,130 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
 public class Statue : MonoBehaviour
 {
-    [Header("Setup")]
-    public Direction direction = Direction.Right;
-    public Transform muzzle; // where the beam starts (tip of statue)
-    public LaserBeam beam;
-    public Animator animator; // has bool "isActive"
+    [Header("Components")]
+    public Animator animator;                 // Bool: "isActive"
+    public LineRenderer lineRenderer;
+    public LineRotator lineRotator;
 
-    [Header("Input")]
-    public bool clickable = true;
+    [Header("Line")]
+    public Transform muzzle;                  // Ray origin; falls back to transform if null
+    public float maxRayDistance = 20f;
+    public LayerMask hitMask;                 // Include Statue (and Walls if you want blocking)
 
-    // cache for last cast result
-    private Statue _lastHit;
+    public int Index { get; private set; } = -1;
 
-    private void OnEnable()
+    private MirrorPuzzleManager manager;
+    private bool isActive;
+    private bool isCompleted;
+
+    // ---------- Lifecycle / Setup ----------
+    public void Init(MirrorPuzzleManager mgr, int index)
     {
-        LaserManager.Instance?.Register(this);
-        SetActiveAnim(false);
-        if (beam != null) beam.TurnOff();
-    }
+        manager = mgr;
+        Index = index;
 
-    private void OnDisable()
-    {
-        LaserManager.Instance?.Unregister(this);
-    }
+        if (lineRotator != null)
+            lineRotator.Bind(this, mgr);
 
-    private void Reset()
-    {
-        // Try auto-wire common setup if added fresh
-        if (muzzle == null) muzzle = transform;
-        if (beam == null) beam = GetComponentInChildren<LaserBeam>();
-        if (animator == null) animator = GetComponentInChildren<Animator>();
-    }
-
-    private void OnMouseDown()
-    {
-        if (!clickable) return;
-        Rotate90();
-    }
-
-    public void Rotate90()
-    {
-        direction = direction.Rotate90();
-        LaserManager.Instance?.OnStatueRotated();
-    }
-
-    public void DeactivateInstant()
-    {
-        _lastHit = null;
-        if (beam != null) beam.TurnOff();
-        SetActiveAnim(false);
-    }
-
-    private void SetActiveAnim(bool on)
-    {
-        if (animator != null)
+        if (lineRenderer != null)
         {
-            animator.SetBool("isActive", on);
+            lineRenderer.positionCount = 2;
+            lineRenderer.enabled = false;
         }
     }
 
-    /// <summary>
-    /// Activate the statue visually, cast the beam, and return the next statue hit if any.
-    /// </summary>
-    public Statue ActivateAndCast(out Vector3 hitPoint)
+    // ---------- State Controls ----------
+    public void Activate()
     {
-        SetActiveAnim(true);
-        if (beam != null) beam.TurnOn();
+        isActive = true;
 
-        Vector3 origin = muzzle != null ? muzzle.position : transform.position;
-        Vector2 dir = direction.ToVector();
+        if (animator) animator.SetBool("isActive", true);
 
-        _lastHit = beam != null
-            ? beam.Cast(origin, dir, out hitPoint)
-            : null;
-        hitPoint = default;
-        return _lastHit;
+        if (lineRenderer) lineRenderer.enabled = true;
+
+        // We are now the controllable statue
+        if (lineRotator)
+        {
+            lineRotator.ResetForActivation();   // clears freeze; keeps previous dir if you want to
+            lineRotator.EnableControl(true);
+        }
+    }
+
+    // Immediately leave Active state (Option 1), but keep line if completed
+    public void Deactivate()
+    {
+        isActive = false;
+
+        if (animator) animator.SetBool("isActive", false);
+
+        if (lineRotator) lineRotator.EnableControl(false);
+
+        if (!isCompleted && lineRenderer)
+            lineRenderer.enabled = false;
+    }
+
+    public void SetCompleted(bool value = true)
+    {
+        isCompleted = value;
+
+        // Ensure line remains visible after completion
+        if (value && lineRenderer != null)
+            lineRenderer.enabled = true;
+    }
+
+    public void ResetStatue()
+    {
+        isCompleted = false;
+
+        // Reset aiming logic only, not visuals
+        if (lineRotator) lineRotator.ResetAll();
+
+        // Keep lineRenderer & animation states as they are (do not disable)
+    }
+
+    // ---------- Interaction from LineRotator ----------
+    /// <summary>
+    /// Called by LineRotator when the ray hits a statue. Handles snapping & progression.
+    /// </summary>
+    public void HandleHit(Statue hitStatue, Vector2 hitPoint)
+    {
+        if (manager == null || !manager.IsCurrentStatue(this)) return;
+
+        bool correct = manager.IsCorrectNextTarget(hitStatue);
+
+        // Snap the line to the exact hit point immediately
+        if (lineRenderer)
+        {
+            lineRenderer.SetPosition(0, GetMuzzlePosition());
+            lineRenderer.SetPosition(1, hitPoint);
+        }
+
+        if (correct)
+        {
+            // Freeze the line so it stops updating and keeps the exact length
+            if (lineRotator) lineRotator.FreezeLineAtSnap(hitPoint);
+
+            // Mark completed, keep line visible
+            SetCompleted(true);
+
+            // ✅ Keep animation active, but disable control so player can't rotate it anymore
+            if (lineRotator) lineRotator.EnableControl(false);
+
+            // Advance puzzle
+            manager.AdvanceToNextStatue();
+        }
+        else
+        {
+            // Wrong target: keep angle; no snap-back
+        }
+    }
+
+
+    // ---------- Helpers ----------
+    public Vector2 GetMuzzlePosition()
+    {
+        return muzzle ? (Vector2)muzzle.position : (Vector2)transform.position;
     }
 }
