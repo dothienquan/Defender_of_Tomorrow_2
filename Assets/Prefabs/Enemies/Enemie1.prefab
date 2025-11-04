@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 7035804188781565986}
   - component: {fileID: 2974879900059146393}
   - component: {fileID: 4547261770350086383}
+  - component: {fileID: -8027716615350512977}
   m_Layer: 0
   m_Name: Enemie1
   m_TagString: Enemy
@@ -232,6 +233,7 @@ MonoBehaviour:
   startingHealth: 3
   deathVFXPrefab: {fileID: 2948048360338672110, guid: aac2025b3fc2cdb4c878f8381e2a4689, type: 3}
   knockBackThrust: 15
+  expPickupPrefab: {fileID: 5210306458450560170, guid: 3d47f448c66c9d643b09632d924025e7, type: 3}
 --- !u!114 &1933424896698195038
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -287,6 +289,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   grapeProjectilePrefab: {fileID: 8550363903010464905, guid: 292c7136c9c5fa44aa9ba291e8862a4c, type: 3}
+--- !u!114 &-8027716615350512977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200932645803366277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a3e3aae6a5e95845a84dd1e977a9f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyExpDropper
+  expPrefab: {fileID: 5210306458450560170, guid: 3d47f448c66c9d643b09632d924025e7, type: 3}
+  spawnOffset: {x: 0, y: 0}
 --- !u!1 &6574809744568846326
 GameObject:
   m_ObjectHideFlags: 0
