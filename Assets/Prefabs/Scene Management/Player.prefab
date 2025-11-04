@@ -335,6 +335,8 @@ GameObject:
   - component: {fileID: 2683464192826202591}
   - component: {fileID: 2992700283809608322}
   - component: {fileID: 8072546563615746073}
+  - component: {fileID: 7894677808688005135}
+  - component: {fileID: 9016282993295759327}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -611,6 +613,38 @@ MonoBehaviour:
   castLockDuration: 0.1
   aimAtMouse: 1
   defaultFaceLeft: 0
+--- !u!114 &7894677808688005135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5622660947806307548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1938e07284e32dc4ea46fe3cd86ebd26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLevelSystemLinear
+  currentLevel: 1
+  currentXP: 0
+  maxLevel: 30
+--- !u!114 &9016282993295759327
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5622660947806307548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d0221d5122764f4f8f93a7fc1b25334, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelUpApplier
+  levelSystem: {fileID: 7894677808688005135}
+  playerHealth: {fileID: 6634890059234188853}
+  stamina: {fileID: 2992700283809608322}
+  staminaRefreshReducePerLevel: 0.2
+  staminaRefreshMin: 0.2
 --- !u!1 &5651044603791470342
 GameObject:
   m_ObjectHideFlags: 0
