@@ -1,24 +1,54 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class InventoryController : MonoBehaviour
 {
-    public GameObject inventoryPanel;
-    public GameObject slotPrefab;
-    public int slotCount;
-    public GameObject[] itemPrefabs;
+    [Header("Inventory UI")]
+    public GameObject inventoryPanel; // grid parent for inventory slots
+    public GameObject slotPrefab;     // slot prefab (must have Slot)
+    public int slotCount = 16;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [Header("Item Prefabs (UI)")]
+    public GameObject[] itemPrefabs;  // each must have UIItem with itemData.id filled
+
+    Dictionary<string, GameObject> idToPrefab = new Dictionary<string, GameObject>();
+
+    void Awake()
     {
-        for (int i = 0; i<slotCount; i++)
+        idToPrefab.Clear();
+        foreach (var go in itemPrefabs)
         {
-            Slot slot = Instantiate(slotPrefab, inventoryPanel.transform).GetComponent<Slot>();
-            if(i < itemPrefabs.Length)
+            if (!go) continue;
+            var ui = go.GetComponent<UIItem>();
+            if (ui && ui.itemData && !string.IsNullOrEmpty(ui.itemData.id))
             {
-                GameObject item = Instantiate(itemPrefabs[i], slot.transform);
-                item.GetComponent<RectTransform>().anchoredPosition = Vector3.zero;
-                slot.currentItem = item;
+                idToPrefab[ui.itemData.id] = go;
             }
         }
+    }
+
+    void Start()
+    {
+        // Build empty slots
+        List<Slot> slots = new List<Slot>();
+        for (int i = 0; i < slotCount; i++)
+        {
+            Slot slot = Instantiate(slotPrefab, inventoryPanel.transform).GetComponent<Slot>();
+            slots.Add(slot);
+        }
+
+        // Try load; if not found, do initial fill from itemPrefabs (first N)
+        if (!InventoryPersistence.TryLoadInventory(inventoryPanel.transform, idToPrefab))
+        {
+            for (int i = 0; i < Mathf.Min(itemPrefabs.Length, slotCount); i++)
+            {
+                var go = Instantiate(itemPrefabs[i], slots[i].transform);
+                go.GetComponent<RectTransform>().anchoredPosition = Vector3.zero;
+                slots[i].currentItem = go;
+            }
+        }
+
+        // Also load hotbar data
+        InventoryPersistence.TryLoadHotbar(idToPrefab);
     }
 }
