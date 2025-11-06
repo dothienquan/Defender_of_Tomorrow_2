@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,6 +24,7 @@ public class Grape : MonoBehaviour, IEnemy
         } else {
             spriteRenderer.flipX = true;
         }
+        
     }
 
     public void SpawnProjectileAnimEvent() {
