@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
@@ -30,28 +30,32 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         canvasGroup.blocksRaycasts = true;
         canvasGroup.alpha = 1f;
 
-        Slot dropSlot = eventData.pointerEnter ? eventData.pointerEnter.GetComponent<Slot>() : null;
-        if (dropSlot == null && eventData.pointerEnter)
+        Slot dropSlot = null;
+        if (eventData.pointerEnter)
         {
-            var maybeItem = eventData.pointerEnter.GetComponentInParent<Slot>();
-            if (maybeItem) dropSlot = maybeItem;
+            // tìm slot chính xác bằng GetComponentInParent, nhưng loại trừ bản thân item đang kéo
+            var potentialSlot = eventData.pointerEnter.GetComponentInParent<Slot>();
+            if (potentialSlot != null && potentialSlot.transform != transform)
+                dropSlot = potentialSlot;
         }
 
         Slot originalSlot = originalParent ? originalParent.GetComponent<Slot>() : null;
         var thisRect = GetComponent<RectTransform>();
         var uiItem = GetComponent<UIItem>();
 
-        if (dropSlot != null)
+        if (dropSlot != null && dropSlot != originalSlot)
         {
-            // Swap handling
+            // --- SWAP LOGIC ---
             if (dropSlot.currentItem != null)
             {
                 // swap UI objects
-                dropSlot.currentItem.transform.SetParent(originalSlot.transform);
-                originalSlot.currentItem = dropSlot.currentItem;
-                originalSlot.currentItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                var otherItem = dropSlot.currentItem;
+                dropSlot.currentItem = gameObject;
+                otherItem.transform.SetParent(originalSlot.transform, false);
+                originalSlot.currentItem = otherItem;
+                otherItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
 
-                // If original is hotbar, refresh its weapon adapter from swapped item
+                // Refresh weapon adapter nếu hotbar
                 if (originalSlot.isHotbarSlot)
                 {
                     var invSlot = originalSlot.GetComponentInChildren<InventorySlot>();
@@ -62,7 +66,6 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             else
             {
                 if (originalSlot) originalSlot.currentItem = null;
-                // If moving out of a hotbar slot, clear its weapon
                 if (originalSlot && originalSlot.isHotbarSlot)
                 {
                     var invSlot = originalSlot.GetComponentInChildren<InventorySlot>();
@@ -70,23 +73,22 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 }
             }
 
-            // place into drop slot
-            transform.SetParent(dropSlot.transform);
+            // đặt item vào slot mới
+            transform.SetParent(dropSlot.transform, false);
             dropSlot.currentItem = gameObject;
             thisRect.anchoredPosition = Vector2.zero;
 
-            // If dropped into a hotbar slot, set its weapon and refresh equip
             if (dropSlot.isHotbarSlot)
             {
                 var invSlot = dropSlot.GetComponentInChildren<InventorySlot>();
                 invSlot?.SetWeapon(uiItem ? uiItem.AsWeapon() : null);
-                ActiveInventory.Instance.RefreshActiveWeapon(); // re-evaluate if needed
+                ActiveInventory.Instance.RefreshActiveWeapon();
             }
         }
         else
         {
-            // No slot -> return to origin
-            transform.SetParent(originalParent);
+            // trả về chỗ cũ
+            transform.SetParent(originalParent, false);
             thisRect.anchoredPosition = Vector2.zero;
         }
     }

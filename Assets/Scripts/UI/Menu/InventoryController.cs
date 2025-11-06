@@ -1,15 +1,15 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class InventoryController : MonoBehaviour
 {
     [Header("Inventory UI")]
-    public GameObject inventoryPanel; // grid parent for inventory slots
-    public GameObject slotPrefab;     // slot prefab (must have Slot)
-    public int slotCount = 16;
+    public GameObject inventoryPanel; // Grid parent chứa sẵn 18 Slot
+    public GameObject slotPrefab;     // Không còn dùng, nhưng giữ để tránh lỗi inspector
+    public int slotCount = 18;        // Chỉ để reference
 
     [Header("Item Prefabs (UI)")]
-    public GameObject[] itemPrefabs;  // each must have UIItem with itemData.id filled
+    public GameObject[] itemPrefabs;  // Mỗi prefab có UIItem với itemData.id
 
     Dictionary<string, GameObject> idToPrefab = new Dictionary<string, GameObject>();
 
@@ -29,18 +29,18 @@ public class InventoryController : MonoBehaviour
 
     void Start()
     {
-        // Build empty slots
-        List<Slot> slots = new List<Slot>();
-        for (int i = 0; i < slotCount; i++)
+        // Dùng slot có sẵn trong hierarchy
+        List<Slot> slots = new List<Slot>(inventoryPanel.GetComponentsInChildren<Slot>(true));
+        if (slots.Count == 0)
         {
-            Slot slot = Instantiate(slotPrefab, inventoryPanel.transform).GetComponent<Slot>();
-            slots.Add(slot);
+            Debug.LogWarning("No slots found in inventoryPanel! Please add Slot components manually.");
+            return;
         }
 
-        // Try load; if not found, do initial fill from itemPrefabs (first N)
+        // Thử load từ save; nếu không có, thì auto fill (tùy chọn)
         if (!InventoryPersistence.TryLoadInventory(inventoryPanel.transform, idToPrefab))
         {
-            for (int i = 0; i < Mathf.Min(itemPrefabs.Length, slotCount); i++)
+            for (int i = 0; i < Mathf.Min(itemPrefabs.Length, slots.Count); i++)
             {
                 var go = Instantiate(itemPrefabs[i], slots[i].transform);
                 go.GetComponent<RectTransform>().anchoredPosition = Vector3.zero;
@@ -48,7 +48,7 @@ public class InventoryController : MonoBehaviour
             }
         }
 
-        // Also load hotbar data
+        // Load hotbar
         InventoryPersistence.TryLoadHotbar(idToPrefab);
     }
 }
