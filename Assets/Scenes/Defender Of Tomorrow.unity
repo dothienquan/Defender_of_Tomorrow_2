@@ -176067,8 +176067,9 @@ GameObject:
   m_Component:
   - component: {fileID: 618688099}
   - component: {fileID: 618688098}
+  - component: {fileID: 618688100}
   m_Layer: 0
-  m_Name: character_20_frame16x20_8
+  m_Name: NPC
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -176141,12 +176142,34 @@ Transform:
   m_GameObject: {fileID: 618688097}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 9.443795, y: -7.3890514, z: 0}
+  m_LocalPosition: {x: 9.443795, y: -7.389051, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &618688100
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 618688097}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 166dea70b99c8d54da7f3909532db99a, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &619193011
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -193169,6 +193192,10 @@ PlayableDirector:
     value: {fileID: 367640860}
   - key: {fileID: -2051292304542828579, guid: 0278e6a919957924e8b826027f09cea2, type: 2}
     value: {fileID: 367640860}
+  - key: {fileID: -367724732483369895, guid: 0278e6a919957924e8b826027f09cea2, type: 2}
+    value: {fileID: 618688100}
+  - key: {fileID: -5264633769373942773, guid: 0278e6a919957924e8b826027f09cea2, type: 2}
+    value: {fileID: 618688100}
   m_ExposedReferences:
     m_References: []
 --- !u!114 &747360821
