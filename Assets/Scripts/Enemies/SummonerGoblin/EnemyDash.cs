@@ -8,10 +8,12 @@ public class EnemyDash : MonoBehaviour
     [SerializeField] private Transform dashTarget;        // <-- kéo thả GameObject vào đây
     private Animator myAnimator;
     private SpriteRenderer spriteRenderer;
+    private EnemyAI enemyAI;   // <-- thêm dòng này
     readonly int ATTACK_HASH = Animator.StringToHash("Attack");
 
     private void Start()
     {
+        enemyAI = GetComponent<EnemyAI>();   // <-- thêm dòng này
         StartCoroutine(DashLoop());
     }
 
@@ -21,8 +23,11 @@ public class EnemyDash : MonoBehaviour
         {
             yield return new WaitForSeconds(dashInterval);
 
-            if (dashTarget != null)
+            // CHỈ DASH KHI ĐANG TRONG ATTACK ZONE
+            if (enemyAI != null && enemyAI.IsInAttackZone() && dashTarget != null)
+            {
                 StartCoroutine(DashToPoint(dashTarget.position));
+            }
         }
     }
     public void Attack()

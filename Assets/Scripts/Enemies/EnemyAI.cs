@@ -12,7 +12,7 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private bool stopMovingWhileAttacking = false;
 
     private bool canAttack = true;
-    private bool inAttackZone = false;                  // <-- AttackZone sẽ bật/tắt cờ này
+    public bool inAttackZone = false;                  // <-- AttackZone sẽ bật/tắt cờ này
 
     private enum State { Roaming, Attacking }
     private State state;
@@ -122,5 +122,9 @@ public class EnemyAI : MonoBehaviour
     {
         inAttackZone = value;
         if (inAttackZone) state = State.Attacking; else state = State.Roaming;
+    }
+    public bool IsInAttackZone()
+    {
+        return inAttackZone;
     }
 }
