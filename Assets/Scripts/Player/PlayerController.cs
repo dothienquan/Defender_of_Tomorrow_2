@@ -4,9 +4,18 @@ using UnityEngine;
 
 public class PlayerController : Singleton<PlayerController>
 {
+   /* public void EnableControls()
+    {
+        controls.Enable();
+    }
+    public void DisableControls()
+    {
+        controls.Disable();
+        valueX = 0;
+;    }*/
     public bool FacingLeft { get { return facingLeft; } }
-    
 
+    public float controls;
     [SerializeField] private float moveSpeed = 1f;
     [SerializeField] private float dashSpeed = 4f;
     [SerializeField] private TrailRenderer myTrailRenderer;
