@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 1632536550200595908}
   - component: {fileID: 80869684330815477}
   - component: {fileID: 6045452653306011364}
-  - component: {fileID: 8053497756707591775}
   - component: {fileID: -7671800998005512865}
   m_Layer: 0
   m_Name: Staff
@@ -56,8 +55,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   weaponInfo: {fileID: 11400000, guid: 704fd1462da447646bd1790c44897502, type: 2}
-  magicLaser: {fileID: 2081935495300963317, guid: e180d3b04c67ed349a29dc708b285323, type: 3}
-  magicLaserSpawnPoint: {fileID: 737103158050958894}
+  firstPrefab: {fileID: 8974203713140315807, guid: 709b0bd6b0b625249a98409dd7a87343, type: 3}
+  secondPrefab: {fileID: 176822597162087251, guid: 46009f57772e5e743bec9df57a49ed66, type: 3}
 --- !u!212 &1632536550200595908
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -150,19 +149,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &8053497756707591775
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5341097846504764207}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e34063fb1a67e94fa6a2a30e8dc0216, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIItem
-  itemData: {fileID: 11400000, guid: 704fd1462da447646bd1790c44897502, type: 2}
 --- !u!114 &-7671800998005512865
 MonoBehaviour:
   m_ObjectHideFlags: 0

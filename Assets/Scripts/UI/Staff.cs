@@ -1,33 +1,55 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Staff : MonoBehaviour, IWeapon
 {
     [SerializeField] private WeaponInfo weaponInfo;
-    [SerializeField] private GameObject magicLaser;
-    [SerializeField] private Transform magicLaserSpawnPoint;
+    [SerializeField] private GameObject firstPrefab;   // prefab đầu tiên
+    [SerializeField] private GameObject secondPrefab;  // prefab thứ hai
 
     private Animator myAnimator;
 
     readonly int ATTACK_HASH = Animator.StringToHash("Attack");
 
-    private void Awake() {
+    private void Awake()
+    {
         myAnimator = GetComponent<Animator>();
     }
 
-    private void Update() {
+    private void Update()
+    {
         MouseFollowWithOffset();
     }
 
-
-    public void Attack() {
+    public void Attack()
+    {
         myAnimator.SetTrigger(ATTACK_HASH);
     }
 
-    public void SpawnStaffProjectileAnimEvent() {
-        GameObject newLaser = Instantiate(magicLaser, magicLaserSpawnPoint.position, Quaternion.identity);
-        newLaser.GetComponent<MagicLaser>().UpdateLaserRange(weaponInfo.weaponRange);
+    public void SpawnStaffProjectileAnimEvent()
+    {
+        StartCoroutine(SpawnSequence());
+    }
+
+    private IEnumerator SpawnSequence()
+    {
+        // Lấy vị trí chuột trong thế giới
+        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mouseWorldPos.z = 0f;
+
+        // Spawn prefab đầu tiên
+        GameObject first = Instantiate(firstPrefab, mouseWorldPos, Quaternion.identity);
+
+        // Chờ 1 giây
+        yield return new WaitForSeconds(.3f);
+
+        // Xóa prefab đầu tiên
+        if (first != null)
+            Destroy(first);
+
+        // Spawn prefab thứ hai
+        Instantiate(secondPrefab, mouseWorldPos, Quaternion.identity);
     }
 
     public WeaponInfo GetWeaponInfo()
