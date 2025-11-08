@@ -20,10 +20,37 @@ public class SaveController : MonoBehaviour
 
     public void SaveGame()
     {
+        var player = GameObject.FindGameObjectWithTag("Player");
+        var confiner = FindFirstObjectByType<CinemachineConfiner>();
+
+        if (player == null)
+        {
+            Debug.LogError("Cannot save: Player not found in scene!");
+            return;
+        }
+
+        if (confiner == null)
+        {
+            Debug.LogError("Cannot save: Confiner not found in scene!");
+            return;
+        }
+
+        if (inventoryController == null)
+        {
+            Debug.LogError("Cannot save: InventoryController not found!");
+            return;
+        }
+
+        if (hotbarController == null)
+        {
+            Debug.LogError("Cannot save: HotbarController not found!");
+            return;
+        }
+
         SaveData saveData = new SaveData
         {
-            playerPosition = GameObject.FindGameObjectWithTag("Player").transform.position,
-            mapBoundary = FindFirstObjectByType<CinemachineConfiner>().m_BoundingShape2D.gameObject.name,
+            playerPosition = player.transform.position,
+            mapBoundary = confiner.m_BoundingShape2D?.gameObject.name ?? "",
             inventorySaveData = inventoryController.GetInventoryItems(),
             hotbarSaveData = hotbarController.GetHotbarItems()
         };
@@ -32,27 +59,45 @@ public class SaveController : MonoBehaviour
         Debug.Log($"Game saved to {saveLocation}");
     }
 
+
     public void LoadGame()
     {
-        if (File.Exists(saveLocation))
-        {
-            SaveData saveData = JsonUtility.FromJson<SaveData>(File.ReadAllText(saveLocation));
-
-            GameObject.FindGameObjectWithTag("Player").transform.position = saveData.playerPosition;
-            FindFirstObjectByType<CinemachineConfiner>().m_BoundingShape2D =
-                GameObject.Find(saveData.mapBoundary).GetComponent<PolygonCollider2D>();
-
-            inventoryController.SetInventoryItems(saveData.inventorySaveData);
-
-            hotbarController.SetHotbarItems(saveData.hotbarSaveData);
-
-            Debug.Log("Game loaded successfully.");
-        }
-        else
+        if (!File.Exists(saveLocation))
         {
             Debug.LogWarning("No save file found. Creating a new one...");
             SaveGame();
+            return;
         }
+
+        SaveData saveData = JsonUtility.FromJson<SaveData>(File.ReadAllText(saveLocation));
+
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+            player.transform.position = saveData.playerPosition;
+        else
+            Debug.LogError("Player not found in scene when trying to load position!");
+
+        var confiner = FindFirstObjectByType<CinemachineConfiner>();
+        if (confiner != null)
+        {
+            var boundary = GameObject.Find(saveData.mapBoundary);
+            if (boundary != null)
+                confiner.m_BoundingShape2D = boundary.GetComponent<PolygonCollider2D>();
+            else
+                Debug.LogError($"Map boundary '{saveData.mapBoundary}' not found in scene!");
+        }
+
+        if (inventoryController != null)
+            inventoryController.SetInventoryItems(saveData.inventorySaveData);
+        else
+            Debug.LogWarning("InventoryController not found — skipping inventory load.");
+
+        if (hotbarController != null)
+            hotbarController.SetHotbarItems(saveData.hotbarSaveData);
+        else
+            Debug.LogWarning("HotbarController not found — skipping hotbar load.");
+
+        Debug.Log("Game loaded successfully.");
     }
 
     public void DeleteSave()

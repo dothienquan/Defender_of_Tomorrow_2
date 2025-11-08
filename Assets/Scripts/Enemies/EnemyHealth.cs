@@ -133,13 +133,17 @@ public class EnemyHealth : MonoBehaviour
 
     public void DetectDeath()
     {
-        if (currentHealth <= 0)
-        {
-            if (deathVFXPrefab) Instantiate(deathVFXPrefab, transform.position, Quaternion.identity);
-            GetComponent<PickUpSpawner>()?.DropItems();
-            if (expPickupPrefab) Instantiate(expPickupPrefab, transform.position, Quaternion.identity);
-            GetComponent<SpawnerSlime>().SpawnerSlimes();
-            Destroy(gameObject);
-        }
+        if (currentHealth > 0) return;
+
+        if (deathVFXPrefab != null)
+            Instantiate(deathVFXPrefab, transform.position, Quaternion.identity);
+
+        GetComponent<PickUpSpawner>()?.DropItems();
+        GetComponent<SpawnerSlime>()?.SpawnerSlimes();
+
+        if (expPickupPrefab != null)
+            Instantiate(expPickupPrefab, transform.position, Quaternion.identity);
+
+        Destroy(gameObject);
     }
 }
