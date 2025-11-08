@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 6581013452070995458}
   - component: {fileID: -3320888382350177336}
   - component: {fileID: -9111854017017711160}
+  - component: {fileID: 4766844960835092393}
   m_Layer: 0
   m_Name: Blue Slime
   m_TagString: Enemy
@@ -177,7 +178,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   roamChangeDirFloat: 2
-  attackRange: 0
   enemyType: {fileID: 0}
   attackCooldown: 2
   stopMovingWhileAttacking: 0
@@ -232,6 +232,8 @@ MonoBehaviour:
   deathVFXPrefab: {fileID: 2948048360338672110, guid: aac2025b3fc2cdb4c878f8381e2a4689, type: 3}
   knockBackThrust: 15
   expPickupPrefab: {fileID: 5210306458450560170, guid: 3d47f448c66c9d643b09632d924025e7, type: 3}
+  dotFlashColor: {r: 1, g: 0.5, b: 0, a: 1}
+  slowFlashColor: {r: 0.3, g: 0.6, b: 1, a: 1}
 --- !u!114 &5989008871408658798
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -288,3 +290,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyExpDropper
   expPrefab: {fileID: 5210306458450560170, guid: 3d47f448c66c9d643b09632d924025e7, type: 3}
   spawnOffset: {x: 0, y: 0}
+--- !u!114 &4766844960835092393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5232450499796952066}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4283e2600b189f408231c684a46d81d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyStatusTint
+  colorProp: _Color
+  slowTint: {r: 0.5, g: 0.7, b: 1, a: 1}
+  fadeOutTime: 0.15

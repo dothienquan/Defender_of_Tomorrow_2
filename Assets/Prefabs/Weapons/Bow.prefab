@@ -57,6 +57,9 @@ MonoBehaviour:
   weaponInfo: {fileID: 11400000, guid: 58e20b876af5c224ab3563df2ccbd336, type: 2}
   arrowPrefab: {fileID: 2573412402603837176, guid: 8bf98a5e93eac7b4da611a59673256e4, type: 3}
   arrowSpawnPoint: {fileID: 2177664111667578506}
+  projectilesPerShot: 1
+  spreadAngle: 45
+  perProjectileHomingDelayStep: 0.05
 --- !u!212 &5687609414931543080
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -162,6 +165,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIItem
   itemData: {fileID: 11400000, guid: 58e20b876af5c224ab3563df2ccbd336, type: 2}
+  iconImage: {fileID: 0}
 --- !u!114 &2449808656411854544
 MonoBehaviour:
   m_ObjectHideFlags: 0
