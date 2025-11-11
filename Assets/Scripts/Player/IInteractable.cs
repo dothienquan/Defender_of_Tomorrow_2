@@ -1,8 +1,7 @@
 using UnityEngine;
 
-public interface IInteractable
+public interface IInteractables
 {
     string DisplayName { get; }
     void Interact(GameObject interactor);
 }
-
