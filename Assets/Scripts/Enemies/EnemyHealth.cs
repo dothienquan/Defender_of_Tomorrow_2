@@ -1,5 +1,4 @@
-﻿
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,10 +16,30 @@ public class EnemyHealth : MonoBehaviour
     [Tooltip("Màu flash khi bị Slow")]
     [SerializeField] private Color slowFlashColor = new Color(0.3f, 0.6f, 1f); // xanh nhạt
 
+    [Header("Boss / Multi-phase")]
+    [SerializeField] private bool destroyOnDeath = true;
+
+    public System.Action OnDeath;
+
+    public void SetDestroyOnDeath(bool value)
+    {
+        destroyOnDeath = value;
+    }
+
+    public void ResetHealthToMax()
+    {
+        currentHealth = startingHealth;
+        hasTriggeredDeath = false;          // reset lại để phase mới có thể chết tiếp
+        activeDots.Clear();                 // tuỳ chọn: xoá DoT đang còn
+    }
+
     private int currentHealth;
     private Knockback knockback;
     private Flash flash;
     private EnemyPathfinding pathfinding;
+
+    // flag để tránh gọi OnDeath nhiều lần khi máu <= 0
+    private bool hasTriggeredDeath = false;
 
     // === DoT System ===
     private class DoTEffect
@@ -53,6 +72,7 @@ public class EnemyHealth : MonoBehaviour
     private void Start()
     {
         currentHealth = startingHealth;
+        hasTriggeredDeath = false;
     }
 
     private void Update()
@@ -87,17 +107,22 @@ public class EnemyHealth : MonoBehaviour
 
     private void InternalDamage(int damage, bool doKnockback, bool isDot)
     {
-        currentHealth -= Mathf.Max(0, damage);
+        if (damage <= 0) return;
 
-        if (doKnockback)
+        currentHealth -= damage;
+
+        if (doKnockback && knockback != null)
         {
             knockback.GetKnockedBack(PlayerController.Instance.transform, knockBackThrust);
         }
 
-        if (isDot)
-            StartCoroutine(flash.FlashRoutine(dotFlashColor)); // DoT flash màu riêng
-        else
-            StartCoroutine(flash.FlashRoutine()); // Direct: trắng như cũ
+        if (flash != null)
+        {
+            if (isDot)
+                StartCoroutine(flash.FlashRoutine(dotFlashColor)); // DoT flash màu riêng
+            else
+                StartCoroutine(flash.FlashRoutine()); // Direct: trắng như cũ
+        }
 
         StartCoroutine(CheckDetectDeathRoutine());
     }
@@ -122,12 +147,17 @@ public class EnemyHealth : MonoBehaviour
     {
         if (pathfinding == null) return;
         pathfinding.ApplySlow(multiplier, duration, allowStack);
-        StartCoroutine(flash.FlashRoutine(slowFlashColor)); // flash màu slow
+        if (flash != null)
+            StartCoroutine(flash.FlashRoutine(slowFlashColor)); // flash màu slow
     }
 
     private IEnumerator CheckDetectDeathRoutine()
     {
-        yield return new WaitForSeconds(flash.GetRestoreMatTime());
+        if (flash != null)
+            yield return new WaitForSeconds(flash.GetRestoreMatTime());
+        else
+            yield return null;
+
         DetectDeath();
     }
 
@@ -135,6 +165,20 @@ public class EnemyHealth : MonoBehaviour
     {
         if (currentHealth > 0) return;
 
+        // nếu death cho thanh máu hiện tại đã xử lý rồi thì bỏ qua
+        if (hasTriggeredDeath) return;
+        hasTriggeredDeath = true;
+
+        // Báo cho listener (boss) biết là máu đã về 0
+        OnDeath?.Invoke();
+
+        // Boss multi-phase: destroyOnDeath = false -> fake death, KHÔNG Destroy
+        if (!destroyOnDeath)
+        {
+            return;
+        }
+
+        // Enemy / boss chết thật
         if (deathVFXPrefab != null)
             Instantiate(deathVFXPrefab, transform.position, Quaternion.identity);
 
@@ -146,4 +190,5 @@ public class EnemyHealth : MonoBehaviour
 
         Destroy(gameObject);
     }
+
 }
