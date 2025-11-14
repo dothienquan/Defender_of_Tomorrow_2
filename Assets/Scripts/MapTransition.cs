@@ -7,31 +7,30 @@ public class MapTransition : MonoBehaviour
     [SerializeField] private Direction direction;
     [SerializeField] private Transform teleportTargetPosition;
 
-    // LƯU Ý: với Cinemachine 2D mới -> CinemachineConfiner2D
-    [SerializeField] private CinemachineConfiner2D confiner;
+    // Dùng CinemachineConfiner (Confine Mode = Confine2D)
+    [SerializeField] private CinemachineConfiner confiner;
 
     private enum Direction { Up, Down, Left, Right, Teleport }
-
-    private void Start()
-    {
-        if (confiner != null && mapBoundry != null)
-        {
-            confiner.m_BoundingShape2D = mapBoundry;
-            confiner.InvalidateCache();
-        }
-    }
 
     private void Awake()
     {
         // Dự phòng nếu quên gán trong Inspector
         if (confiner == null)
-            confiner = FindFirstObjectByType<CinemachineConfiner2D>(); // hoặc FindAnyObjectByType trên Unity cũ
+            confiner = FindFirstObjectByType<CinemachineConfiner>();
 
         if (confiner == null)
-            Debug.LogError("Không tìm thấy CinemachineConfiner2D trong scene.");
+            Debug.LogError("Không tìm thấy CinemachineConfiner trong scene.");
 
         if (mapBoundry == null)
             Debug.LogError("Chưa gán mapBoundry (PolygonCollider2D) trong Inspector.");
+    }
+
+    private void Start()
+    {
+        if (confiner != null && mapBoundry != null)
+        {
+            SetupConfiner();
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -40,11 +39,20 @@ public class MapTransition : MonoBehaviour
 
         if (confiner != null && mapBoundry != null)
         {
-            confiner.m_BoundingShape2D = mapBoundry;
-            confiner.InvalidateCache();
+            SetupConfiner();
         }
 
         UpdatePlayerPosition(collision.gameObject);
+    }
+
+    private void SetupConfiner()
+    {
+        // Bắt buộc set mode = Confine2D để dùng PolygonCollider2D
+        confiner.m_ConfineMode = CinemachineConfiner.Mode.Confine2D;
+        confiner.m_BoundingShape2D = mapBoundry;
+
+        // Với CinemachineConfiner dùng InvalidatePathCache()
+        confiner.InvalidatePathCache();
     }
 
     private void UpdatePlayerPosition(GameObject player)
@@ -56,6 +64,7 @@ public class MapTransition : MonoBehaviour
                 Debug.LogError("Teleport mode nhưng chưa gán teleportTargetPosition.");
                 return;
             }
+
             player.transform.position = teleportTargetPosition.position;
             return;
         }
