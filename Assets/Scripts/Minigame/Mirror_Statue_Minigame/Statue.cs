@@ -13,6 +13,10 @@ public class Statue : MonoBehaviour
     public float maxRayDistance = 20f;
     public LayerMask hitMask;                 // Include Statue (and Walls if you want blocking)
 
+    [Header("VFX")]
+    public GameObject snapVFX;                // The particle prefab to spawn
+    public Transform snapVFXPoint;            // Custom VFX spawn position (optional)
+
     public int Index { get; private set; } = -1;
 
     private MirrorPuzzleManager manager;
@@ -41,24 +45,20 @@ public class Statue : MonoBehaviour
         isActive = true;
 
         if (animator) animator.SetBool("isActive", true);
-
         if (lineRenderer) lineRenderer.enabled = true;
 
-        // We are now the controllable statue
         if (lineRotator)
         {
-            lineRotator.ResetForActivation();   // clears freeze; keeps previous dir if you want to
+            lineRotator.ResetForActivation();
             lineRotator.EnableControl(true);
         }
     }
 
-    // Immediately leave Active state (Option 1), but keep line if completed
     public void Deactivate()
     {
         isActive = false;
 
         if (animator) animator.SetBool("isActive", false);
-
         if (lineRotator) lineRotator.EnableControl(false);
 
         if (!isCompleted && lineRenderer)
@@ -69,7 +69,6 @@ public class Statue : MonoBehaviour
     {
         isCompleted = value;
 
-        // Ensure line remains visible after completion
         if (value && lineRenderer != null)
             lineRenderer.enabled = true;
     }
@@ -78,15 +77,12 @@ public class Statue : MonoBehaviour
     {
         isCompleted = false;
 
-        // Reset aiming logic only, not visuals
         if (lineRotator) lineRotator.ResetAll();
-
-        // Keep lineRenderer & animation states as they are (do not disable)
     }
 
     // ---------- Interaction from LineRotator ----------
     /// <summary>
-    /// Called by LineRotator when the ray hits a statue. Handles snapping & progression.
+    /// Called when the ray hits a statue. Handles the snap, freeze, and puzzle advancement.
     /// </summary>
     public void HandleHit(Statue hitStatue, Vector2 hitPoint)
     {
@@ -94,7 +90,7 @@ public class Statue : MonoBehaviour
 
         bool correct = manager.IsCorrectNextTarget(hitStatue);
 
-        // Snap the line to the exact hit point immediately
+        // Always set line positions
         if (lineRenderer)
         {
             lineRenderer.SetPosition(0, GetMuzzlePosition());
@@ -103,24 +99,33 @@ public class Statue : MonoBehaviour
 
         if (correct)
         {
-            // Freeze the line so it stops updating and keeps the exact length
+            // ---------- VFX Spawn Here ----------
+            if (snapVFX != null)
+            {
+                Vector3 vfxPos = (snapVFXPoint != null)
+                    ? snapVFXPoint.position
+                    : (Vector3)hitPoint;
+
+                Instantiate(snapVFX, vfxPos, Quaternion.identity);
+            }
+
+            // Freeze line in place
             if (lineRotator) lineRotator.FreezeLineAtSnap(hitPoint);
 
-            // Mark completed, keep line visible
+            // Keep line visible
             SetCompleted(true);
 
-            // ✅ Keep animation active, but disable control so player can't rotate it anymore
+            // Stop rotating this statue
             if (lineRotator) lineRotator.EnableControl(false);
 
-            // Advance puzzle
+            // Progress puzzle
             manager.AdvanceToNextStatue();
         }
         else
         {
-            // Wrong target: keep angle; no snap-back
+            // Wrong statue hit: do nothing, maintain current rotation
         }
     }
-
 
     // ---------- Helpers ----------
     public Vector2 GetMuzzlePosition()
