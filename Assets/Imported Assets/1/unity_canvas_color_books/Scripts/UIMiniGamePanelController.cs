@@ -1,20 +1,21 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class UIMiniGamePanelController : MonoBehaviour
 {
     public GameObject panelRoot;
-    public DoorController door;                 // vẫn giữ nếu cần animation mở
-    public GameObject sceneTransitionObject;    // ✅ thêm dòng này
+    
+    
     public UIBookDrag[] books;
     public UISlot[] slots;
     public int totalBooks = 6;
 
     private int placedCount = 0;
+    public MiniGameMover mover;
 
     private void Awake()
     {
         if (panelRoot != null) panelRoot.SetActive(false);
-        if (sceneTransitionObject != null) sceneTransitionObject.SetActive(false); // ẩn sẵn
+        
     }
 
     public void OpenPanel()
@@ -33,18 +34,13 @@ public class UIMiniGamePanelController : MonoBehaviour
         placedCount++;
         if (placedCount >= totalBooks)
         {
+            Debug.Log("Mini-game hoàn thành!");
             ClosePanel();
 
-            // ✅ Thay vì mở cửa → bật object chuyển scene
-            if (sceneTransitionObject != null)
-            {
-                sceneTransitionObject.SetActive(true);
-                if (door != null) door.gameObject.SetActive(false); // ẩn cửa cũ (tùy chọn)
-            }
-            else if (door != null)
-            {
-                door.Open(); // fallback
-            }
+            if (mover != null)
+                mover.OnMiniGameComplete();
+
+
         }
     }
 
