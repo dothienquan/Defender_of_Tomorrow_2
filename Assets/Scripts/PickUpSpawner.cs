@@ -8,7 +8,7 @@ public class PickUpSpawner : MonoBehaviour
 
     public void DropItems()
     {
-        int randomNum = Random.Range(1, 5);
+        int randomNum = Random.Range(1, 3);
 
         if (randomNum == 1)
         {
