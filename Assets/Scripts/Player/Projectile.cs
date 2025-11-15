@@ -1,5 +1,4 @@
-﻿
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -123,6 +122,21 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        // --- New: check boss redirector first ---
+        BossHitRedirector redirector = other.gameObject.GetComponent<BossHitRedirector>();
+        if (redirector != null)
+        {
+            // Tell the redirector what type of hit this is (direct/DoT/slow)
+            redirector.HandleProjectileHit(this, directDamage, damageMode == DamageMode.Direct,
+                dotDamagePerTick, dotTickInterval, dotDuration, dotStackable,
+                applySlowOnHit, slowMultiplier, slowDuration, slowStackable,
+                particleOnHitPrefabVFX);
+            // destroy projectile in all boss-hit cases (consistent with prior behavior)
+            Destroy(gameObject);
+            return;
+        }
+
+        // --- Original behavior (non-boss or not handled by redirector) ---
         EnemyHealth enemyHealth = other.gameObject.GetComponent<EnemyHealth>();
         Indestructible indestructible = other.gameObject.GetComponent<Indestructible>();
         PlayerHealth player = other.gameObject.GetComponent<PlayerHealth>();
