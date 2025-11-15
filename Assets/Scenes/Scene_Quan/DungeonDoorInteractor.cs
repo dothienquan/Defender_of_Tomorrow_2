@@ -4,8 +4,8 @@ using UnityEngine;
 public class DungeonDoorInteractor : MonoBehaviour
 {
     [Header("References")]
-    public UIClockMinigameController panelController; // UI panel opener/closer
-    public DoorController door;                        // Optional door to open on success
+    public GameObject uiPanel;       // Normal UI panel
+    public DoorClockController door;      // Optional
 
     [Header("Settings")]
     public string playerTag = "Player";
@@ -14,7 +14,8 @@ public class DungeonDoorInteractor : MonoBehaviour
     [Header("UI Hint (Optional)")]
     public GameObject hint;
 
-    private bool playerInRange;
+    private bool playerInRange = false;
+    private bool panelOpen = false;
 
     private void Reset()
     {
@@ -22,29 +23,10 @@ public class DungeonDoorInteractor : MonoBehaviour
         if (col != null) col.isTrigger = true;
     }
 
-    private void OnEnable()
+    private void Start()
     {
+        if (uiPanel != null) uiPanel.SetActive(false);
         if (hint != null) hint.SetActive(false);
-        SubscribeToSuccess(true);
-    }
-
-    private void OnDisable()
-    {
-        SubscribeToSuccess(false);
-    }
-
-    private void SubscribeToSuccess(bool add)
-    {
-        if (panelController == null) return;
-        if (add)
-            panelController.onMiniGameSuccess.AddListener(HandleMinigameSuccess);
-        else
-            panelController.onMiniGameSuccess.RemoveListener(HandleMinigameSuccess);
-    }
-
-    private void HandleMinigameSuccess()
-    {
-       // if (door != null) door.OpenDoor();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -52,7 +34,7 @@ public class DungeonDoorInteractor : MonoBehaviour
         if (other.CompareTag(playerTag))
         {
             playerInRange = true;
-            if (hint != null) hint.SetActive(true);
+            if (!panelOpen && hint != null) hint.SetActive(true);
         }
     }
 
@@ -62,6 +44,10 @@ public class DungeonDoorInteractor : MonoBehaviour
         {
             playerInRange = false;
             if (hint != null) hint.SetActive(false);
+
+            // Auto-close panel when leaving area
+            if (panelOpen)
+                ClosePanel();
         }
     }
 
@@ -71,14 +57,43 @@ public class DungeonDoorInteractor : MonoBehaviour
 
         if (Input.GetKeyDown(interactKey))
         {
-            if (panelController != null)
+            if (!panelOpen)
             {
-                panelController.OpenPanel();
+                OpenPanel();
             }
             else
             {
-                Debug.LogWarning("[DungeonDoorInteractor] panelController not assigned.");
+                ClosePanel();
             }
         }
+    }
+
+    public void OpenPanel()
+    {
+        if (uiPanel == null) return;
+
+        uiPanel.SetActive(true);
+        panelOpen = true;
+
+        if (hint != null) hint.SetActive(false);
+    }
+
+    public void ClosePanel()
+    {
+        if (uiPanel == null) return;
+
+        uiPanel.SetActive(false);
+        panelOpen = false;
+
+        if (playerInRange && hint != null)
+            hint.SetActive(true);
+    }
+
+    // Call this from a UI Button (optional)
+    public void OnMinigameSuccess()
+    {
+        ClosePanel();
+        if (door != null)
+            door.OpenDoor();
     }
 }
