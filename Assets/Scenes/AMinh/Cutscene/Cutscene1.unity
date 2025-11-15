@@ -90785,6 +90785,7 @@ GameObject:
   - component: {fileID: 852885292}
   - component: {fileID: 852885291}
   - component: {fileID: 852885290}
+  - component: {fileID: 852885293}
   m_Layer: 0
   m_Name: Line1 (1)
   m_TagString: Untagged
@@ -90907,9 +90908,24 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -31, y: 194}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &852885293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 852885289}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2ee93073d85779428ee4b330eee3385, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TypingEffect
+  textUI: {fileID: 852885290}
+  fullText: hhhhhhhhhhhhhh
+  charSpeed: 0.03
 --- !u!1001 &853979123
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -97339,6 +97355,7 @@ GameObject:
   - component: {fileID: 1087789954}
   - component: {fileID: 1087789956}
   - component: {fileID: 1087789955}
+  - component: {fileID: 1087789957}
   m_Layer: 0
   m_Name: Line1
   m_TagString: Untagged
@@ -97464,6 +97481,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1087789953}
   m_CullTransparentMesh: 1
+--- !u!114 &1087789957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1087789953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2ee93073d85779428ee4b330eee3385, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TypingEffect
+  textUI: {fileID: 1087789955}
+  fullText: hhhhhhhhhhhh
+  charSpeed: 0.03
 --- !u!1001 &1095093094
 PrefabInstance:
   m_ObjectHideFlags: 0
