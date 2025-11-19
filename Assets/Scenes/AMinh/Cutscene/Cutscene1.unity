@@ -2155,8 +2155,8 @@ MonoBehaviour:
     \u0111\u1EE9a tr\u1EBB c\u1EE7a ta. Ng\u1ECDn gi\xF3 l\u1EA1 \u0111ang mang theo
     m\xF9i c\u1EE7a b\xF3ng t\u1ED1i \u0111\u1EBFn."
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2714,8 +2714,8 @@ MonoBehaviour:
   m_text: "Player:\n *M\u1EA5t m\xE1u nhi\u1EC1u qu\xE1, kh\xF4ng th\u1EC3 c\u1EA7m
     \u0111\u01B0\u1EE3c*"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4726,8 +4726,8 @@ MonoBehaviour:
     sau gi\xE1 s\xE1ch l\xE0 c\xE1nh c\u1ED5ng d\u1EABn \u0111\u1EBFn m\u1ED9t t\u01B0\u01A1ng
     lai m\u1EDBi cho th\u1EBF gi\u1EDBi n\xE0y."
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -52157,6 +52157,81 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &556315181
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 556315182}
+  - component: {fileID: 556315184}
+  - component: {fileID: 556315183}
+  m_Layer: 0
+  m_Name: DialoguePanel (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &556315182
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 556315181}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1272750380}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: -290}
+  m_SizeDelta: {x: 800, y: 300}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &556315183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 556315181}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.72156864}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: -855298285791758126, guid: 66d18dd70552bb2468d31705055ca60c, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &556315184
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 556315181}
+  m_CullTransparentMesh: 1
 --- !u!1001 &561997775
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -59787,11 +59862,11 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "Eiden:\n T\u1EEB l\xE2u d\xF2ng m\xE1u c\u1EE7a ng\u01B0\u01A1i \u0111\xE3
-    \u0111\u01B0\u1EE3c   \u0111\u1ECBnh s\u1EB5n \u0111\u1EC3 b\u1EA3o v\u1EC7 phong
+    \u0111\u01B0\u1EE3c \u0111\u1ECBnh s\u1EB5n \u0111\u1EC3 b\u1EA3o v\u1EC7 phong
     \u1EA5n"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -60486,8 +60561,8 @@ MonoBehaviour:
   hitMask:
     serializedVersion: 2
     m_Bits: 64
-  snapVFX: {fileID: 7155335147208632822, guid: 97c43495f80a3244fad1301dfafbe252, type: 3}
-  snapVFXPoint: {fileID: 696848389}
+  snapVFX: {fileID: 0}
+  snapVFXPoint: {fileID: 0}
 --- !u!114 &696848383
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -64647,6 +64722,10 @@ PrefabInstance:
     - {fileID: 4476225388045429477, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
     - {fileID: 7501486265954187876, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
     - {fileID: 2238459908951263024, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+    - {fileID: 7236853050971168267, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+    - {fileID: 6871739175105800217, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+    - {fileID: 6253980467312934299, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+    - {fileID: 2690451943619256838, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 148440011132508129, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
@@ -70319,8 +70398,8 @@ MonoBehaviour:
   m_text: "T\u1EEB x\u01B0a, c\xE1c b\u1EADc hi\u1EC1n tri\u1EBFt \u0111\xE3 ti\xEAn
     tri v\u1EC1 Ng\xE0y Xi\u1EC1ng X\xEDch"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -73209,8 +73288,8 @@ MonoBehaviour:
     ch\u1EAFc b\u1EA3n th\xE2n m\xECnh ch\u1EB3ng c\u1EA7m ch\xE2n \u0111\u01B0\u1EE3c
     l\xE2u"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -75697,6 +75776,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1158781852}
+  - {fileID: 556315182}
   - {fileID: 2127966023}
   - {fileID: 102809487}
   - {fileID: 685475400}
@@ -77050,8 +77130,8 @@ MonoBehaviour:
     m\u1EDF \u0111\u01B0\u1EE3c, ta tin ng\u01B0\u01A1i s\u1EBD l\xE0m \u0111\u01B0\u1EE3c
     \u0111i\u1EC1u m\xE0 th\u1EBF h\u1EC7 ch\xFAng ta \u0111\xE3 th\u1EA5t b\u1EA1i..."
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -77498,8 +77578,8 @@ MonoBehaviour:
   m_text: "Eiden:\n\u0110\xE1m qu\xE1i v\u1EADt c\xE1c ng\u01B0\u01A1i d\xE1m \u0111\u1EADt
     ch\xE2n v\xE0o v\xF9ng \u0111\u1EA5t linh thi\xEAn n\xE0y!!!"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -84747,7 +84827,7 @@ PlayableDirector:
   - key: {fileID: 1683887127051104945, guid: efc76fa8166ab4a4f9be20a85fe0e2e2, type: 2}
     value: {fileID: 1214646459}
   - key: {fileID: -1389324891823872633, guid: efc76fa8166ab4a4f9be20a85fe0e2e2, type: 2}
-    value: {fileID: 1158781851}
+    value: {fileID: 556315181}
   - key: {fileID: -7626507050804841681, guid: efc76fa8166ab4a4f9be20a85fe0e2e2, type: 2}
     value: {fileID: 1421121112}
   - key: {fileID: 94272437442545070, guid: efc76fa8166ab4a4f9be20a85fe0e2e2, type: 2}
@@ -93802,8 +93882,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Player:\n                   Tr\u01B0\u1EDFng l\xE0ng!!!"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
