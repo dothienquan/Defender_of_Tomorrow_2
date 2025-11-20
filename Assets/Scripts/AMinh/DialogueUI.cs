@@ -4,14 +4,20 @@ using System.Collections;
 
 public class DialogueUI : MonoBehaviour
 {
-    public TMP_Text text;          // Kéo TextMeshPro vào đây trong Inspector
-    public float typeSpeed = 0.03f; // Thời gian giữa mỗi ký tự
+    public TMP_Text text;
+    public float typeSpeed = 0.03f;
 
     DialogueObject currentDialogue;
     int index;
     bool isTyping;
     string currentLine;
     Coroutine typingRoutine;
+
+    void Start()
+    {
+        // Lúc bắt đầu game tự ẩn, nhưng object phải ACTIVE để Start chạy
+        gameObject.SetActive(false);
+    }
 
     public void Show(DialogueObject d)
     {
@@ -25,27 +31,20 @@ public class DialogueUI : MonoBehaviour
     {
         if (!gameObject.activeSelf) return;
 
-        if (Input.GetMouseButtonDown(0)) // click chuột trái
+        if (Input.GetMouseButtonDown(0))
         {
-            OnClick();
-        }
-    }
+            if (currentDialogue == null) return;
 
-    void OnClick()
-    {
-        if (currentDialogue == null) return;
-
-        if (isTyping)
-        {
-            // Nếu đang gõ → hiện full câu luôn
-            if (typingRoutine != null) StopCoroutine(typingRoutine);
-            text.text = currentLine;
-            isTyping = false;
-        }
-        else
-        {
-            // Đã gõ xong câu → sang câu tiếp theo
-            Next();
+            if (isTyping)
+            {
+                StopCoroutine(typingRoutine);
+                text.text = currentLine;
+                isTyping = false;
+            }
+            else
+            {
+                Next();
+            }
         }
     }
 
@@ -55,7 +54,6 @@ public class DialogueUI : MonoBehaviour
 
         if (index >= currentDialogue.lines.Length)
         {
-            // Hết thoại
             currentDialogue = null;
             gameObject.SetActive(false);
             return;
