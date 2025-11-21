@@ -4,7 +4,11 @@ using System.Collections;
 
 public class DialogueUI : MonoBehaviour
 {
-    public TMP_Text text;
+    [Header("UI References")]
+    public TMP_Text nameText;          // Text hiện tên NPC
+    public TMP_Text text;              // Text hiện nội dung thoại
+
+    [Header("Typing Settings")]
     public float typeSpeed = 0.03f;
 
     DialogueObject currentDialogue;
@@ -13,16 +17,24 @@ public class DialogueUI : MonoBehaviour
     string currentLine;
     Coroutine typingRoutine;
 
-    void Start()
+    // Nếu bạn muốn, có thể để DialoguePanel tắt sẵn trong Hierarchy,
+    // script sẽ bật nó khi Show() được gọi.
+
+    // Hàm cũ (nếu đâu đó vẫn gọi Show(dialogue) không có tên)
+    public void Show(DialogueObject d)
     {
-        // Lúc bắt đầu game tự ẩn, nhưng object phải ACTIVE để Start chạy
-        gameObject.SetActive(false);
+        Show(d, "");
     }
 
-    public void Show(DialogueObject d)
+    // Hàm mới: Show + tên người nói
+    public void Show(DialogueObject d, string speakerName)
     {
         currentDialogue = d;
         index = 0;
+
+        if (nameText != null)
+            nameText.text = speakerName;
+
         gameObject.SetActive(true);
         Next();
     }
@@ -37,12 +49,14 @@ public class DialogueUI : MonoBehaviour
 
             if (isTyping)
             {
-                StopCoroutine(typingRoutine);
+                // Đang gõ dở → hiện full câu
+                if (typingRoutine != null) StopCoroutine(typingRoutine);
                 text.text = currentLine;
                 isTyping = false;
             }
             else
             {
+                // Gõ xong → sang câu tiếp theo
                 Next();
             }
         }
@@ -54,6 +68,7 @@ public class DialogueUI : MonoBehaviour
 
         if (index >= currentDialogue.lines.Length)
         {
+            // Hết thoại
             currentDialogue = null;
             gameObject.SetActive(false);
             return;
