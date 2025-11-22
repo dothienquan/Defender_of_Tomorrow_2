@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 5234277435155797007}
   - component: {fileID: -7514575547722489110}
   - component: {fileID: -3915323046974763681}
+  - component: {fileID: -3586544931743813955}
   m_Layer: 0
   m_Name: BoC_Visual
   m_TagString: Enemy
@@ -206,3 +207,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AreaEntrance
   transitionName: 
+--- !u!114 &-3586544931743813955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7076191672534897698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7fdec394c3adfe4ba89647725a42a87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossShooter
+  bulletPrefab: {fileID: 2964017956643342995, guid: 940080f8f73d21e439c88341625444d0, type: 3}
+  bulletMoveSpeed: 5
+  burstCount: 5
+  projectilesPerBurst: 5
+  angleSpread: 359
+  startingDistance: 0.1
+  timeBetweenBursts: 0.5
+  restTime: 1
+  stagger: 0
+  oscillate: 0
+  attackRange: 10

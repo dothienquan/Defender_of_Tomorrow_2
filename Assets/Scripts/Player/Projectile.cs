@@ -102,6 +102,12 @@ public class Projectile : MonoBehaviour
         this.moveSpeed = moveSpeed;
     }
 
+    // NEW: cho phép code ngoài set đạn là của enemy (boss) hay không
+    public void SetIsEnemyProjectile(bool value)
+    {
+        isEnemyProjectile = value;
+    }
+
     private void ApplyDamageTo(EnemyHealth enemyHealth)
     {
         if (damageMode == DamageMode.Direct)
@@ -126,12 +132,10 @@ public class Projectile : MonoBehaviour
         BossHitRedirector redirector = other.gameObject.GetComponent<BossHitRedirector>();
         if (redirector != null)
         {
-            // Tell the redirector what type of hit this is (direct/DoT/slow)
             redirector.HandleProjectileHit(this, directDamage, damageMode == DamageMode.Direct,
                 dotDamagePerTick, dotTickInterval, dotDuration, dotStackable,
                 applySlowOnHit, slowMultiplier, slowDuration, slowStackable,
                 particleOnHitPrefabVFX);
-            // destroy projectile in all boss-hit cases (consistent with prior behavior)
             Destroy(gameObject);
             return;
         }
