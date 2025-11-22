@@ -1,5 +1,7 @@
+﻿using System.Collections;
 using System.Reflection;
 using UnityEngine;
+using DG.Tweening;
 
 public class BossDuplicateManager : MonoBehaviour
 {
@@ -21,6 +23,10 @@ public class BossDuplicateManager : MonoBehaviour
     [Header("General Settings")]
     public bool swapOnHit = true;
 
+    [Header("Swap FX")]
+    [SerializeField] private float swapMoveDuration = 0.25f;   // thời gian 2 bản thể trượt qua nhau
+    [SerializeField] private Ease swapEase = Ease.InOutQuad;   // easing cho cảm giác mượt
+
     private GameObject realVisual;
     private GameObject fakeVisual;
 
@@ -33,6 +39,9 @@ public class BossDuplicateManager : MonoBehaviour
     private FieldInfo fi_startingHealth;
 
     private bool isPhaseTwo = false;
+
+    // Hiệu ứng boss bị đánh (tránh spam)
+    private bool isHitAnimating = false;
 
     private void Awake()
     {
@@ -113,7 +122,7 @@ public class BossDuplicateManager : MonoBehaviour
     public void OnFakeHit()
     {
         if (!isPhaseTwo && swapOnHit)
-            SwapPositions();
+            StartCoroutine(HitEffectThenSwap());
     }
 
     public void HandleRealDirectHit(int damage)
@@ -128,9 +137,8 @@ public class BossDuplicateManager : MonoBehaviour
         CheckPhaseSwitch();
 
         if (!isPhaseTwo && swapOnHit)
-            SwapPositions();
+            StartCoroutine(HitEffectThenSwap());
     }
-
 
     public void HandleRealDotHit(int dmg, float interval, float duration, bool stack)
     {
@@ -199,15 +207,56 @@ public class BossDuplicateManager : MonoBehaviour
     }
 
     // ======================
+    //   HIT FX + SWAP
+    // ======================
+
+    private IEnumerator HitVanishRoutine()
+    {
+        if (isHitAnimating) yield break;
+        isHitAnimating = true;
+
+        // Thu nhỏ và "biến mất"
+        if (realVisual != null)
+            realVisual.transform.DOScale(Vector3.zero, 0.25f);
+        if (fakeVisual != null)
+            fakeVisual.transform.DOScale(Vector3.zero, 0.25f);
+
+        yield return new WaitForSeconds(1f);
+
+        // Scale lên lại
+        if (realVisual != null)
+            realVisual.transform.DOScale(Vector3.one, 0.25f);
+        if (fakeVisual != null)
+            fakeVisual.transform.DOScale(Vector3.one, 0.25f);
+
+        yield return new WaitForSeconds(0.25f);
+
+        isHitAnimating = false;
+    }
+
+    private IEnumerator HitEffectThenSwap()
+    {
+        yield return HitVanishRoutine();
+        SwapPositions();
+    }
+
+    // ======================
     //     SWAP POSITIONS
     // ======================
 
     private void SwapPositions()
     {
+        if (realVisual == null || fakeVisual == null) return;
+
         Vector3 p1 = realVisual.transform.position;
         Vector3 p2 = fakeVisual.transform.position;
 
-        realVisual.transform.position = p2;
-        fakeVisual.transform.position = p1;
+        // Dừng tween cũ nếu có
+        realVisual.transform.DOKill();
+        fakeVisual.transform.DOKill();
+
+        // Tween 2 bản thể trượt qua vị trí của nhau
+        realVisual.transform.DOMove(p2, swapMoveDuration).SetEase(swapEase);
+        fakeVisual.transform.DOMove(p1, swapMoveDuration).SetEase(swapEase);
     }
 }

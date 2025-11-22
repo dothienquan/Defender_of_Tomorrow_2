@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 8672268040679908647}
   - component: {fileID: 8066460873925080755}
   - component: {fileID: 2579999938514856318}
-  - component: {fileID: 7815369401539116099}
+  - component: {fileID: 6980273474270936243}
   m_Layer: 0
-  m_Name: Bullet
+  m_Name: BossBullet
   m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -127,7 +127,7 @@ CircleCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2964017956643342995}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
@@ -156,7 +156,7 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0.004280567}
   m_Radius: 0.20464897
---- !u!114 &7815369401539116099
+--- !u!114 &6980273474270936243
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -165,30 +165,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 2964017956643342995}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 34169115a5ca93446956c1d61f742369, type: 3}
+  m_Script: {fileID: 11500000, guid: 51e312bfd45d1ba46b3a4b1bd11f6b7f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  damageMode: 0
-  directDamage: 1
-  dotDamagePerTick: 1
-  dotTickInterval: 0.5
-  dotDuration: 3
-  dotStackable: 0
-  applySlowOnHit: 0
-  slowMultiplier: 0.5
-  slowDuration: 2
-  slowStackable: 0
-  moveSpeed: 8
-  projectileRange: 30
-  useHoming: 1
-  turnRateDegPerSec: 360
-  homingStartDelay: 0.05
-  homingRampTime: 0.25
-  targetHitRadius: 0.2
-  destroyOnReachTarget: 1
-  useMaxLifetime: 1
-  maxLifetimeSeconds: 0
-  orbitGuardRadius: 0.4
-  orbitGuardTime: 0.5
-  particleOnHitPrefabVFX: {fileID: 2948048360338672110, guid: 91271c323c5cf1146a48a21f77e1ab51, type: 3}
-  isEnemyProjectile: 1
+  m_EditorClassIdentifier: '::'
