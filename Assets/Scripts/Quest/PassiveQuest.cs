@@ -25,10 +25,10 @@ public class PassiveQuest : MonoBehaviour
         switch (state)
         {
             case QuestState.Start:
-                questLabel.text = "Đến nhà của trưởng làng.";
+                questLabel.text = "Den nha cua truong lang";
                 break;
             case QuestState.DidAction1:
-                questLabel.text = "Quan sát xung quanh và tìm cách thoát ra ngoài.";
+                questLabel.text = "Quan sat xung quanh va tim loi thoat";
                 break;
             case QuestState.DidAction2:
                 questLabel.text = "Xong rồi, nhiệm vụ hoàn thành.";
