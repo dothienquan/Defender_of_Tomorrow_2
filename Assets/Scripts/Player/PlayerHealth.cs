@@ -14,6 +14,8 @@ public class PlayerHealth : Singleton<PlayerHealth>
 
     private Slider healthSlider;
     private int currentHealth;
+    public int MaxHealth => maxHealth;
+    public int CurrentHealth => currentHealth;
     private bool canTakeDamage = true;
     private Knockback knockback;
     private Flash flash;

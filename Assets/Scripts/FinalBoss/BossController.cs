@@ -26,12 +26,19 @@ public class BossController : MonoBehaviour
     [SerializeField] private LightningStrikeArea lightningStrikeAreaPrefab;
     [SerializeField] private LightningProjectile lightningProjectilePrefab;
 
+    [Header("Phase 2 VFX")]
+    [SerializeField] private GameObject voidBGPrefab;     // hiệu ứng nền Void
+    [SerializeField] private GameObject voidCastWavePrefab; // hiệu ứng cast Void
+
     private Transform player;
     private bool isPhase2 = false;
     private bool fightActive = false;
 
     private enum BossState { Waiting, Phase1, Phase2, Dead }
     private BossState state = BossState.Waiting;
+
+    [SerializeField] private SafeZone safeZonePrefab;
+
 
     private void Awake()
     {
@@ -159,6 +166,33 @@ public class BossController : MonoBehaviour
         }
     }
 
+    private IEnumerator Phase2Loop()
+    {
+        while (state == BossState.Phase2)
+        {
+            float wait = Random.Range(1.5f, 2.5f);
+            yield return new WaitForSeconds(wait);
+
+            if (inVulnerableWindow) continue;
+
+            int skill = Random.Range(0, 3);
+
+            switch (skill)
+            {
+                case 0:
+                    yield return CastRandomLightningStrikes();
+                    break;
+                case 1:
+                    yield return CastSingleFastLightning();
+                    break;
+                case 2:
+                    yield return CastVoidField();   // skill phase 2
+                    break;
+            }
+        }
+    }
+
+
     #endregion
 
     #region SKILLS
@@ -229,6 +263,103 @@ public class BossController : MonoBehaviour
 
         yield return null;
     }
+    private void SpawnLightningAroundSafeZone(SafeZone zone)
+    {
+        float r = zone.CurrentRadius;
+        int count = 6;
+        float step = 360f / count;
+
+        for (int i = 0; i < count; i++)
+        {
+            float ang = step * i * Mathf.Deg2Rad;
+            Vector2 pos = (Vector2)zone.transform.position +
+                          new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * (r + 1f);
+
+            Instantiate(lightningStrikeAreaPrefab, pos, Quaternion.identity);
+        }
+    }
+
+    private IEnumerator CastVoidField()
+    {
+        float duration = 10f;
+
+        // tạo object vô hình điều khiển void damage
+        var voidObj = new GameObject("VoidDamageController");
+        var voidDamage = voidObj.AddComponent<VoidDamageController>();
+        var bg = Instantiate(voidBGPrefab, transform.position, Quaternion.identity);
+        bg.transform.localScale = Vector3.one * 14f;
+
+
+        // tạo 3 vùng an toàn gần boss
+        List<SafeZone> zones = new();
+
+        for (int i = 0; i < 3; i++)
+        {
+            float angle = (i * 120f) * Mathf.Deg2Rad;
+            Vector2 offset = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 2f;
+
+            SafeZone z = Instantiate(
+                safeZonePrefab,
+                (Vector2)transform.position + offset,
+                Quaternion.identity
+            );
+
+            zones.Add(z);
+            voidDamage.safeZones.Add(z);
+        }
+
+        float timer = 0f;
+
+        while (timer < duration)
+        {
+            // nếu boss bị tê liệt -> kết thúc ngay
+            if (inVulnerableWindow)
+                break;
+
+            // với mỗi safe zone, bắn sét vòng quanh nó giống phase 1
+            foreach (var z in zones)
+            {
+                if (z != null && z.IsActive)
+                    SpawnLightningAroundSafeZone(z);
+            }
+
+            timer += 1f;
+            yield return new WaitForSeconds(1f);
+        }
+
+        // dọn sạch
+        Destroy(voidObj);
+        foreach (var z in zones)
+            if (z != null) Destroy(z.gameObject);
+
+        // tạo hiệu ứng cast
+        Instantiate(voidCastWavePrefab, transform.position, Quaternion.identity);
+
+        // tạo nền void
+        var voidBG = Instantiate(voidBGPrefab, transform.position, Quaternion.identity);
+
+        // …
+        while (timer < duration)
+        {
+            if (inVulnerableWindow)
+                break;
+
+            // sét quanh safe zones
+            foreach (var z in zones)
+            {
+                if (z != null && z.IsActive)
+                    SpawnLightningAroundSafeZone(z);
+            }
+
+            timer += 1f;
+            yield return new WaitForSeconds(1f);
+        }
+
+        // skill kết thúc → dọn vfx
+        Destroy(voidBG);
+
+    }
+
 
     #endregion
 }
