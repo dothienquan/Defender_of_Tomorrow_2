@@ -187427,6 +187427,8 @@ GameObject:
   m_Component:
   - component: {fileID: 618688099}
   - component: {fileID: 618688098}
+  - component: {fileID: 618688101}
+  - component: {fileID: 618688100}
   m_Layer: 0
   m_Name: character_20_frame16x20_8
   m_TagString: Untagged
@@ -187507,6 +187509,66 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &618688100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 618688097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: beb465503639aa144a86eea3865ff957, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RaftNpcInteraction
+  miniGamePanel: {fileID: 0}
+  interactKey: 102
+--- !u!61 &618688101
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 618688097}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1, y: 1.25}
+    newSize: {x: 1.3333334, y: 1.6666666}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 1, y: 1.25}
+  m_EdgeRadius: 0
 --- !u!1001 &619193011
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -341571,6 +341633,20 @@ MonoBehaviour:
   vfxDestroyAfter: 2
   levelUpTextPrefab: {fileID: 0}
   textSpawnPoint: {fileID: 635427784}
+--- !u!114 &1285770724
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1285770679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5776109c2b943aa4f82109308da706a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RaftMaterialCollector
+  requiredWood: 10
+  currentWood: 0
 --- !u!1 &1285778596
 GameObject:
   m_ObjectHideFlags: 0
@@ -643183,11 +643259,11 @@ PrefabInstance:
       objectReference: {fileID: 21300000, guid: be644f4e0c77d4c4a9d849f4cf63f6db, type: 3}
     - target: {fileID: 8333620564710897922, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1045.293
+      value: 1046.4916
       objectReference: {fileID: 0}
     - target: {fileID: 8333620564710897922, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 489.3139
+      value: 489.33234
       objectReference: {fileID: 0}
     - target: {fileID: 8333620564710897922, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       propertyPath: m_LocalPosition.z
@@ -643452,6 +643528,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 148440011132508129, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1285770710}
+    - targetCorrespondingSourceObject: {fileID: 148440011132508129, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1285770724}
   m_SourcePrefab: {fileID: 100100000, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
