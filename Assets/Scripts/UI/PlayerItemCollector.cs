@@ -3,9 +3,12 @@ using UnityEngine;
 public class PlayerItemCollector : MonoBehaviour
 {
     private InventoryController inventoryController;
+    private RaftMaterialCollector raftMaterialCollector;   // <-- thêm
     void Start()
     {
         inventoryController = FindFirstObjectByType<InventoryController>();
+        raftMaterialCollector = GetComponent<RaftMaterialCollector>(); // <-- thêm
+
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -21,10 +24,16 @@ public class PlayerItemCollector : MonoBehaviour
 
                 if (itemAdded)
                 {
+                    if (raftMaterialCollector != null && item.isRaftMaterial)
+                    {
+                        raftMaterialCollector.AddMaterial(1);
+                    }
                     item.PickUp();
                     Destroy(collision.gameObject);
                 }
             }
+            
+
         }
     }
 }
