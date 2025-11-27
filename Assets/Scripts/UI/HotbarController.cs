@@ -38,11 +38,51 @@ public class HotbarController : MonoBehaviour
                                                                 
     void UseItemInSlot(int index)
     {
+        if (index < 0 || index >= hotbarPanel.transform.childCount) return;
+
         Slot slot = hotbarPanel.transform.GetChild(index).GetComponent<Slot>();
         if (slot.currentItem != null)
         {
             Item item = slot.currentItem.GetComponent<Item>();
-            item.UseItem();
+            if (item != null)
+            {
+                // Nếu là vũ khí, equip vào ActiveInventory
+                if (item.IsWeapon)
+                {
+                    EquipWeaponFromSlot(slot, item);
+                }
+                else
+                {
+                    // Sử dụng item thông thường
+                    item.UseItem();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Equip vũ khí từ slot vào ActiveInventory
+    /// </summary>
+    private void EquipWeaponFromSlot(Slot slot, Item item)
+    {
+        if (item.weaponInfo == null) return;
+
+        // Đảm bảo InventorySlot có WeaponInfo
+        InventorySlot inventorySlot = slot.GetComponent<InventorySlot>();
+        if (inventorySlot == null)
+        {
+            inventorySlot = slot.gameObject.AddComponent<InventorySlot>();
+        }
+        
+        // Set weapon info
+        inventorySlot.SetWeapon(item.weaponInfo);
+
+        // Cập nhật ActiveInventory để equip vũ khí này
+        if (ActiveInventory.Instance != null)
+        {
+            // Set active slot index trong ActiveInventory
+            int slotIndex = slot.transform.GetSiblingIndex();
+            ActiveInventory.Instance.SetActiveSlot(slotIndex);
         }
     }
 
