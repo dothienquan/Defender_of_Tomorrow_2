@@ -3,74 +3,54 @@ using UnityEngine.UI;
 
 public class RaftMiniGame : MonoBehaviour
 {
-    [Header("Click Settings")]
-    public int clicksToBuild = 100;         // cần bấm bao nhiêu lần
-    public Text progressText;               // hiển thị % hoặc số (optional)
-    public Slider progressSlider;           // thanh tiến độ (optional)
+    [Header("Progress Settings")]
+    public int clicksToBuild = 100;
+    public int currentClicks = 0;
+
+    [Header("UI")]
+    public Image raftProgressImage;   // sprite thuyền dùng làm progress bar
 
     [Header("Raft Spawn")]
-    public GameObject raftPrefab;           // prefab bè
-    public Transform raftSpawnPoint;        // chỗ spawn bè
-    public bool destroyPanelAfterBuild = true;
+    public GameObject raftPrefab;
+    public Transform spawnPoint;
 
-    private int currentClicks = 0;
-    private bool raftBuilt = false;
+    private bool raftDone = false;
 
     private void OnEnable()
     {
         currentClicks = 0;
-        UpdateUI();
+
+        if (raftProgressImage != null)
+            raftProgressImage.fillAmount = 0f;
     }
 
     public void OnClickBuildButton()
     {
-        if (raftBuilt) return;
+        if (raftDone) return;
 
         currentClicks++;
+
+        float progress = (float)currentClicks / clicksToBuild;
+
+        // cập nhật thanh tiến độ (fill từ 0 → 1)
+        if (raftProgressImage != null)
+            raftProgressImage.fillAmount = progress;
 
         if (currentClicks >= clicksToBuild)
         {
             BuildRaft();
         }
-
-        UpdateUI();
-    }
-
-    private void UpdateUI()
-    {
-        if (progressText != null)
-        {
-            progressText.text = $"{currentClicks}/{clicksToBuild}";
-        }
-
-        if (progressSlider != null)
-        {
-            progressSlider.maxValue = clicksToBuild;
-            progressSlider.value = currentClicks;
-        }
     }
 
     private void BuildRaft()
     {
-        raftBuilt = true;
+        raftDone = true;
 
-        if (raftPrefab != null && raftSpawnPoint != null)
-        {
-            Instantiate(raftPrefab, raftSpawnPoint.position, raftSpawnPoint.rotation);
-        }
+        if (raftPrefab != null && spawnPoint != null)
+            Instantiate(raftPrefab, spawnPoint.position, spawnPoint.rotation);
 
-        // tắt panel mini game
-        if (destroyPanelAfterBuild)
-            gameObject.SetActive(false);
+        gameObject.SetActive(false);
 
-        // nếu muốn báo cho NPC đóng panel
-        var npc = FindObjectOfType<RaftNpcInteraction>();
-        if (npc != null)
-        {
-            npc.CloseMiniGame();
-        }
-
-        Debug.Log("Bè đã được tạo!");
-        // có thể mở cầu/cho phép qua sông ở đây
+        Debug.Log("Bè đã hoàn thành!");
     }
 }
