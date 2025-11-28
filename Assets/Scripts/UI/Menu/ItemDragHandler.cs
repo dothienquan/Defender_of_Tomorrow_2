@@ -43,6 +43,8 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
         Slot originalSlot = originalParent.GetComponent<Slot>();
 
+        bool itemMoved = false;
+
         if (dropSlot != null)
         {
             //Is a slot under drop point
@@ -61,6 +63,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             //Move item into drop slot
             transform.SetParent(dropSlot.transform);
             dropSlot.currentItem = gameObject;
+            itemMoved = true;
         }
         else
         {
@@ -69,5 +72,37 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
 
         GetComponent<RectTransform>().anchoredPosition = Vector2.zero; //Center
+
+        // Nếu item là vũ khí và đã được di chuyển, cập nhật InventorySlot và refresh ActiveInventory
+        if (itemMoved)
+        {
+            Item item = GetComponent<Item>();
+            if (item != null && item.IsWeapon)
+            {
+                // Cập nhật InventorySlot ở slot mới
+                InventorySlot inventorySlot = dropSlot.GetComponent<InventorySlot>();
+                if (inventorySlot == null)
+                {
+                    inventorySlot = dropSlot.gameObject.AddComponent<InventorySlot>();
+                }
+                inventorySlot.SetWeapon(item.weaponInfo);
+
+                // Xóa InventorySlot ở slot cũ (nếu có)
+                if (originalSlot != null)
+                {
+                    InventorySlot oldInventorySlot = originalSlot.GetComponent<InventorySlot>();
+                    if (oldInventorySlot != null)
+                    {
+                        oldInventorySlot.SetWeapon(null);
+                    }
+                }
+
+                // Refresh ActiveInventory để cập nhật vũ khí đang equip
+                if (ActiveInventory.Instance != null)
+                {
+                    ActiveInventory.Instance.RefreshActiveWeapon();
+                }
+            }
+        }
     }
 }
