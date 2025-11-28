@@ -47,6 +47,21 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         if (dropSlot != null)
         {
+            // Kiểm tra nếu slot thuộc về DungeonDoorDiamondPanel
+            DungeonDoorDiamondPanel diamondPanel = dropSlot.GetComponentInParent<DungeonDoorDiamondPanel>();
+            if (diamondPanel != null)
+            {
+                // Kiểm tra xem item có phải là kim cương không
+                Item item = GetComponent<Item>();
+                if (item == null || !diamondPanel.IsValidDiamond(gameObject))
+                {
+                    // Không phải kim cương, không cho phép kéo vào
+                    transform.SetParent(originalParent);
+                    GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                    return;
+                }
+            }
+
             //Is a slot under drop point
             if (dropSlot.currentItem != null)
             {
@@ -72,6 +87,16 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
 
         GetComponent<RectTransform>().anchoredPosition = Vector2.zero; //Center
+
+        // Thông báo cho diamond panel nếu item được kéo vào
+        if (itemMoved && dropSlot != null)
+        {
+            DungeonDoorDiamondPanel diamondPanel = dropSlot.GetComponentInParent<DungeonDoorDiamondPanel>();
+            if (diamondPanel != null)
+            {
+                diamondPanel.OnItemDroppedInSlot(dropSlot);
+            }
+        }
 
         // Nếu item là vũ khí và đã được di chuyển, cập nhật InventorySlot và refresh ActiveInventory
         if (itemMoved)

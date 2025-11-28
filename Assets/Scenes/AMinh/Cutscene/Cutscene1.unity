@@ -64433,8 +64433,20 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 940530435338492512, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 940530435338492512, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      propertyPath: attachPoint
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 961752485026775083, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1160578966367128840, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1657185993346674343, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
@@ -64673,6 +64685,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: -460413151, guid: 6eb16e372762d6b4cb708c44ebfab931, type: 3}
+    - target: {fileID: 4327848622963768100, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4577070439755485560, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -64754,12 +64770,28 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: ce81bca7c1e7bc14ba0973b4c5e39005, type: 2}
     - target: {fileID: 6849883186826812310, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6849883186826812310, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       propertyPath: moveSpeed
       value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 6849883186826812310, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      propertyPath: weaponCollider
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6849883186826812310, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      propertyPath: myTrailRenderer
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7261509280036693691, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       propertyPath: m_Enabled
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7314087951679906239, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7366575921512669825, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       propertyPath: m_AnchorMax.y
@@ -64857,6 +64889,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7581103295613373154, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7645679631216917877, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -64897,6 +64933,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7833032315690945713, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7959084570259467246, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -64911,6 +64951,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7959084570259467246, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8091361561617656832, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8184123668223203584, guid: fc9400523dc3f424da20fd4b23ecb489, type: 3}
@@ -65113,7 +65157,7 @@ CircleCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 827067480}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
@@ -73202,6 +73246,10 @@ MonoBehaviour:
   suckDuration: 0.4
   waitDuration: 1.5
   zoomOutDuration: 0.35
+  useFadeEffect: 1
+  fadeInDuration: 0.5
+  fadeOutDuration: 0.5
+  waitBetweenFades: 0.3
   confiner: {fileID: 0}
 --- !u!61 &1191218798
 BoxCollider2D:
@@ -85472,6 +85520,10 @@ MonoBehaviour:
   suckDuration: 0.4
   waitDuration: 1.5
   zoomOutDuration: 0.35
+  useFadeEffect: 1
+  fadeInDuration: 0.5
+  fadeOutDuration: 0.5
+  waitBetweenFades: 0.3
   confiner: {fileID: 0}
 --- !u!61 &1703870832
 BoxCollider2D:

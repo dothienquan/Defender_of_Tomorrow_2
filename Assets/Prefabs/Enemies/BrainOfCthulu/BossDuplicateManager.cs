@@ -27,6 +27,13 @@ public class BossDuplicateManager : MonoBehaviour
     [SerializeField] private float swapMoveDuration = 0.25f;   // thời gian 2 bản thể trượt qua nhau
     [SerializeField] private Ease swapEase = Ease.InOutQuad;   // easing cho cảm giác mượt
 
+    [Header("Fake Hit Effect (Phase 1)")]
+    [SerializeField] private float fakeHitBlinkDuration = 2f;  // Thời gian nhấp nháy khi fake bị đánh
+    [SerializeField] private float fakeHitBlinkInterval = 0.15f;  // Khoảng thời gian giữa mỗi lần nhấp nháy
+    [SerializeField] private float shrinkScale = 0.3f;  // Kích thước khi thu nhỏ
+    [SerializeField] private float shrinkDuration = 0.2f;  // Thời gian thu nhỏ
+    [SerializeField] private float expandDuration = 0.2f;  // Thời gian phục hồi kích thước
+
     private GameObject realVisual;
     private GameObject fakeVisual;
 
@@ -122,22 +129,44 @@ public class BossDuplicateManager : MonoBehaviour
     public void OnFakeHit()
     {
         if (!isPhaseTwo && swapOnHit)
-            StartCoroutine(HitEffectThenSwap());
+            StartCoroutine(FakeHitBlinkThenSwap());
     }
 
     public void HandleRealDirectHit(int damage)
     {
         realHealth.TakeDamage(damage);
 
-        // Trigger flash on REAL VISUAL
-        Flash flash = realVisual.GetComponent<Flash>();
-        if (flash != null)
-            StartCoroutine(flash.FlashRoutine());
+        // Kiểm tra phase switch nhưng KHÔNG dừng coroutine đang chạy
+        // Chỉ đánh dấu để phase 2 được kích hoạt sau khi swap xong
+        bool shouldEnterPhase2 = !isPhaseTwo && HPPercent() <= 0.5f;
 
-        CheckPhaseSwitch();
+        // Nếu đã ở phase 2, không cần swap nữa
+        if (isPhaseTwo)
+        {
+            // Trigger flash on REAL VISUAL (phase 2 không swap)
+            Flash flash = realVisual.GetComponent<Flash>();
+            if (flash != null)
+                StartCoroutine(flash.FlashRoutine());
+            return;
+        }
 
-        if (!isPhaseTwo && swapOnHit)
-            StartCoroutine(HitEffectThenSwap());
+        // Phase 1: nhấp nháy với Flash và đổi chỗ
+        if (swapOnHit)
+        {
+            StartCoroutine(RealHitBlinkThenSwap(shouldEnterPhase2));
+        }
+        else
+        {
+            // Nếu không swap, chỉ flash và kiểm tra phase switch
+            Flash flash = realVisual.GetComponent<Flash>();
+            if (flash != null)
+                StartCoroutine(flash.FlashRoutine());
+            
+            if (shouldEnterPhase2)
+            {
+                CheckPhaseSwitch();
+            }
+        }
     }
 
     public void HandleRealDotHit(int dmg, float interval, float duration, bool stack)
@@ -180,8 +209,18 @@ public class BossDuplicateManager : MonoBehaviour
     {
         if (isPhaseTwo) return;
 
+        // Ngay lập tức kích hoạt phase 2 khi HP <= 50%
         if (HPPercent() <= 0.5f)
+        {
+            // Dừng mọi tween đang chạy (nhưng không dừng coroutine để cho phép swap hoàn tất)
+            if (realVisual != null) realVisual.transform.DOKill();
+            if (fakeVisual != null) fakeVisual.transform.DOKill();
+            
+            // Reset hit animating flag để cho phép các coroutine khác chạy
+            isHitAnimating = false;
+            
             EnterPhaseTwo();
+        }
     }
 
     private void EnterPhaseTwo()
@@ -240,6 +279,201 @@ public class BossDuplicateManager : MonoBehaviour
         SwapPositions();
     }
 
+    /// <summary>
+    /// Khi fake body bị đánh ở phase 1: cả hai bản thể đứng yên và nhấp nháy trong 2 giây, sau đó đổi vị trí
+    /// </summary>
+    private IEnumerator FakeHitBlinkThenSwap()
+    {
+        if (isHitAnimating) yield break;
+        isHitAnimating = true;
+
+        // Dừng mọi movement nếu đang di chuyển
+        if (realVisual != null)
+        {
+            realVisual.transform.DOKill();
+            BossMover realMover = realVisual.GetComponent<BossMover>();
+            if (realMover != null) realMover.enabled = false;
+        }
+        if (fakeVisual != null)
+        {
+            fakeVisual.transform.DOKill();
+            BossMover fakeMover = fakeVisual.GetComponent<BossMover>();
+            if (fakeMover != null) fakeMover.enabled = false;
+        }
+
+        // Lấy SpriteRenderer components
+        SpriteRenderer realSR = realVisual != null ? realVisual.GetComponent<SpriteRenderer>() : null;
+        SpriteRenderer fakeSR = fakeVisual != null ? fakeVisual.GetComponent<SpriteRenderer>() : null;
+
+        if (realSR == null || fakeSR == null)
+        {
+            Debug.LogWarning("[BossDuplicateManager] SpriteRenderer not found on visuals!");
+            isHitAnimating = false;
+            yield break;
+        }
+
+        // Lưu màu gốc
+        Color realOriginalColor = realSR.color;
+        Color fakeOriginalColor = fakeSR.color;
+
+        // Nhấp nháy cả hai bản thể trong 2 giây bằng cách thay đổi alpha
+        float elapsed = 0f;
+        int blinkCount = 0;
+        int totalBlinks = Mathf.RoundToInt(fakeHitBlinkDuration / fakeHitBlinkInterval);
+
+        while (elapsed < fakeHitBlinkDuration)
+        {
+            elapsed += fakeHitBlinkInterval;
+            blinkCount++;
+            bool isVisible = (blinkCount % 2 == 1); // Nhấp nháy: visible -> invisible -> visible...
+
+            // Toggle alpha cho cả hai bản thể
+            Color realColor = realOriginalColor;
+            realColor.a = isVisible ? 1f : 0.3f;
+            realSR.color = realColor;
+
+            Color fakeColor = fakeOriginalColor;
+            fakeColor.a = isVisible ? 1f : 0.3f;
+            fakeSR.color = fakeColor;
+
+            yield return new WaitForSeconds(fakeHitBlinkInterval);
+        }
+
+        // Khôi phục màu về bình thường
+        realSR.color = realOriginalColor;
+        fakeSR.color = fakeOriginalColor;
+
+        // Thu nhỏ cả hai bản thể trước khi đổi chỗ
+        Vector3 originalRealScale = realVisual.transform.localScale;
+        Vector3 originalFakeScale = fakeVisual.transform.localScale;
+        Vector3 shrinkVector = Vector3.one * shrinkScale;
+
+        // Dừng mọi tween scale cũ
+        realVisual.transform.DOKill();
+        fakeVisual.transform.DOKill();
+
+        // Thu nhỏ
+        realVisual.transform.DOScale(shrinkVector, shrinkDuration).SetEase(Ease.InBack);
+        fakeVisual.transform.DOScale(shrinkVector, shrinkDuration).SetEase(Ease.InBack);
+
+        yield return new WaitForSeconds(shrinkDuration);
+
+        // Đổi vị trí (trong khi đang nhỏ)
+        SwapPositions();
+
+        // Đợi swap hoàn tất
+        yield return new WaitForSeconds(swapMoveDuration);
+
+        // Phục hồi kích thước bình thường
+        realVisual.transform.DOScale(originalRealScale, expandDuration).SetEase(Ease.OutBack);
+        fakeVisual.transform.DOScale(originalFakeScale, expandDuration).SetEase(Ease.OutBack);
+
+        yield return new WaitForSeconds(expandDuration);
+
+        isHitAnimating = false;
+    }
+
+    /// <summary>
+    /// Khi real body bị đánh ở phase 1: cả hai bản thể đứng yên, nhấp nháy với Flash component, sau đó đổi vị trí
+    /// </summary>
+    private IEnumerator RealHitBlinkThenSwap(bool shouldEnterPhase2AfterSwap = false)
+    {
+        if (isHitAnimating || isPhaseTwo) yield break;
+        isHitAnimating = true;
+
+        // Dừng mọi movement nếu đang di chuyển
+        if (realVisual != null)
+        {
+            realVisual.transform.DOKill();
+            BossMover realMover = realVisual.GetComponent<BossMover>();
+            if (realMover != null) realMover.enabled = false;
+        }
+        if (fakeVisual != null)
+        {
+            fakeVisual.transform.DOKill();
+            BossMover fakeMover = fakeVisual.GetComponent<BossMover>();
+            if (fakeMover != null) fakeMover.enabled = false;
+        }
+
+        // Lấy Flash components
+        Flash realFlash = realVisual != null ? realVisual.GetComponent<Flash>() : null;
+        Flash fakeFlash = fakeVisual != null ? fakeVisual.GetComponent<Flash>() : null;
+
+        if (realFlash == null)
+        {
+            Debug.LogWarning("[BossDuplicateManager] Flash component not found on real visual!");
+            isHitAnimating = false;
+            yield break;
+        }
+
+        // Nhấp nháy cả hai bản thể trong 2 giây bằng Flash component
+        float elapsed = 0f;
+        int blinkCount = 0;
+        int totalBlinks = Mathf.RoundToInt(fakeHitBlinkDuration / fakeHitBlinkInterval);
+
+        while (elapsed < fakeHitBlinkDuration && !isPhaseTwo)
+        {
+            elapsed += fakeHitBlinkInterval;
+            blinkCount++;
+            bool shouldFlash = (blinkCount % 2 == 1); // Flash mỗi lần blink
+
+            if (shouldFlash)
+            {
+                // Flash real visual với màu mặc định (trắng)
+                if (realFlash != null)
+                    StartCoroutine(realFlash.FlashRoutine());
+                
+                // Flash fake visual cũng với màu trắng (hoặc có thể dùng màu khác)
+                if (fakeFlash != null)
+                    StartCoroutine(fakeFlash.FlashRoutine());
+            }
+
+            yield return new WaitForSeconds(fakeHitBlinkInterval);
+        }
+
+        // Nếu đã chuyển phase 2, không swap nữa
+        if (isPhaseTwo)
+        {
+            isHitAnimating = false;
+            yield break;
+        }
+
+        // Lưu scale ban đầu
+        Vector3 originalRealScale = realVisual.transform.localScale;
+        Vector3 originalFakeScale = fakeVisual.transform.localScale;
+        Vector3 shrinkVector = Vector3.one * shrinkScale;
+
+        // Dừng mọi tween scale cũ
+        realVisual.transform.DOKill();
+        fakeVisual.transform.DOKill();
+
+        // Thu nhỏ cả hai bản thể trước khi đổi chỗ
+        realVisual.transform.DOScale(shrinkVector, shrinkDuration).SetEase(Ease.InBack);
+        fakeVisual.transform.DOScale(shrinkVector, shrinkDuration).SetEase(Ease.InBack);
+
+        yield return new WaitForSeconds(shrinkDuration);
+
+        // Đổi vị trí (trong khi đang nhỏ)
+        SwapPositions();
+
+        // Đợi swap hoàn tất
+        yield return new WaitForSeconds(swapMoveDuration);
+
+        // Phục hồi kích thước bình thường
+        realVisual.transform.DOScale(originalRealScale, expandDuration).SetEase(Ease.OutBack);
+        fakeVisual.transform.DOScale(originalFakeScale, expandDuration).SetEase(Ease.OutBack);
+
+        yield return new WaitForSeconds(expandDuration);
+
+        isHitAnimating = false;
+
+        // Sau khi swap xong, nếu cần chuyển phase 2 thì kích hoạt
+        if (shouldEnterPhase2AfterSwap && !isPhaseTwo)
+        {
+            CheckPhaseSwitch();
+        }
+    }
+
     // ======================
     //     SWAP POSITIONS
     // ======================
@@ -251,9 +485,17 @@ public class BossDuplicateManager : MonoBehaviour
         Vector3 p1 = realVisual.transform.position;
         Vector3 p2 = fakeVisual.transform.position;
 
-        // Dừng tween cũ nếu có
+        // Lưu scale hiện tại trước khi kill tween (để không ảnh hưởng đến scale tween đang chạy)
+        Vector3 realCurrentScale = realVisual.transform.localScale;
+        Vector3 fakeCurrentScale = fakeVisual.transform.localScale;
+        
+        // Kill tất cả tween (bao gồm move) nhưng restore scale ngay lập tức
         realVisual.transform.DOKill();
         fakeVisual.transform.DOKill();
+        
+        // Restore scale ngay lập tức để không ảnh hưởng đến scale tween
+        realVisual.transform.localScale = realCurrentScale;
+        fakeVisual.transform.localScale = fakeCurrentScale;
 
         // Tween 2 bản thể trượt qua vị trí của nhau
         realVisual.transform.DOMove(p2, swapMoveDuration).SetEase(swapEase);

@@ -28,33 +28,84 @@ public class ActiveInventory : Singleton<ActiveInventory>
 
     private void OnEnable() { playerControls.Enable(); }
 
-    public void EquipStartingWeapon() { ToggleActiveHighlight(0); }
+    public void EquipStartingWeapon() 
+    { 
+        // Kiểm tra xem có hotbar hoặc ActiveInventory slots không trước khi equip
+        bool hasSlots = false;
+        
+        if (hotbarController != null && hotbarController.hotbarPanel != null)
+        {
+            hasSlots = hotbarController.hotbarPanel.transform.childCount > 0;
+        }
+        
+        if (!hasSlots && transform.childCount > 0)
+        {
+            hasSlots = true;
+        }
+        
+        if (hasSlots)
+        {
+            ToggleActiveHighlight(0);
+        }
+        else
+        {
+            // Không có slot nào, chỉ set weapon null
+            if (ActiveWeapon.Instance != null)
+            {
+                ActiveWeapon.Instance.WeaponNull();
+            }
+        }
+    }
 
     private void ToggleActiveSlot(int numValue) { ToggleActiveHighlight(numValue - 1); }
 
     private void ToggleActiveHighlight(int indexNum)
     {
         // Nếu có hotbar, dùng số slot của hotbar, nếu không dùng transform.childCount
-        int maxSlots = hotbarController != null && hotbarController.hotbarPanel != null 
-            ? hotbarController.hotbarPanel.transform.childCount 
-            : transform.childCount;
-        
-        activeSlotIndexNum = Mathf.Clamp(indexNum, 0, maxSlots - 1);
-
-        // Highlight trong ActiveInventory (nếu có)
-        if (transform.childCount > 0)
+        int maxSlots = 0;
+        if (hotbarController != null && hotbarController.hotbarPanel != null)
         {
+            maxSlots = hotbarController.hotbarPanel.transform.childCount;
+        }
+        else if (transform.childCount > 0)
+        {
+            maxSlots = transform.childCount;
+        }
+        else
+        {
+            // Không có slot nào, chỉ cần change weapon (có thể không có weapon)
+            ChangeActiveWeapon();
+            return;
+        }
+        
+        // Clamp index để đảm bảo trong phạm vi hợp lệ
+        activeSlotIndexNum = Mathf.Clamp(indexNum, 0, Mathf.Max(0, maxSlots - 1));
+
+        // Highlight trong ActiveInventory (nếu có và có child)
+        if (transform.childCount > 0 && activeSlotIndexNum < transform.childCount)
+        {
+            // Tắt tất cả highlight
             foreach (Transform inventorySlot in this.transform)
             {
-                if (inventorySlot.childCount > 0)
+                if (inventorySlot != null && inventorySlot.childCount > 0)
                 {
-                    inventorySlot.GetChild(0).gameObject.SetActive(false);
+                    Transform highlight = inventorySlot.GetChild(0);
+                    if (highlight != null)
+                    {
+                        highlight.gameObject.SetActive(false);
+                    }
                 }
             }
 
-            if (activeSlotIndexNum < transform.childCount && transform.GetChild(activeSlotIndexNum).childCount > 0)
+            // Bật highlight cho slot active
+            Transform activeSlot = transform.GetChild(activeSlotIndexNum);
+            if (activeSlot != null && activeSlot.childCount > 0)
             {
-                transform.GetChild(activeSlotIndexNum).GetChild(0).gameObject.SetActive(true);
+                Transform highlight = activeSlot.GetChild(0);
+                if (highlight != null)
+                {
+                    highlight.gameObject.SetActive(true);
+                }
             }
         }
 
@@ -151,44 +202,51 @@ public class ActiveInventory : Singleton<ActiveInventory>
         // Ưu tiên lấy từ hotbar
         if (hotbarController != null && hotbarController.hotbarPanel != null)
         {
-            if (activeSlotIndexNum < hotbarController.hotbarPanel.transform.childCount)
+            int hotbarChildCount = hotbarController.hotbarPanel.transform.childCount;
+            if (hotbarChildCount > 0 && activeSlotIndexNum >= 0 && activeSlotIndexNum < hotbarChildCount)
             {
                 Transform hotbarSlot = hotbarController.hotbarPanel.transform.GetChild(activeSlotIndexNum);
-                Slot slot = hotbarSlot.GetComponent<Slot>();
-                
-                if (slot != null && slot.currentItem != null)
+                if (hotbarSlot != null)
                 {
-                    // Kiểm tra xem item có phải là vũ khí không
-                    Item item = slot.currentItem.GetComponent<Item>();
-                    if (item != null && item.IsWeapon)
+                    Slot slot = hotbarSlot.GetComponent<Slot>();
+                    
+                    if (slot != null && slot.currentItem != null)
                     {
-                        // Đảm bảo InventorySlot có WeaponInfo
-                        InventorySlot inventorySlot = hotbarSlot.GetComponent<InventorySlot>();
-                        if (inventorySlot == null)
+                        // Kiểm tra xem item có phải là vũ khí không
+                        Item item = slot.currentItem.GetComponent<Item>();
+                        if (item != null && item.IsWeapon)
                         {
-                            inventorySlot = hotbarSlot.gameObject.AddComponent<InventorySlot>();
+                            // Đảm bảo InventorySlot có WeaponInfo
+                            InventorySlot inventorySlot = hotbarSlot.GetComponent<InventorySlot>();
+                            if (inventorySlot == null)
+                            {
+                                inventorySlot = hotbarSlot.gameObject.AddComponent<InventorySlot>();
+                            }
+                            
+                            // Set weapon info nếu chưa có
+                            if (inventorySlot.GetWeaponInfo() == null && item.weaponInfo != null)
+                            {
+                                inventorySlot.SetWeapon(item.weaponInfo);
+                            }
+                            
+                            return inventorySlot.GetWeaponInfo();
                         }
-                        
-                        // Set weapon info nếu chưa có
-                        if (inventorySlot.GetWeaponInfo() == null && item.weaponInfo != null)
-                        {
-                            inventorySlot.SetWeapon(item.weaponInfo);
-                        }
-                        
-                        return inventorySlot.GetWeaponInfo();
                     }
                 }
             }
         }
 
         // Fallback: lấy từ ActiveInventory (cách cũ)
-        if (activeSlotIndexNum < transform.childCount)
+        if (transform.childCount > 0 && activeSlotIndexNum >= 0 && activeSlotIndexNum < transform.childCount)
         {
             Transform childTransform = transform.GetChild(activeSlotIndexNum);
-            InventorySlot inventorySlot = childTransform.GetComponentInChildren<InventorySlot>();
-            if (inventorySlot != null)
+            if (childTransform != null)
             {
-                return inventorySlot.GetWeaponInfo();
+                InventorySlot inventorySlot = childTransform.GetComponentInChildren<InventorySlot>();
+                if (inventorySlot != null)
+                {
+                    return inventorySlot.GetWeaponInfo();
+                }
             }
         }
 
