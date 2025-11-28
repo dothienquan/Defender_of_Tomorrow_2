@@ -5,6 +5,7 @@ public class InteractionUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI label; // nếu dùng TMP: TextMeshProUGUI
     [SerializeField] private string hintKey = "F";
+    [SerializeField] private bool useGameObjectActive = false; // Nếu true, dùng gameObject.SetActive thay vì label.enabled
 
     private void Awake()
     {
@@ -14,14 +15,35 @@ public class InteractionUI : MonoBehaviour
 
     public void Show(string displayName)
     {
-        if (label == null) return;
+        if (label == null)
+        {
+            Debug.LogWarning("[InteractionUI] Label is null! Vui lòng gán TextMeshProUGUI component.");
+            return;
+        }
+        
         label.text = $"[{hintKey}] {displayName}";
-        label.enabled = true;
+        
+        if (useGameObjectActive)
+        {
+            gameObject.SetActive(true);
+        }
+        else
+        {
+            label.enabled = true;
+        }
     }
 
     public void Hide()
     {
         if (label == null) return;
-        label.enabled = false;
+        
+        if (useGameObjectActive)
+        {
+            gameObject.SetActive(false);
+        }
+        else
+        {
+            label.enabled = false;
+        }
     }
 }

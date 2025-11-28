@@ -6,6 +6,7 @@ public class DungeonDoorInteractor : MonoBehaviour
     [Header("References")]
     public GameObject uiPanel;       // Normal UI panel
     public DoorClockController door;      // Optional
+    public DungeonDoorDiamondPanel diamondPanel; // Panel quản lý kim cương (optional)
 
     [Header("Settings")]
     public string playerTag = "Player";
@@ -76,6 +77,12 @@ public class DungeonDoorInteractor : MonoBehaviour
         panelOpen = true;
 
         if (hint != null) hint.SetActive(false);
+
+        // Cập nhật trạng thái diamond panel nếu có
+        if (diamondPanel != null)
+        {
+            diamondPanel.UpdateStatus();
+        }
     }
 
     public void ClosePanel()
@@ -95,5 +102,11 @@ public class DungeonDoorInteractor : MonoBehaviour
         ClosePanel();
         if (door != null)
             door.OpenDoor();
+    }
+
+    // Được gọi từ DungeonDoorDiamondPanel khi cổng được mở
+    public void OnDoorOpened()
+    {
+        ClosePanel();
     }
 }

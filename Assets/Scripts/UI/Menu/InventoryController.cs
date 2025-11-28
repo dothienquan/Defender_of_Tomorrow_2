@@ -59,6 +59,47 @@ public class InventoryController : MonoBehaviour
         return invData;
     }
 
+    /// <summary>
+    /// Kiểm tra xem player có item với ID cụ thể trong inventory không
+    /// </summary>
+    public bool HasItem(int itemID)
+    {
+        foreach (Transform slotTransform in inventoryPanel.transform)
+        {
+            Slot slot = slotTransform.GetComponent<Slot>();
+            if (slot != null && slot.currentItem != null)
+            {
+                Item item = slot.currentItem.GetComponent<Item>();
+                if (item != null && item.ID == itemID)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Lấy số lượng item với ID cụ thể trong inventory
+    /// </summary>
+    public int GetItemCount(int itemID)
+    {
+        int count = 0;
+        foreach (Transform slotTransform in inventoryPanel.transform)
+        {
+            Slot slot = slotTransform.GetComponent<Slot>();
+            if (slot != null && slot.currentItem != null)
+            {
+                Item item = slot.currentItem.GetComponent<Item>();
+                if (item != null && item.ID == itemID)
+                {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
     public void SetInventoryItems(List<InventorySaveData> inventorySaveData)
     {
         foreach (Transform child in inventoryPanel.transform)
