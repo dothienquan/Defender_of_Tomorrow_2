@@ -19,7 +19,28 @@ public class ActiveWeapon : Singleton<ActiveWeapon>
 
     private void OnEnable()
     {
-        playerControls.Enable();
+        if (playerControls != null)
+        {
+            playerControls.Enable();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (playerControls != null)
+        {
+            playerControls.Disable();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Đảm bảo PlayerControls được disable trước khi destroy
+        if (playerControls != null)
+        {
+            playerControls.Disable();
+            playerControls.Dispose();
+        }
     }
 
     private void Start()

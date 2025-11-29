@@ -35,7 +35,21 @@ public class PassiveQuest : MonoBehaviour
         Completed
     }
 
+    [Header("Quest Persistence")]
+    [SerializeField] private string questID = "MainQuest"; // ID để lưu quest state (nếu có nhiều quest)
+    [SerializeField] private bool persistQuestState = true; // Lưu quest state qua scene load
+
     private QuestState state = QuestState.Start;
+    private string QuestStateKey => $"QuestState_{questID}";
+
+    private void Awake()
+    {
+        // Load quest state nếu có
+        if (persistQuestState)
+        {
+            LoadQuestState();
+        }
+    }
 
     private void Start()
     {
@@ -91,6 +105,7 @@ public class PassiveQuest : MonoBehaviour
     {
         if (state != QuestState.Start) return;
         state = QuestState.DidAction1;
+        SaveQuestState();
         UpdateText();
     }
 
@@ -98,6 +113,7 @@ public class PassiveQuest : MonoBehaviour
     {
         if (state != QuestState.DidAction1) return;
         state = QuestState.DidAction2;
+        SaveQuestState();
         UpdateText();
     }
 
@@ -105,6 +121,7 @@ public class PassiveQuest : MonoBehaviour
     {
         if (state != QuestState.DidAction2) return;
         state = QuestState.DidAction3;
+        SaveQuestState();
         UpdateText();
     }
 
@@ -112,6 +129,7 @@ public class PassiveQuest : MonoBehaviour
     {
         if (state != QuestState.DidAction3) return;
         state = QuestState.DidAction4;
+        SaveQuestState();
         UpdateText();
     }
 
@@ -119,6 +137,7 @@ public class PassiveQuest : MonoBehaviour
     {
         if (state != QuestState.DidAction4) return;
         state = QuestState.DidAction5;
+        SaveQuestState();
         UpdateText();
     }
 
@@ -126,6 +145,7 @@ public class PassiveQuest : MonoBehaviour
     {
         if (state != QuestState.DidAction5) return;
         state = QuestState.DidAction6;
+        SaveQuestState();
         UpdateText();
     }
 
@@ -133,6 +153,7 @@ public class PassiveQuest : MonoBehaviour
     {
         if (state != QuestState.DidAction6) return;
         state = QuestState.DidAction7;
+        SaveQuestState();
         UpdateText();
     }
 
@@ -140,6 +161,7 @@ public class PassiveQuest : MonoBehaviour
     {
         if (state != QuestState.DidAction7) return;
         state = QuestState.DidAction8;
+        SaveQuestState();
         UpdateText();
     }
 
@@ -147,6 +169,7 @@ public class PassiveQuest : MonoBehaviour
     {
         if (state != QuestState.DidAction8) return;
         state = QuestState.DidAction9;
+        SaveQuestState();
         UpdateText();
     }
 
@@ -154,6 +177,7 @@ public class PassiveQuest : MonoBehaviour
     {
         if (state != QuestState.DidAction9) return;
         state = QuestState.DidAction10;
+        SaveQuestState();
         UpdateText();
     }
 
@@ -161,6 +185,56 @@ public class PassiveQuest : MonoBehaviour
     {
         if (state != QuestState.DidAction10) return;
         state = QuestState.Completed;
+        SaveQuestState();
         UpdateText();
+    }
+
+    /// <summary>
+    /// Lưu quest state vào PlayerPrefs
+    /// </summary>
+    private void SaveQuestState()
+    {
+        if (!persistQuestState) return;
+        
+        PlayerPrefs.SetString(QuestStateKey, state.ToString());
+        PlayerPrefs.Save();
+        Debug.Log($"[PassiveQuest] Đã lưu quest state: {state}");
+    }
+
+    /// <summary>
+    /// Load quest state từ PlayerPrefs
+    /// </summary>
+    private void LoadQuestState()
+    {
+        if (!persistQuestState) return;
+
+        string savedState = PlayerPrefs.GetString(QuestStateKey, "");
+        if (!string.IsNullOrEmpty(savedState))
+        {
+            if (System.Enum.TryParse<QuestState>(savedState, out QuestState loadedState))
+            {
+                state = loadedState;
+                Debug.Log($"[PassiveQuest] Đã load quest state: {state}");
+            }
+            else
+            {
+                Debug.LogWarning($"[PassiveQuest] Không thể parse quest state: {savedState}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reset quest state (xóa save)
+    /// </summary>
+    public void ResetQuest()
+    {
+        state = QuestState.Start;
+        if (persistQuestState)
+        {
+            PlayerPrefs.DeleteKey(QuestStateKey);
+            PlayerPrefs.Save();
+        }
+        UpdateText();
+        Debug.Log("[PassiveQuest] Quest đã được reset.");
     }
 }

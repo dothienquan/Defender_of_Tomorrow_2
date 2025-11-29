@@ -53,7 +53,20 @@ public class PlayerController : Singleton<PlayerController>
 
     private void OnDisable()
     {
-        playerControls.Disable();
+        if (playerControls != null)
+        {
+            playerControls.Disable();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Đảm bảo PlayerControls được disable trước khi destroy
+        if (playerControls != null)
+        {
+            playerControls.Disable();
+            playerControls.Dispose();
+        }
     }
 
     private void Update()
