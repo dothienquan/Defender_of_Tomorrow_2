@@ -33,13 +33,27 @@ public class CutsceneManager : Singleton<CutsceneManager>
         base.Awake();
         // Singleton base class đã xử lý DontDestroyOnLoad
         
-        // Khôi phục previousSceneName từ PlayerPrefs nếu có
-        if (string.IsNullOrEmpty(previousSceneName))
+        // Kiểm tra xem có phải New Game không (flag được set bởi MainMenuController)
+        bool isNewGame = PlayerPrefs.GetInt("MainMenuController_NewGame", 0) == 1;
+        if (isNewGame)
         {
-            previousSceneName = PlayerPrefs.GetString(PREVIOUS_SCENE_KEY, "");
-            if (!string.IsNullOrEmpty(previousSceneName))
+            // Nếu là New Game, clear tất cả dữ liệu liên quan đến cutscene
+            previousSceneName = null;
+            PlayerPrefs.DeleteKey(PREVIOUS_SCENE_KEY);
+            PlayerPrefs.DeleteKey(RETURN_POINT_ID_KEY);
+            PlayerPrefs.DeleteKey(USE_RETURN_POINT_KEY);
+            Debug.Log("[CutsceneManager] New Game detected - cleared all cutscene data.");
+        }
+        else
+        {
+            // Khôi phục previousSceneName từ PlayerPrefs nếu có
+            if (string.IsNullOrEmpty(previousSceneName))
             {
-                Debug.Log($"[CutsceneManager] Khôi phục scene trước đó từ PlayerPrefs: {previousSceneName}");
+                previousSceneName = PlayerPrefs.GetString(PREVIOUS_SCENE_KEY, "");
+                if (!string.IsNullOrEmpty(previousSceneName))
+                {
+                    Debug.Log($"[CutsceneManager] Khôi phục scene trước đó từ PlayerPrefs: {previousSceneName}");
+                }
             }
         }
     }

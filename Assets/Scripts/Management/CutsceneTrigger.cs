@@ -136,5 +136,41 @@ public class CutsceneTrigger : MonoBehaviour
             CutsceneManager.Instance.LoadCutscene(cutsceneSceneName, returnToPreviousScene, useReturnPoint);
         }
     }
+
+    /// <summary>
+    /// Reset tất cả CutsceneTrigger states trong PlayerPrefs
+    /// Static method để có thể gọi từ bất kỳ đâu
+    /// </summary>
+    public static void ResetAllCutsceneTriggerStates()
+    {
+        // Xóa tất cả keys có prefix "CutsceneTrigger_Inactive_"
+        // Vì Unity không hỗ trợ list keys, ta sẽ xóa các keys phổ biến
+        // và reset tất cả CutsceneTrigger trong scene hiện tại
+        
+        // Reset tất cả CutsceneTrigger trong scene hiện tại
+        CutsceneTrigger[] triggers = FindObjectsByType<CutsceneTrigger>(FindObjectsSortMode.None);
+        int resetCount = 0;
+        
+        foreach (var trigger in triggers)
+        {
+            if (trigger.persistInactiveState)
+            {
+                string key = trigger.TriggerStateKey;
+                if (PlayerPrefs.HasKey(key))
+                {
+                    PlayerPrefs.DeleteKey(key);
+                    resetCount++;
+                }
+            }
+        }
+
+        // Xóa các keys liên quan đến CutsceneManager
+        PlayerPrefs.DeleteKey("CutsceneManager_PreviousScene");
+        PlayerPrefs.DeleteKey("CutsceneManager_ReturnPointID");
+        PlayerPrefs.DeleteKey("CutsceneManager_UseReturnPoint");
+        
+        PlayerPrefs.Save();
+        Debug.Log($"[CutsceneTrigger] Đã reset {resetCount} CutsceneTrigger state(s) và các keys liên quan.");
+    }
 }
 
