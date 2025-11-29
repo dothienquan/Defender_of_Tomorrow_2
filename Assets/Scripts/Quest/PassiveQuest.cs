@@ -6,7 +6,7 @@ public class PassiveQuest : MonoBehaviour
     [SerializeField] private TextMeshProUGUI questLabel;
 
     [Header("Quest Text (Action Text)")]
-    [SerializeField] [TextArea(2, 4)] private string startText = "Den nha cua truong lang";
+    [SerializeField] [TextArea(2, 4)] private string startText = "Đến nhà của trưởng làng";
     [SerializeField] [TextArea(2, 4)] private string action1Text = "Quan sat xung quanh va tim loi thoat";
     [SerializeField] [TextArea(2, 4)] private string action2Text = "";
     [SerializeField] [TextArea(2, 4)] private string action3Text = "";
