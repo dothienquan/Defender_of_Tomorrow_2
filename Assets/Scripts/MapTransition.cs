@@ -48,14 +48,15 @@ public class MapTransition : MonoBehaviour
     {
         if (!collision.CompareTag("Player")) return;
 
-        if (confiner != null && mapBoundry != null)
-            SetupConfiner();
-
         if (transitionType == TransitionType.Portal)
         {
             StartCoroutine(PortalTransition(collision.gameObject));
             return;
         }
+
+        // Chỉ setup confiner cho NormalMove transition (không phải Portal)
+        if (confiner != null && mapBoundry != null)
+            SetupConfiner();
 
         // Sử dụng fade effect cho NormalMove transition
         if (useFadeEffect)
@@ -91,56 +92,52 @@ public class MapTransition : MonoBehaviour
             playerController.enabled = false;
         }
 
-        // Fade to black nếu bật fade effect
+        // BƯỚC 1: Delay 1 giây sau khi chạm trigger
+        yield return new WaitForSeconds(1f);
+
+        // Tạm thời disable camera follow và confiner để camera không di chuyển khi teleport
+        CinemachineVirtualCamera virtualCamera = FindFirstObjectByType<CinemachineVirtualCamera>();
+        Transform originalFollow = null;
+        if (virtualCamera != null)
+        {
+            originalFollow = virtualCamera.Follow;
+            virtualCamera.Follow = null; // Disable camera follow
+        }
+
+        // Disable confiner để camera không snap vào boundary mới
+        if (confiner != null)
+        {
+            confiner.enabled = false;
+        }
+
+        // BƯỚC 2: Fade in (fade to black)
         if (useFadeEffect && UIFade.Instance != null)
         {
             UIFade.Instance.FadeToBlack(fadeInDuration);
             yield return new WaitForSeconds(fadeInDuration);
         }
 
-        // Keep the exact original scale
-        Vector3 originalScale = player.transform.localScale;
-        // How small it gets when being sucked in (10% of original)
-        Vector3 miniScale = originalScale * 0.1f;
+        // BƯỚC 3: Fade out (fade to clear) - ngay sau fade in
+        if (useFadeEffect && UIFade.Instance != null)
+        {
+            UIFade.Instance.FadeToClear(fadeOutDuration);
+            yield return new WaitForSeconds(fadeOutDuration);
+        }
 
-        // Suck in: move to portal center + shrink
-        player.transform.DOMove(transform.position, suckDuration)
-            .SetEase(Ease.InQuad);
-        player.transform.DOScale(miniScale, suckDuration)
-            .SetEase(Ease.InBack);
-
-        // Wait: suck animation + extra wait time
-        yield return new WaitForSeconds(suckDuration + waitDuration);
-
-        // Teleport to target
+        // BƯỚC 4: Teleport player SAU KHI fade in và fade out xong
         player.transform.position = teleportTargetPosition.position;
 
         // Setup confiner sau khi teleport
         if (confiner != null && mapBoundry != null)
         {
+            confiner.enabled = true;
             SetupConfiner();
         }
 
-        // Start from mini size at destination
-        player.transform.localScale = miniScale;
-
-        // Zoom back to EXACT original scale
-        player.transform.DOScale(originalScale, zoomOutDuration)
-            .SetEase(Ease.OutBack)
-            .OnComplete(() =>
-            {
-                // Force final scale to be exactly original
-                player.transform.localScale = originalScale;
-            });
-
-        // Wait until zoom-out done
-        yield return new WaitForSeconds(zoomOutDuration);
-
-        // Fade to clear nếu bật fade effect
-        if (useFadeEffect && UIFade.Instance != null)
+        // Re-enable camera follow sau khi teleport và setup confiner
+        if (virtualCamera != null && originalFollow != null)
         {
-            UIFade.Instance.FadeToClear(fadeOutDuration);
-            yield return new WaitForSeconds(fadeOutDuration);
+            virtualCamera.Follow = originalFollow;
         }
 
         // Re-enable player movement
