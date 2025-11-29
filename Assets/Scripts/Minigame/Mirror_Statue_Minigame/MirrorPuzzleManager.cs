@@ -135,7 +135,8 @@ public class MirrorPuzzleManager : MonoBehaviour
 
         if (CutsceneManager.Instance != null)
         {
-            CutsceneManager.Instance.LoadCutscene(cutsceneSceneName, true);
+            // Load cutscene với return point (vì đây là từ laser minigame)
+            CutsceneManager.Instance.LoadCutscene(cutsceneSceneName, true, true);
         }
         else
         {

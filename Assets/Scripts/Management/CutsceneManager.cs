@@ -26,6 +26,7 @@ public class CutsceneManager : Singleton<CutsceneManager>
     
     private const string PREVIOUS_SCENE_KEY = "CutsceneManager_PreviousScene";
     private const string RETURN_POINT_ID_KEY = "CutsceneManager_ReturnPointID";
+    private const string USE_RETURN_POINT_KEY = "CutsceneManager_UseReturnPoint";
 
     protected override void Awake()
     {
@@ -57,7 +58,8 @@ public class CutsceneManager : Singleton<CutsceneManager>
     /// </summary>
     /// <param name="cutsceneSceneName">Tên scene cutscene cần load</param>
     /// <param name="returnToPreviousScene">Có quay lại scene trước đó sau khi cutscene kết thúc không</param>
-    public void LoadCutscene(string cutsceneSceneName, bool returnToPreviousScene = true)
+    /// <param name="useReturnPoint">Có sử dụng CutsceneReturnPoint khi quay lại không (mặc định: false)</param>
+    public void LoadCutscene(string cutsceneSceneName, bool returnToPreviousScene = true, bool useReturnPoint = false)
     {
         if (isCutsceneActive)
         {
@@ -70,13 +72,19 @@ public class CutsceneManager : Singleton<CutsceneManager>
             previousSceneName = SceneManager.GetActiveScene().name;
             // Lưu vào PlayerPrefs để persist qua scene load
             PlayerPrefs.SetString(PREVIOUS_SCENE_KEY, previousSceneName);
-            // Lưu return point ID nếu có
-            if (!string.IsNullOrEmpty(returnPointID))
+            // Lưu flag có dùng return point hay không
+            PlayerPrefs.SetInt(USE_RETURN_POINT_KEY, useReturnPoint ? 1 : 0);
+            // Lưu return point ID nếu có và được bật
+            if (useReturnPoint && !string.IsNullOrEmpty(returnPointID))
             {
                 PlayerPrefs.SetString(RETURN_POINT_ID_KEY, returnPointID);
             }
+            else
+            {
+                PlayerPrefs.DeleteKey(RETURN_POINT_ID_KEY);
+            }
             PlayerPrefs.Save();
-            Debug.Log($"[CutsceneManager] Lưu scene hiện tại để quay lại: {previousSceneName}, ReturnPointID: {returnPointID}");
+            Debug.Log($"[CutsceneManager] Lưu scene hiện tại để quay lại: {previousSceneName}, UseReturnPoint: {useReturnPoint}, ReturnPointID: {returnPointID}");
         }
         else
         {
@@ -198,10 +206,17 @@ public class CutsceneManager : Singleton<CutsceneManager>
         yield return null;
         yield return null;
 
-        // Set player position từ CutsceneReturnPoint nếu có
-        if (useCustomReturnPosition)
+        // Kiểm tra xem có nên dùng return point không (từ PlayerPrefs)
+        bool shouldUseReturnPoint = PlayerPrefs.GetInt(USE_RETURN_POINT_KEY, 0) == 1;
+        
+        // Set player position từ CutsceneReturnPoint nếu được bật
+        if (useCustomReturnPosition && shouldUseReturnPoint)
         {
             SetPlayerReturnPosition();
+        }
+        else
+        {
+            Debug.Log("[CutsceneManager] Không sử dụng return point. Player sẽ ở vị trí mặc định.");
         }
 
         // Re-enable player
@@ -221,6 +236,7 @@ public class CutsceneManager : Singleton<CutsceneManager>
         // Xóa PlayerPrefs sau khi hoàn thành
         PlayerPrefs.DeleteKey(PREVIOUS_SCENE_KEY);
         PlayerPrefs.DeleteKey(RETURN_POINT_ID_KEY);
+        PlayerPrefs.DeleteKey(USE_RETURN_POINT_KEY);
         PlayerPrefs.Save();
     }
 
