@@ -26,7 +26,31 @@ public class ActiveInventory : Singleton<ActiveInventory>
         playerControls.Inventory.Keyboard.performed += ctx => ToggleActiveSlot((int)ctx.ReadValue<float>());
     }
 
-    private void OnEnable() { playerControls.Enable(); }
+    private void OnEnable() 
+    { 
+        if (playerControls != null)
+        {
+            playerControls.Enable();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (playerControls != null)
+        {
+            playerControls.Disable();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Đảm bảo PlayerControls được disable trước khi destroy
+        if (playerControls != null)
+        {
+            playerControls.Disable();
+            playerControls.Dispose();
+        }
+    }
 
     public void EquipStartingWeapon() 
     { 

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -14,6 +15,11 @@ public class MirrorPuzzleManager : MonoBehaviour
     public UnityEvent onPuzzleStarted;
     public UnityEvent onPuzzleSuccess;
     public UnityEvent onPuzzleReset;
+
+    [Header("Cutscene Settings")]
+    [SerializeField] private bool loadCutsceneOnComplete = false;
+    [SerializeField] private string cutsceneSceneName = "";
+    [SerializeField] private float delayBeforeCutscene = 1f; // Delay trước khi load cutscene
 
     public int CurrentIndex { get; private set; } = -1;
     public bool IsRunning { get; private set; } = false;
@@ -61,6 +67,13 @@ public class MirrorPuzzleManager : MonoBehaviour
         {
             IsRunning = false;
             onPuzzleSuccess?.Invoke();
+            
+            // Load cutscene nếu được bật
+            if (loadCutsceneOnComplete && !string.IsNullOrEmpty(cutsceneSceneName))
+            {
+                StartCoroutine(LoadCutsceneAfterDelay());
+            }
+            
             return;
         }
 
@@ -111,5 +124,23 @@ public class MirrorPuzzleManager : MonoBehaviour
     public bool IsCurrentStatue(Statue s)
     {
         return IsRunning && s != null && s.Index == CurrentIndex;
+    }
+
+    /// <summary>
+    /// Load cutscene sau một khoảng delay
+    /// </summary>
+    private IEnumerator LoadCutsceneAfterDelay()
+    {
+        yield return new WaitForSeconds(delayBeforeCutscene);
+
+        if (CutsceneManager.Instance != null)
+        {
+            CutsceneManager.Instance.LoadCutscene(cutsceneSceneName, true);
+        }
+        else
+        {
+            Debug.LogWarning("[MirrorPuzzleManager] Không tìm thấy CutsceneManager. Load scene trực tiếp.");
+            UnityEngine.SceneManagement.SceneManager.LoadScene(cutsceneSceneName);
+        }
     }
 }
