@@ -99,6 +99,9 @@ public class PassiveQuest : MonoBehaviour
                 questLabel.text = completedText;
                 break;
         }
+
+        // Force update text layout để đảm bảo text tự động xuống dòng
+        questLabel.ForceMeshUpdate();
     }
 
     public void OnAction1Done()

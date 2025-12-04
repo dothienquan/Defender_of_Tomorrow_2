@@ -110,40 +110,44 @@ public class MapTransition : MonoBehaviour
             confiner.enabled = false;
         }
 
-        // BƯỚC 2: Fade in (fade to black)
+        // BƯỚC 2: Fade in (fade to black) - che màn hình trước khi teleport
         if (useFadeEffect && UIFade.Instance != null)
         {
             UIFade.Instance.FadeToBlack(fadeInDuration);
             yield return new WaitForSeconds(fadeInDuration);
         }
 
-        // BƯỚC 3: Fade out (fade to clear) - ngay sau fade in
+        // BƯỚC 3: Teleport player KHI MÀN HÌNH ĐÃ ĐEN (sau fade in)
+        player.transform.position = teleportTargetPosition.position;
+        Debug.Log($"[MapTransition] Đã teleport player đến: {teleportTargetPosition.position} (khi màn hình đã đen)");
+
+        // Setup confiner sau khi teleport (vẫn khi màn hình đen)
+        if (confiner != null && mapBoundry != null)
+        {
+            confiner.enabled = true;
+            SetupConfiner();
+            Debug.Log("[MapTransition] Đã setup confiner (khi màn hình đã đen)");
+        }
+
+        // Re-enable camera follow sau khi teleport và setup confiner (vẫn khi màn hình đen)
+        if (virtualCamera != null && originalFollow != null)
+        {
+            virtualCamera.Follow = originalFollow;
+            Debug.Log("[MapTransition] Đã re-enable camera follow (khi màn hình đã đen)");
+        }
+
+        // BƯỚC 4: Fade out (fade to clear) - hiện cảnh mới SAU KHI đã teleport
         if (useFadeEffect && UIFade.Instance != null)
         {
             UIFade.Instance.FadeToClear(fadeOutDuration);
             yield return new WaitForSeconds(fadeOutDuration);
         }
 
-        // BƯỚC 4: Teleport player SAU KHI fade in và fade out xong
-        player.transform.position = teleportTargetPosition.position;
-
-        // Setup confiner sau khi teleport
-        if (confiner != null && mapBoundry != null)
-        {
-            confiner.enabled = true;
-            SetupConfiner();
-        }
-
-        // Re-enable camera follow sau khi teleport và setup confiner
-        if (virtualCamera != null && originalFollow != null)
-        {
-            virtualCamera.Follow = originalFollow;
-        }
-
-        // Re-enable player movement
+        // Re-enable player movement sau khi fade out xong
         if (playerController != null && wasEnabled)
         {
             playerController.enabled = true;
+            Debug.Log("[MapTransition] Đã re-enable player movement");
         }
     }
 

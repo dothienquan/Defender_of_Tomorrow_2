@@ -10,6 +10,58 @@ public class ActiveWeapon : Singleton<ActiveWeapon>
     private float timeBetweenAttacks;
 
     private bool attackButtonDown, isAttacking = false;
+    
+    // Cooldown tracking for UI
+    private float cooldownStartTime = 0f;
+    private float currentCooldownDuration = 0f;
+    
+    /// <summary>
+    /// Lấy thời gian cooldown còn lại (0 = hết cooldown)
+    /// </summary>
+    public float GetRemainingCooldown()
+    {
+        if (!isAttacking || currentCooldownDuration <= 0f)
+        {
+            return 0f;
+        }
+        
+        float elapsed = Time.time - cooldownStartTime;
+        float remaining = currentCooldownDuration - elapsed;
+        return Mathf.Max(0f, remaining);
+    }
+    
+    /// <summary>
+    /// Lấy thời gian cooldown tối đa của weapon hiện tại
+    /// </summary>
+    public float GetMaxCooldown()
+    {
+        if (CurrentActiveWeapon == null)
+        {
+            return 0f;
+        }
+        
+        IWeapon weapon = CurrentActiveWeapon as IWeapon;
+        if (weapon == null)
+        {
+            return 0f;
+        }
+        
+        WeaponInfo weaponInfo = weapon.GetWeaponInfo();
+        if (weaponInfo == null)
+        {
+            return 0f;
+        }
+        
+        return weaponInfo.weaponCooldown;
+    }
+    
+    /// <summary>
+    /// Kiểm tra xem weapon có đang trong cooldown không
+    /// </summary>
+    public bool IsOnCooldown()
+    {
+        return isAttacking && GetRemainingCooldown() > 0f;
+    }
 
     protected override void Awake() {
         base.Awake();
@@ -68,6 +120,8 @@ public class ActiveWeapon : Singleton<ActiveWeapon>
 
     private void AttackCooldown() {
         isAttacking = true;
+        cooldownStartTime = Time.time;
+        currentCooldownDuration = timeBetweenAttacks;
         StopAllCoroutines();
         StartCoroutine(TimeBetweenAttacksRoutine());
     }
@@ -75,6 +129,7 @@ public class ActiveWeapon : Singleton<ActiveWeapon>
     private IEnumerator TimeBetweenAttacksRoutine() {
         yield return new WaitForSeconds(timeBetweenAttacks);
         isAttacking = false;
+        currentCooldownDuration = 0f;
     }
 
     private void StartAttacking()
