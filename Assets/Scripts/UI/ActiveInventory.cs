@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ActiveInventory : Singleton<ActiveInventory>
 {
@@ -81,21 +82,36 @@ public class ActiveInventory : Singleton<ActiveInventory>
         }
     }
 
-    private void ToggleActiveSlot(int numValue) { ToggleActiveHighlight(numValue - 1); }
+    private void ToggleActiveSlot(int numValue) 
+    { 
+        int slotIndex = numValue - 1; // Convert 1-9,0 to 0-9
+        ToggleActiveHighlight(slotIndex);
+        
+        // Nếu có hotbar, sử dụng item trong slot đó (giống hotbar cũ)
+        if (hotbarController != null && hotbarController.hotbarPanel != null)
+        {
+            hotbarController.UseItemInSlot(slotIndex);
+        }
+    }
 
     private void ToggleActiveHighlight(int indexNum)
     {
-        // Nếu có hotbar, dùng số slot của hotbar, nếu không dùng transform.childCount
+        // Ưu tiên sử dụng hotbar, nếu không có thì dùng ActiveInventory panel cũ
         int maxSlots = 0;
+        bool useHotbar = false;
+        
         if (hotbarController != null && hotbarController.hotbarPanel != null)
         {
             maxSlots = hotbarController.hotbarPanel.transform.childCount;
+            useHotbar = maxSlots > 0;
         }
-        else if (transform.childCount > 0)
+        
+        if (!useHotbar && transform.childCount > 0)
         {
             maxSlots = transform.childCount;
         }
-        else
+        
+        if (maxSlots == 0)
         {
             // Không có slot nào, chỉ cần change weapon (có thể không có weapon)
             ChangeActiveWeapon();
@@ -105,35 +121,137 @@ public class ActiveInventory : Singleton<ActiveInventory>
         // Clamp index để đảm bảo trong phạm vi hợp lệ
         activeSlotIndexNum = Mathf.Clamp(indexNum, 0, Mathf.Max(0, maxSlots - 1));
 
-        // Highlight trong ActiveInventory (nếu có và có child)
-        if (transform.childCount > 0 && activeSlotIndexNum < transform.childCount)
+        // Ưu tiên highlight hotbar slots
+        if (useHotbar)
         {
-            // Tắt tất cả highlight
-            foreach (Transform inventorySlot in this.transform)
-            {
-                if (inventorySlot != null && inventorySlot.childCount > 0)
-                {
-                    Transform highlight = inventorySlot.GetChild(0);
-                    if (highlight != null)
-                    {
-                        highlight.gameObject.SetActive(false);
-                    }
-                }
-            }
+            HighlightHotbarSlot(activeSlotIndexNum);
+        }
+        // Fallback: highlight ActiveInventory panel cũ (nếu có)
+        else if (transform.childCount > 0 && activeSlotIndexNum < transform.childCount)
+        {
+            HighlightActiveInventorySlot(activeSlotIndexNum);
+        }
 
-            // Bật highlight cho slot active
-            Transform activeSlot = transform.GetChild(activeSlotIndexNum);
-            if (activeSlot != null && activeSlot.childCount > 0)
+        ChangeActiveWeapon();
+    }
+
+    /// <summary>
+    /// Highlight slot trong hotbar
+    /// </summary>
+    private void HighlightHotbarSlot(int slotIndex)
+    {
+        if (hotbarController == null || hotbarController.hotbarPanel == null)
+            return;
+
+        // Tắt tất cả highlight trong hotbar
+        foreach (Transform slotTransform in hotbarController.hotbarPanel.transform)
+        {
+            if (slotTransform != null)
             {
-                Transform highlight = activeSlot.GetChild(0);
+                // Ưu tiên sử dụng HotbarSlotHighlight component nếu có
+                HotbarSlotHighlight highlight = slotTransform.GetComponent<HotbarSlotHighlight>();
                 if (highlight != null)
                 {
-                    highlight.gameObject.SetActive(true);
+                    highlight.SetHighlight(false);
+                }
+                else
+                {
+                    // Fallback: tìm highlight object thủ công
+                    Image[] images = slotTransform.GetComponentsInChildren<Image>();
+                    foreach (Image img in images)
+                    {
+                        if (img.name.ToLower().Contains("highlight") || 
+                            img.name.ToLower().Contains("active") ||
+                            img.name.ToLower().Contains("selected"))
+                        {
+                            img.gameObject.SetActive(false);
+                        }
+                    }
+
+                    // Hoặc nếu highlight là child đầu tiên
+                    if (slotTransform.childCount > 0)
+                    {
+                        Transform firstChild = slotTransform.GetChild(0);
+                        // Chỉ tắt nếu không phải là item (item sẽ có Item component)
+                        if (firstChild.GetComponent<Item>() == null)
+                        {
+                            firstChild.gameObject.SetActive(false);
+                        }
+                    }
                 }
             }
         }
 
-        ChangeActiveWeapon();
+        // Bật highlight cho slot active trong hotbar
+        if (slotIndex >= 0 && slotIndex < hotbarController.hotbarPanel.transform.childCount)
+        {
+            Transform activeSlot = hotbarController.hotbarPanel.transform.GetChild(slotIndex);
+            if (activeSlot != null)
+            {
+                // Ưu tiên sử dụng HotbarSlotHighlight component nếu có
+                HotbarSlotHighlight highlight = activeSlot.GetComponent<HotbarSlotHighlight>();
+                if (highlight != null)
+                {
+                    highlight.SetHighlight(true);
+                }
+                else
+                {
+                    // Fallback: tìm highlight object thủ công
+                    Image[] images = activeSlot.GetComponentsInChildren<Image>();
+                    foreach (Image img in images)
+                    {
+                        if (img.name.ToLower().Contains("highlight") || 
+                            img.name.ToLower().Contains("active") ||
+                            img.name.ToLower().Contains("selected"))
+                        {
+                            img.gameObject.SetActive(true);
+                            break;
+                        }
+                    }
+
+                    // Hoặc nếu highlight là child đầu tiên
+                    if (activeSlot.childCount > 0)
+                    {
+                        Transform firstChild = activeSlot.GetChild(0);
+                        // Chỉ bật nếu không phải là item
+                        if (firstChild.GetComponent<Item>() == null)
+                        {
+                            firstChild.gameObject.SetActive(true);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Highlight slot trong ActiveInventory panel cũ (fallback)
+    /// </summary>
+    private void HighlightActiveInventorySlot(int slotIndex)
+    {
+        // Tắt tất cả highlight
+        foreach (Transform inventorySlot in this.transform)
+        {
+            if (inventorySlot != null && inventorySlot.childCount > 0)
+            {
+                Transform highlight = inventorySlot.GetChild(0);
+                if (highlight != null)
+                {
+                    highlight.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        // Bật highlight cho slot active
+        Transform activeSlot = transform.GetChild(slotIndex);
+        if (activeSlot != null && activeSlot.childCount > 0)
+        {
+            Transform highlight = activeSlot.GetChild(0);
+            if (highlight != null)
+            {
+                highlight.gameObject.SetActive(true);
+            }
+        }
     }
 
     // NEW: public refresh so drag handler can force re-evaluation

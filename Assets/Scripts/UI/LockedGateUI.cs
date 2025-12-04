@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using DG.Tweening;
 
 /// <summary>
 /// UI component cho LockedGate panel
@@ -18,9 +19,15 @@ public class LockedGateUI : MonoBehaviour
     [SerializeField] private string confirmButtonText = "Mo cong";
     [SerializeField] private string cancelButtonText = "Huy";
     [SerializeField] private string statusFormat = "{0}/{1}"; // Format: "0/1" hoặc "1/1"
+    
+    [Header("Confirm Animation")]
+    [SerializeField] private float rotationAngle = 45f; // Góc xoay (độ)
+    [SerializeField] private float animationDuration = 3f; // Thời gian animation (giây)
 
     private LockedGate lockedGate;
     private ItemDictionary itemDictionary;
+    private bool isAnimating = false; // Tránh click nhiều lần
+    private Tween rotationTween; // Lưu tween để có thể kill nếu cần
 
     private void Awake()
     {
@@ -47,6 +54,31 @@ public class LockedGateUI : MonoBehaviour
 
         // Ẩn panel ban đầu
         gameObject.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        // Kill tween khi destroy để tránh memory leak
+        if (rotationTween != null && rotationTween.IsActive())
+        {
+            rotationTween.Kill();
+        }
+    }
+
+    private void OnDisable()
+    {
+        // Kill tween khi disable
+        if (rotationTween != null && rotationTween.IsActive())
+        {
+            rotationTween.Kill();
+        }
+        
+        // Reset trạng thái
+        isAnimating = false;
+        if (confirmButton != null)
+        {
+            confirmButton.interactable = true;
+        }
     }
 
     /// <summary>
@@ -99,14 +131,97 @@ public class LockedGateUI : MonoBehaviour
 
     private void OnConfirmClicked()
     {
-        if (lockedGate != null)
+        // Tránh click nhiều lần khi đang animation
+        if (isAnimating || confirmButton == null)
         {
-            lockedGate.UnlockGate();
+            return;
         }
-        else
+
+        if (lockedGate == null)
         {
             Debug.LogWarning("[LockedGateUI] LockedGate not found!");
+            return;
         }
+
+        // Kiểm tra có chìa khóa trước khi bắt đầu animation
+        bool hasKey = CheckHasKey();
+        if (!hasKey)
+        {
+            // Không có chìa khóa, hiển thị message và cho phép bấm lại
+            ShowMessage("Bạn chưa có chìa khóa!");
+            Debug.LogWarning("[LockedGateUI] Player does not have required key!");
+            return;
+        }
+
+        // Có chìa khóa, bắt đầu animation
+        // Disable button để tránh click nhiều lần
+        confirmButton.interactable = false;
+        isAnimating = true;
+
+        // Lưu rotation ban đầu
+        Vector3 originalRotation = confirmButton.transform.localEulerAngles;
+        Vector3 targetRotation = originalRotation + new Vector3(0f, 0f, rotationAngle);
+
+        // Xoay button 45 độ trong 3 giây
+        rotationTween = confirmButton.transform.DORotate(targetRotation, animationDuration, RotateMode.FastBeyond360)
+            .SetEase(Ease.Linear) // Xoay đều
+            .OnComplete(() =>
+            {
+                // Sau khi animation xong, mở khóa
+                if (lockedGate != null)
+                {
+                    lockedGate.UnlockGate();
+                }
+                
+                // Reset rotation về ban đầu
+                confirmButton.transform.localEulerAngles = originalRotation;
+                
+                // Reset trạng thái
+                isAnimating = false;
+            });
+    }
+
+    /// <summary>
+    /// Kiểm tra xem player có chìa khóa không
+    /// </summary>
+    private bool CheckHasKey()
+    {
+        if (lockedGate == null)
+        {
+            return false;
+        }
+
+        // Sử dụng reflection hoặc public method từ LockedGate
+        // Hoặc tự kiểm tra từ InventoryController
+        InventoryController inventoryController = FindFirstObjectByType<InventoryController>();
+        if (inventoryController == null)
+        {
+            return false;
+        }
+
+        // Lấy requiredKeyID từ LockedGate
+        // Vì LockedGate không expose public field, ta cần dùng reflection hoặc thêm public method
+        // Tạm thời dùng cách đơn giản: kiểm tra qua lockedGate
+        // Nếu lockedGate có method CheckHasKey, dùng nó
+        var checkHasKeyMethod = lockedGate.GetType().GetMethod("CheckHasKey", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        
+        if (checkHasKeyMethod != null)
+        {
+            return (bool)checkHasKeyMethod.Invoke(lockedGate, null);
+        }
+
+        // Fallback: tìm requiredKeyID từ LockedGate bằng reflection
+        var requiredKeyIDField = lockedGate.GetType().GetField("requiredKeyID",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        
+        if (requiredKeyIDField != null)
+        {
+            int requiredKeyID = (int)requiredKeyIDField.GetValue(lockedGate);
+            return inventoryController.HasItem(requiredKeyID);
+        }
+
+        return false;
     }
 
     private void OnCancelClicked()
