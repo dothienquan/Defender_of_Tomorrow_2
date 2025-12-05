@@ -38,13 +38,13 @@ public class PlayerHealth : Singleton<PlayerHealth>
         UpdateHealthSlider();
     }
 
-    private void OnCollisionStay2D(Collision2D other) {
+    /*private void OnCollisionStay2D(Collision2D other) {
         EnemyAI enemy = other.gameObject.GetComponent<EnemyAI>();
 
         if (enemy) {
             TakeDamage(1, other.transform);
         }
-    }
+    }*/
 
     public void HealPlayer() {
         if (currentHealth < maxHealth) {

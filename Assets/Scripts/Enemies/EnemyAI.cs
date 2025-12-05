@@ -7,12 +7,12 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private float roamChangeDirFloat = 2f;
 
     [Header("Attack (qua AttackZone)")]
-    [SerializeField] private MonoBehaviour enemyType;   // IEnemy (ví dụ Grape)
+    [SerializeField] private MonoBehaviour enemyType;   // IEnemy
     [SerializeField] private float attackCooldown = 2f;
     [SerializeField] private bool stopMovingWhileAttacking = false;
 
     private bool canAttack = true;
-    public bool inAttackZone = false;                  // <-- AttackZone sẽ bật/tắt cờ này
+    public bool inAttackZone = false;
 
     private enum State { Roaming, Attacking }
     private State state;
@@ -22,9 +22,13 @@ public class EnemyAI : MonoBehaviour
 
     private EnemyPathfinding enemyPathfinding;
 
+    // 👇 THÊM
+    private EnemyAnimator enemyAnimator;
+
     private void Awake()
     {
         enemyPathfinding = GetComponent<EnemyPathfinding>();
+        enemyAnimator = GetComponentInChildren<EnemyAnimator>();   // <-- thêm animator
         state = State.Roaming;
     }
 
@@ -36,13 +40,13 @@ public class EnemyAI : MonoBehaviour
     private void Update()
     {
         MovementStateControl();
+        UpdateAnimationDirection();   // 👈 luôn cập nhật hướng di chuyển cho animator
     }
 
     private void MovementStateControl()
     {
         switch (state)
         {
-            default:
             case State.Roaming:
                 Roaming();
                 break;
@@ -57,10 +61,9 @@ public class EnemyAI : MonoBehaviour
     {
         timeRoaming += Time.deltaTime;
 
-        // di chuyển theo hướng roam hiện tại
+        // di chuyển theo hướng roam
         enemyPathfinding.MoveTo(roamPosition);
 
-        // chuyển sang Attacking khi Player vào vùng (được AttackZone bật cờ)
         if (inAttackZone)
         {
             state = State.Attacking;
@@ -75,20 +78,21 @@ public class EnemyAI : MonoBehaviour
 
     private void Attacking()
     {
-        // nếu Player rời vùng, quay lại Roaming
         if (!inAttackZone)
         {
             state = State.Roaming;
             return;
         }
 
-        // tấn công theo cooldown
         if (canAttack)
         {
             canAttack = false;
 
-            // gọi skill/animation tấn công của enemy (IEnemy)
+            // gọi skill/anim tấn công
             (enemyType as IEnemy)?.Attack();
+
+            // 👇 GỌI ANIMATION ATTACK
+            enemyAnimator?.PlayAttack();
 
             if (stopMovingWhileAttacking)
             {
@@ -96,8 +100,7 @@ public class EnemyAI : MonoBehaviour
             }
             else
             {
-                // có thể chọn đuổi theo Player khi đang ở trạng thái tấn công
-                // enemyPathfinding.MoveTo((PlayerController.Instance.transform.position - transform.position).normalized);
+                // vẫn di chuyển (nếu muốn)
                 enemyPathfinding.MoveTo(roamPosition);
             }
 
@@ -117,14 +120,23 @@ public class EnemyAI : MonoBehaviour
         return new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
     }
 
-    // ==== API cho AttackZone gọi ====
+    // ========= THÊM: Gửi hướng di chuyển -> animator =========
+    private void UpdateAnimationDirection()
+    {
+        if (!enemyAnimator) return;
+
+        Vector2 currentVelocity = enemyPathfinding.GetCurrentVelocity();
+        // NOTE: bạn cần hàm này trong EnemyPathfinding:
+        // public Vector2 GetCurrentVelocity() { return moveDir; }
+
+        enemyAnimator.SetMoveDirection(currentVelocity);
+    }
+
+    // ==== AttackZone API ====
     public void SetInAttackZone(bool value)
     {
         inAttackZone = value;
-        if (inAttackZone) state = State.Attacking; else state = State.Roaming;
+        state = value ? State.Attacking : State.Roaming;
     }
-    public bool IsInAttackZone()
-    {
-        return inAttackZone;
-    }
+    public bool IsInAttackZone() => inAttackZone;
 }
