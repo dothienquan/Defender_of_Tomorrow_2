@@ -180,20 +180,37 @@ public class SaveController : MonoBehaviour
 
             Debug.Log($"[SaveController] Loaded save data: {saveData.inventorySaveData?.Count ?? 0} inventory items, {saveData.hotbarSaveData?.Count ?? 0} hotbar items.");
 
-            var player = GameObject.FindGameObjectWithTag("Player");
-            if (player != null)
-                player.transform.position = saveData.playerPosition;
-            else
-                Debug.LogError("[SaveController] Player not found in scene when trying to load position!");
-
-            var confiner = FindFirstObjectByType<CinemachineConfiner>();
-            if (confiner != null)
+            // Kiểm tra xem có đang quay lại từ cutscene không
+            // Nếu có, không load player position vì CutsceneManager sẽ set từ CutsceneReturnPoint
+            bool isReturningFromCutscene = PlayerPrefs.GetInt("CutsceneManager_UseReturnPoint", 0) == 1;
+            
+            if (!isReturningFromCutscene)
             {
-                var boundary = GameObject.Find(saveData.mapBoundary);
-                if (boundary != null)
-                    confiner.m_BoundingShape2D = boundary.GetComponent<PolygonCollider2D>();
+                // Chỉ load player position nếu không quay lại từ cutscene
+                var player = GameObject.FindGameObjectWithTag("Player");
+                if (player != null)
+                {
+                    player.transform.position = saveData.playerPosition;
+                    Debug.Log($"[SaveController] Loaded player position from save: {saveData.playerPosition}");
+                }
                 else
-                    Debug.LogError($"[SaveController] Map boundary '{saveData.mapBoundary}' not found in scene!");
+                {
+                    Debug.LogError("[SaveController] Player not found in scene when trying to load position!");
+                }
+
+                var confiner = FindFirstObjectByType<CinemachineConfiner>();
+                if (confiner != null)
+                {
+                    var boundary = GameObject.Find(saveData.mapBoundary);
+                    if (boundary != null)
+                        confiner.m_BoundingShape2D = boundary.GetComponent<PolygonCollider2D>();
+                    else
+                        Debug.LogError($"[SaveController] Map boundary '{saveData.mapBoundary}' not found in scene!");
+                }
+            }
+            else
+            {
+                Debug.Log("[SaveController] Returning from cutscene - skipping player position load (CutsceneManager will handle it).");
             }
 
             // Tìm lại controllers nếu chưa có

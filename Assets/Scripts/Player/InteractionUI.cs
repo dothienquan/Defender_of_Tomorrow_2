@@ -21,7 +21,7 @@ public class InteractionUI : MonoBehaviour
             return;
         }
         
-        label.text = $"[{hintKey}] {displayName}";
+        label.text = $"{displayName}";
         
         if (useGameObjectActive)
         {
