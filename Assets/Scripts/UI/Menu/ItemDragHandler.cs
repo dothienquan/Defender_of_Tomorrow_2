@@ -1,7 +1,8 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
@@ -20,6 +21,8 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     private Vector2 originalWorldSize; // Kích thước world space của item
     private Animator animator; // Animator component (nếu có)
     private bool originalAnimatorEnabled; // Trạng thái ban đầu của Animator
+    private AutoFitToSlot autoFitToSlot; // AutoFitToSlot component (nếu có)
+    private bool originalAutoFitEnabled; // Trạng thái ban đầu của AutoFitToSlot
 
     // Start is called before the first frame update
     void Start()
@@ -242,6 +245,11 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
             rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            
+            // Đảm bảo RectTransform không bị lock bởi constraints
+            // Unity không có API trực tiếp để set constraints, nhưng đảm bảo anchoredPosition có thể thay đổi
+            // Force update để đảm bảo RectTransform được apply đúng
+            Canvas.ForceUpdateCanvases();
         }
         
         // Đảm bảo item ở trên cùng
@@ -253,6 +261,14 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         {
             originalAnimatorEnabled = animator.enabled;
             animator.enabled = false; // Disable Animator khi drag
+        }
+        
+        // Disable AutoFitToSlot nếu có (để tránh can thiệp vào position khi drag)
+        autoFitToSlot = GetComponent<AutoFitToSlot>();
+        if (autoFitToSlot != null)
+        {
+            originalAutoFitEnabled = autoFitToSlot.enabled;
+            autoFitToSlot.enabled = false; // Disable AutoFitToSlot khi drag
         }
         
         // Setup canvas group
@@ -296,8 +312,16 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera,
                 out localPoint))
             {
-                // Set position của item theo chuột
+                // Set position của item theo chuột (cả X và Y)
                 rectTransform.anchoredPosition = localPoint;
+                
+                // Debug: Kiểm tra nếu chỉ có X được update
+                if (Mathf.Abs(rectTransform.anchoredPosition.y - localPoint.y) > 0.01f)
+                {
+                    Debug.LogWarning($"[ItemDragHandler] Y position mismatch! Expected: {localPoint.y}, Actual: {rectTransform.anchoredPosition.y}");
+                    // Force set lại Y
+                    rectTransform.anchoredPosition = new Vector2(localPoint.x, localPoint.y);
+                }
             }
             else
             {
@@ -331,6 +355,12 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         if (animator != null)
         {
             animator.enabled = originalAnimatorEnabled;
+        }
+        
+        // Restore AutoFitToSlot nếu có
+        if (autoFitToSlot != null)
+        {
+            autoFitToSlot.enabled = originalAutoFitEnabled;
         }
         
         // Restore canvas group
@@ -389,7 +419,49 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 //Slot has an item - swap items
                 GameObject otherItem = dropSlot.currentItem;
                 otherItem.transform.SetParent(originalSlot.transform, false);
-                otherItem.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+                
+                // Setup lại RectTransform cho item được swap
+                RectTransform otherRect = otherItem.GetComponent<RectTransform>();
+                if (otherRect != null)
+                {
+                    otherRect.anchoredPosition = Vector2.zero;
+                    otherRect.anchorMin = Vector2.zero;
+                    otherRect.anchorMax = Vector2.one;
+                    otherRect.pivot = new Vector2(0.5f, 0.5f);
+                    otherRect.sizeDelta = Vector2.zero;
+                }
+                
+                // Apply AutoFitToSlot cho item được swap
+                AutoFitToSlot otherAutoFit = otherItem.GetComponent<AutoFitToSlot>();
+                if (otherAutoFit != null)
+                {
+                    otherAutoFit.Apply();
+                }
+                else
+                {
+                    // Nếu không có, setup thủ công
+                    if (otherRect != null)
+                    {
+                        otherRect.offsetMin = new Vector2(4f, 4f);
+                        otherRect.offsetMax = new Vector2(-4f, -4f);
+                    }
+                }
+                
+                Canvas.ForceUpdateCanvases();
+                
+                // Đảm bảo Image được enable cho item được swap
+                Image otherImage = otherItem.GetComponent<Image>();
+                SpriteRenderer otherSpriteRenderer = otherItem.GetComponent<SpriteRenderer>();
+                if (otherImage != null && otherSpriteRenderer != null)
+                {
+                    if (otherImage.sprite == null && otherSpriteRenderer.sprite != null)
+                    {
+                        otherImage.sprite = otherSpriteRenderer.sprite;
+                    }
+                    otherImage.enabled = otherImage.sprite != null;
+                    otherSpriteRenderer.enabled = false;
+                }
+                
                 originalSlot.currentItem = otherItem;
             }
             else
@@ -420,6 +492,58 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 rectTransform.anchorMax = originalAnchorMax;
                 rectTransform.pivot = originalPivot;
             }
+            
+            // QUAN TRỌNG: Apply AutoFitToSlot sau khi drop vào slot mới
+            AutoFitToSlot autoFit = GetComponent<AutoFitToSlot>();
+            if (autoFit != null)
+            {
+                autoFit.Apply();
+            }
+            else
+            {
+                // Nếu không có AutoFitToSlot, setup thủ công
+                if (rectTransform != null)
+                {
+                    rectTransform.anchorMin = Vector2.zero;
+                    rectTransform.anchorMax = Vector2.one;
+                    rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                    rectTransform.anchoredPosition = Vector2.zero;
+                    rectTransform.offsetMin = new Vector2(4f, 4f);
+                    rectTransform.offsetMax = new Vector2(-4f, -4f);
+                }
+            }
+            
+            // QUAN TRỌNG: Đảm bảo Image được enable và SpriteRenderer được disable sau khi drop
+            // (vì có thể item đã bị thay đổi trong quá trình drag)
+            Image itemImage = GetComponent<Image>();
+            SpriteRenderer itemSpriteRenderer = GetComponent<SpriteRenderer>();
+            
+            if (itemImage != null && itemSpriteRenderer != null)
+            {
+                // Trong UI Canvas, luôn dùng Image
+                if (itemImage.sprite == null && itemSpriteRenderer.sprite != null)
+                {
+                    itemImage.sprite = itemSpriteRenderer.sprite;
+                }
+                itemImage.enabled = itemImage.sprite != null;
+                itemSpriteRenderer.enabled = false;
+                
+                // Đảm bảo Image color alpha = 1
+                Color imgColor = itemImage.color;
+                imgColor.a = 1f;
+                itemImage.color = imgColor;
+            }
+            
+            // Đảm bảo CanvasGroup alpha = 1
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 1f;
+                canvasGroup.blocksRaycasts = true;
+                canvasGroup.interactable = true;
+            }
+            
+            // Force update Canvas
+            Canvas.ForceUpdateCanvases();
             
             dropSlot.currentItem = gameObject;
             itemMoved = true;
@@ -501,6 +625,57 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 rectTransform.anchorMax = originalAnchorMax;
                 rectTransform.pivot = originalPivot;
             }
+            
+            // QUAN TRỌNG: Apply AutoFitToSlot sau khi return về slot cũ
+            AutoFitToSlot autoFit = GetComponent<AutoFitToSlot>();
+            if (autoFit != null)
+            {
+                autoFit.Apply();
+            }
+            else
+            {
+                // Nếu không có AutoFitToSlot, setup thủ công
+                if (rectTransform != null)
+                {
+                    rectTransform.anchorMin = Vector2.zero;
+                    rectTransform.anchorMax = Vector2.one;
+                    rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                    rectTransform.anchoredPosition = Vector2.zero;
+                    rectTransform.offsetMin = new Vector2(4f, 4f);
+                    rectTransform.offsetMax = new Vector2(-4f, -4f);
+                }
+            }
+            
+            // QUAN TRỌNG: Đảm bảo Image được enable và SpriteRenderer được disable
+            Image itemImage = GetComponent<Image>();
+            SpriteRenderer itemSpriteRenderer = GetComponent<SpriteRenderer>();
+            
+            if (itemImage != null && itemSpriteRenderer != null)
+            {
+                // Trong UI Canvas, luôn dùng Image
+                if (itemImage.sprite == null && itemSpriteRenderer.sprite != null)
+                {
+                    itemImage.sprite = itemSpriteRenderer.sprite;
+                }
+                itemImage.enabled = itemImage.sprite != null;
+                itemSpriteRenderer.enabled = false;
+                
+                // Đảm bảo Image color alpha = 1
+                Color imgColor = itemImage.color;
+                imgColor.a = 1f;
+                itemImage.color = imgColor;
+            }
+            
+            // Đảm bảo CanvasGroup alpha = 1
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 1f;
+                canvasGroup.blocksRaycasts = true;
+                canvasGroup.interactable = true;
+            }
+            
+            // Force update Canvas
+            Canvas.ForceUpdateCanvases();
             
             // Restore original sibling index if needed
             if (originalSiblingIndex >= 0 && originalSiblingIndex < originalParent.childCount)

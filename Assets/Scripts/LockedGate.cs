@@ -18,6 +18,9 @@ public class LockedGate : MonoBehaviour
     [Header("Visual")]
     [SerializeField] private GameObject lockedVisual; // Visual khi cổng bị khóa
     [SerializeField] private GameObject unlockedVisual; // Visual khi cổng đã mở
+    
+    [Header("On Unlock")]
+    [SerializeField] private GameObject objectToActivate; // Object sẽ được set active sau khi unlock thành công
 
     private bool isUnlocked = false;
     private bool playerInRange = false;
@@ -181,6 +184,13 @@ public class LockedGate : MonoBehaviour
 
         // Ẩn panel
         HidePanel();
+
+        // Set active object sau khi panel đã tắt
+        if (objectToActivate != null)
+        {
+            objectToActivate.SetActive(true);
+            Debug.Log($"[LockedGate] Activated object: {objectToActivate.name}");
+        }
 
         Debug.Log("[LockedGate] Gate unlocked!");
     }

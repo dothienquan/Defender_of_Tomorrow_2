@@ -124,6 +124,33 @@ public class CutsceneManager : Singleton<CutsceneManager>
             DisablePlayer();
         }
 
+        // QUAN TRỌNG: Save game trước khi chuyển scene để lưu inventory và hotbar
+        SaveController saveController = FindFirstObjectByType<SaveController>();
+        if (saveController != null)
+        {
+            Debug.Log("[CutsceneManager] Saving game before loading cutscene...");
+            saveController.SaveGame();
+            
+            // Đợi một chút để đảm bảo file đã được ghi xong
+            yield return new WaitForSeconds(0.1f);
+            
+            // Verify save file exists
+            string saveLocation = System.IO.Path.Combine(Application.persistentDataPath, "saveData.json");
+            if (System.IO.File.Exists(saveLocation))
+            {
+                string savedContent = System.IO.File.ReadAllText(saveLocation);
+                Debug.Log($"[CutsceneManager] Save file verified. Size: {savedContent.Length} bytes");
+            }
+            else
+            {
+                Debug.LogError("[CutsceneManager] Save file was NOT created! Items may be lost.");
+            }
+        }
+        else
+        {
+            Debug.LogError("[CutsceneManager] SaveController not found! Inventory and hotbar WILL NOT be saved!");
+        }
+
         // Fade to black
         if (UIFade.Instance != null)
         {

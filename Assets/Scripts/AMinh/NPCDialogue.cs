@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using TMPro;
 
 public class NPCDialogue : MonoBehaviour
@@ -9,6 +9,7 @@ public class NPCDialogue : MonoBehaviour
     [Header("Dialogue")]
     public DialogueObject firstDialogue;     // thoại lần đầu
     public DialogueObject repeatDialogue;    // thoại từ lần 2 trở đi
+    public DialogueObject autoTriggerDialogue; // Dialogue tự động kích hoạt khi trigger (optional)
 
     [Header("UI References")]
     public DialogueUI dialogueUI;            // kéo DialoguePanel vào
@@ -17,8 +18,17 @@ public class NPCDialogue : MonoBehaviour
     [Header("Input")]
     public KeyCode key = KeyCode.F;
 
+    [Header("Auto Trigger Settings")]
+    [Tooltip("Tự động kích hoạt dialogue khi player chạm vào trigger")]
+    public bool enableAutoTrigger = false;
+    [Tooltip("Dialogue chỉ xuất hiện 1 lần (lưu vào PlayerPrefs)")]
+    public bool showOnlyOnce = true;
+    [Tooltip("Unique ID cho trigger này (dùng để lưu trạng thái đã hiển thị)")]
+    public string triggerID = "";
+
     bool playerInRange;
     bool hasTalked = false;                  // mỗi NPC có biến riêng
+    private string autoTriggerKey;           // Key để lưu trạng thái đã hiển thị
 
     void Start()
     {
@@ -27,6 +37,14 @@ public class NPCDialogue : MonoBehaviour
 
         if (dialogueUI == null)
             Debug.LogError($"[{name}] dialogueUI chưa được gán!");
+
+        // Tạo unique key cho auto trigger
+        if (enableAutoTrigger)
+        {
+            // Sử dụng triggerID nếu có, nếu không thì dùng GameObject name
+            string id = !string.IsNullOrEmpty(triggerID) ? triggerID : gameObject.name;
+            autoTriggerKey = $"NPCDialogue_AutoTrigger_{id}";
+        }
     }
 
     void Update()
@@ -85,7 +103,94 @@ public class NPCDialogue : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
+        {
             playerInRange = true;
+            
+            // Tự động kích hoạt dialogue nếu được bật
+            if (enableAutoTrigger)
+            {
+                TryAutoTriggerDialogue();
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Thử tự động kích hoạt dialogue (chỉ 1 lần nếu showOnlyOnce = true)
+    /// </summary>
+    private void TryAutoTriggerDialogue()
+    {
+        if (dialogueUI == null)
+        {
+            Debug.LogWarning($"[NPCDialogue] Cannot auto-trigger: dialogueUI is null!");
+            return;
+        }
+
+        // Kiểm tra xem dialogue đang active không (tránh trigger nhiều lần)
+        if (dialogueUI.gameObject.activeSelf)
+        {
+            return; // Dialogue đang hiển thị, không trigger lại
+        }
+
+        // Kiểm tra xem dialogue đã được hiển thị chưa (nếu showOnlyOnce = true)
+        if (showOnlyOnce)
+        {
+            bool hasShown = PlayerPrefs.GetInt(autoTriggerKey, 0) == 1;
+            if (hasShown)
+            {
+                Debug.Log($"[NPCDialogue] Auto-trigger dialogue already shown for '{gameObject.name}'. Skipping...");
+                return;
+            }
+        }
+
+        // Chọn dialogue để hiển thị
+        DialogueObject dialogueToShow = null;
+        
+        // Ưu tiên autoTriggerDialogue, nếu không có thì dùng firstDialogue
+        if (autoTriggerDialogue != null)
+        {
+            dialogueToShow = autoTriggerDialogue;
+        }
+        else if (firstDialogue != null)
+        {
+            dialogueToShow = firstDialogue;
+        }
+        else
+        {
+            Debug.LogWarning($"[NPCDialogue] No dialogue assigned for auto-trigger on '{gameObject.name}'!");
+            return;
+        }
+
+        // Hiển thị dialogue
+        if (fHint != null) fHint.gameObject.SetActive(false);
+        
+        dialogueUI.Show(dialogueToShow, npcName);
+        
+        // Đánh dấu đã hiển thị (nếu showOnlyOnce = true)
+        if (showOnlyOnce)
+        {
+            PlayerPrefs.SetInt(autoTriggerKey, 1);
+            PlayerPrefs.Save();
+            Debug.Log($"[NPCDialogue] Auto-trigger dialogue shown and marked as shown for '{gameObject.name}'.");
+        }
+        
+        // Đánh dấu đã nói chuyện (để lần sau dùng repeatDialogue nếu nhấn F)
+        if (!hasTalked)
+        {
+            hasTalked = true;
+        }
+    }
+    
+    /// <summary>
+    /// Reset trạng thái auto-trigger (dùng khi New Game)
+    /// </summary>
+    public void ResetAutoTriggerState()
+    {
+        if (!string.IsNullOrEmpty(autoTriggerKey))
+        {
+            PlayerPrefs.DeleteKey(autoTriggerKey);
+            PlayerPrefs.Save();
+            Debug.Log($"[NPCDialogue] Reset auto-trigger state for '{gameObject.name}'.");
+        }
     }
 
     void OnTriggerExit2D(Collider2D other)

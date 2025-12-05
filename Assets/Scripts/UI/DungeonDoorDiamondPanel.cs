@@ -17,9 +17,10 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
     [SerializeField] private Transform diamondSlotsParent; // Parent chứa các slot để kéo kim cương vào
     [SerializeField] private GameObject diamondSlotPrefab; // Prefab của slot
     [SerializeField] private int slotCount = 3; // Số lượng slot
-    [SerializeField] private Button confirmButton; // Nút xác nhận
+    [SerializeField] private Button confirmButton; // Nút xác nhận (optional, có thể không dùng)
     [SerializeField] private TextMeshProUGUI statusText; // Text hiển thị trạng thái (ví dụ: "2/3")
     [SerializeField] private string statusFormat = "{0}/{1}"; // Format status text
+    [SerializeField] private bool autoCloseOnComplete = true; // Tự động đóng panel khi đủ item
 
     [Header("Door Reference")]
     [SerializeField] private DoorClockController doorController; // Controller để mở cổng
@@ -44,33 +45,61 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
             itemDictionary = FindFirstObjectByType<ItemDictionary>();
         }
 
-        // Tạo slots nếu chưa có
-        if (diamondSlotsParent != null && diamondSlotsParent.childCount == 0)
-        {
-            CreateSlots();
-        }
-        else if (diamondSlotsParent != null)
-        {
-            // Lấy các slots hiện có
-            foreach (Transform child in diamondSlotsParent)
-            {
-                Slot slot = child.GetComponent<Slot>();
-                if (slot != null)
-                {
-                    diamondSlots.Add(slot);
-                }
-            }
-        }
-
-        // Setup confirm button
+        // Setup confirm button (optional)
         if (confirmButton != null)
         {
             confirmButton.onClick.AddListener(OnConfirmClicked);
             confirmButton.interactable = false; // Ban đầu disable
         }
 
+        // KHÔNG tạo slots trong Awake - sẽ tạo khi panel mở (trong InitializeSlots)
+    }
+
+    private void OnEnable()
+    {
+        // Khi panel được enable, khởi tạo slots nếu chưa có
+        if (diamondSlots.Count == 0 && diamondSlotsParent != null)
+        {
+            InitializeSlots();
+        }
+    }
+
+    private void OnDisable()
+    {
+        // Clear slots khi panel tắt để spawn lại lần sau
+        ClearSlots();
+    }
+
+    /// <summary>
+    /// Khởi tạo slots khi panel mở (được gọi từ DungeonDoorInteractor hoặc OnEnable)
+    /// </summary>
+    public void InitializeSlots()
+    {
+        // Xóa slots cũ nếu có
+        ClearSlots();
+
+        // Tạo slots mới
+        CreateSlots();
+
         // Cập nhật status ban đầu
         UpdateStatus();
+    }
+
+    /// <summary>
+    /// Xóa tất cả slots
+    /// </summary>
+    private void ClearSlots()
+    {
+        if (diamondSlotsParent != null)
+        {
+            // Destroy tất cả child slots
+            for (int i = diamondSlotsParent.childCount - 1; i >= 0; i--)
+            {
+                Destroy(diamondSlotsParent.GetChild(i).gameObject);
+            }
+        }
+
+        diamondSlots.Clear();
     }
 
     private void CreateSlots()
@@ -152,25 +181,23 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
             statusText.text = string.Format(statusFormat, currentCount, requiredDiamondCount);
         }
 
-        // Enable/disable confirm button
+        // Enable/disable confirm button (nếu có)
         if (confirmButton != null)
         {
             confirmButton.interactable = hasEnough && !isDoorOpened;
         }
+
+        // Tự động đóng panel và mở cổng nếu đủ item
+        if (hasEnough && autoCloseOnComplete && !isDoorOpened)
+        {
+            OnComplete();
+        }
     }
 
     /// <summary>
-    /// Được gọi khi item được kéo vào slot (từ ItemDragHandler hoặc tự gọi)
+    /// Xử lý khi đủ item (tự động gọi hoặc từ confirm button)
     /// </summary>
-    public void OnItemDroppedInSlot(Slot slot)
-    {
-        UpdateStatus();
-    }
-
-    /// <summary>
-    /// Xử lý khi nhấn nút xác nhận
-    /// </summary>
-    private void OnConfirmClicked()
+    private void OnComplete()
     {
         if (isDoorOpened)
         {
@@ -192,6 +219,30 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
         OpenDoor();
 
         // Đóng panel
+        ClosePanel();
+    }
+
+    /// <summary>
+    /// Được gọi khi item được kéo vào slot (từ ItemDragHandler hoặc tự gọi)
+    /// </summary>
+    public void OnItemDroppedInSlot(Slot slot)
+    {
+        UpdateStatus();
+    }
+
+    /// <summary>
+    /// Xử lý khi nhấn nút xác nhận (nếu có confirm button)
+    /// </summary>
+    private void OnConfirmClicked()
+    {
+        OnComplete();
+    }
+
+    /// <summary>
+    /// Đóng panel
+    /// </summary>
+    private void ClosePanel()
+    {
         if (transform.parent != null)
         {
             transform.parent.gameObject.SetActive(false);

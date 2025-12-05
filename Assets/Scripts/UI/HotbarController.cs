@@ -213,6 +213,23 @@ public class HotbarController : MonoBehaviour
                     // Setup item giống như trong InventoryController
                     SetupItemForHotbar(newItem, slotTransform);
                     
+                    // Debug: Kiểm tra item sau khi setup
+                    RectTransform itemRect = newItem.GetComponent<RectTransform>();
+                    Image itemImage = newItem.GetComponent<Image>();
+                    CanvasGroup itemCanvasGroup = newItem.GetComponent<CanvasGroup>();
+                    
+                    Debug.Log($"[HotbarController] Item '{newItem.name}' setup complete:");
+                    Debug.Log($"  - Active: {newItem.activeSelf}");
+                    Debug.Log($"  - Parent: {newItem.transform.parent?.name}");
+                    Debug.Log($"  - RectTransform size: {itemRect?.rect.size}");
+                    Debug.Log($"  - RectTransform anchoredPosition: {itemRect?.anchoredPosition}");
+                    Debug.Log($"  - RectTransform localScale: {newItem.transform.localScale}");
+                    Debug.Log($"  - Image enabled: {itemImage?.enabled}");
+                    Debug.Log($"  - Image sprite: {itemImage?.sprite?.name ?? "NULL"}");
+                    Debug.Log($"  - Image color: {itemImage?.color}");
+                    Debug.Log($"  - CanvasGroup alpha: {itemCanvasGroup?.alpha}");
+                    Debug.Log($"  - CanvasGroup blocksRaycasts: {itemCanvasGroup?.blocksRaycasts}");
+                    
                     slot.currentItem = newItem;
                     Debug.Log($"[HotbarController] Loaded item ID {data.itemID} to hotbar slot {data.slotIndex}.");
                 }
@@ -243,7 +260,24 @@ public class HotbarController : MonoBehaviour
         SpriteRenderer spriteRenderer = newItem.GetComponent<SpriteRenderer>();
         Image image = newItem.GetComponent<Image>();
         
-        if (spriteRenderer != null && image == null)
+        // QUAN TRỌNG: Trong UI Canvas, luôn dùng Image, không dùng SpriteRenderer
+        // Nếu có cả SpriteRenderer và Image, disable SpriteRenderer và đảm bảo Image có sprite
+        if (spriteRenderer != null && image != null)
+        {
+            Debug.Log($"[HotbarController] Item '{newItem.name}' has both SpriteRenderer and Image. Disabling SpriteRenderer and using Image for UI...");
+            
+            // Đảm bảo Image có sprite (ưu tiên từ Image, nếu không có thì lấy từ SpriteRenderer)
+            if (image.sprite == null && spriteRenderer.sprite != null)
+            {
+                image.sprite = spriteRenderer.sprite;
+                Debug.Log($"[HotbarController] Copied sprite from SpriteRenderer to Image for '{newItem.name}'.");
+            }
+            
+            // Enable Image và disable SpriteRenderer (vì đang trong UI Canvas)
+            image.enabled = image.sprite != null;
+            spriteRenderer.enabled = false;
+        }
+        else if (spriteRenderer != null && image == null)
         {
             Debug.Log($"[HotbarController] Converting world item '{newItem.name}' to UI item (SpriteRenderer -> Image)...");
             
@@ -330,14 +364,110 @@ public class HotbarController : MonoBehaviour
             autoFit.padding = 4f;
             autoFit.preserveAspectForImage = true;
         }
+        else
+        {
+            // Nếu đã có, đảm bảo padding đúng
+            autoFit.padding = 4f;
+            autoFit.preserveAspectForImage = true;
+        }
         
-        // Force update Canvas sau khi AutoFitToSlot được thêm
+        // QUAN TRỌNG: Force apply AutoFitToSlot ngay lập tức (không đợi Awake)
+        autoFit.Apply();
+        
+        // Force update Canvas sau khi AutoFitToSlot được apply
         Canvas.ForceUpdateCanvases();
         
-        // Đảm bảo Image có raycast target để có thể drag
+        // Đảm bảo item không bị lệch ra ngoài slot
+        RectTransform slotRect = slotTransform as RectTransform;
+        if (slotRect != null && rectTransform != null)
+        {
+            // Force update để đảm bảo rect size được tính toán đúng
+            Canvas.ForceUpdateCanvases();
+            
+            Vector2 slotSize = slotRect.rect.size;
+            Vector2 itemSize = rectTransform.rect.size;
+            
+            // Kiểm tra slot size và item size hợp lệ
+            if (slotSize.x > 0 && slotSize.y > 0 && itemSize.x > 0 && itemSize.y > 0)
+            {
+                // Nếu item size lớn hơn slot size (sau khi trừ padding), scale down
+                float padding = autoFit != null ? autoFit.padding : 4f;
+                float maxItemSize = Mathf.Min(slotSize.x, slotSize.y) - (padding * 2);
+                
+                // Đảm bảo maxItemSize > 0
+                if (maxItemSize > 0)
+                {
+                    float maxItemDimension = Mathf.Max(itemSize.x, itemSize.y);
+                    
+                    // Đảm bảo không chia cho 0
+                    if (maxItemDimension > 0 && maxItemDimension > maxItemSize)
+                    {
+                        float scale = maxItemSize / maxItemDimension;
+                        
+                        // Đảm bảo scale hợp lệ (0 < scale <= 1)
+                        scale = Mathf.Clamp(scale, 0.1f, 1f);
+                        
+                        if (float.IsFinite(scale) && scale > 0)
+                        {
+                            rectTransform.localScale = Vector3.one * scale;
+                            Canvas.ForceUpdateCanvases();
+                            Debug.Log($"[HotbarController] Scaled down item '{newItem.name}' to fit in slot. Scale: {scale}, SlotSize: {slotSize}, ItemSize: {itemSize}, MaxItemSize: {maxItemSize}");
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[HotbarController] Invalid scale calculated: {scale}. Using default scale 1.");
+                            rectTransform.localScale = Vector3.one;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[HotbarController] Invalid sizes - SlotSize: {slotSize}, ItemSize: {itemSize}. Using default scale 1.");
+                rectTransform.localScale = Vector3.one;
+            }
+        }
+        else
+        {
+            // Đảm bảo scale = 1 nếu không thể tính toán
+            if (rectTransform != null)
+            {
+                rectTransform.localScale = Vector3.one;
+            }
+        }
+        
+        // Đảm bảo Image có raycast target và được cấu hình đúng
+        // QUAN TRỌNG: Tìm lại Image component vì có thể đã được thêm sau
+        image = newItem.GetComponent<Image>();
         if (image != null)
         {
             image.raycastTarget = true;
+            image.preserveAspect = true;
+            // Đảm bảo Image được enable nếu có sprite
+            if (image.sprite != null)
+            {
+                image.enabled = true;
+                // Đảm bảo color alpha = 1 (không transparent)
+                Color imgColor = image.color;
+                imgColor.a = 1f;
+                image.color = imgColor;
+                Debug.Log($"[HotbarController] Image enabled for '{newItem.name}' with sprite: {image.sprite.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"[HotbarController] Image component exists but has no sprite for '{newItem.name}'!");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[HotbarController] No Image component found for '{newItem.name}' after setup!");
+        }
+        
+        // Đảm bảo GameObject được active
+        if (!newItem.activeSelf)
+        {
+            Debug.LogWarning($"[HotbarController] Item '{newItem.name}' is not active! Activating...");
+            newItem.SetActive(true);
         }
         
         // Đảm bảo item có CanvasGroup để có thể drag
@@ -347,6 +477,27 @@ public class HotbarController : MonoBehaviour
             canvasGroup = newItem.AddComponent<CanvasGroup>();
             canvasGroup.blocksRaycasts = true;
             canvasGroup.interactable = true;
+        }
+        
+        // Đảm bảo CanvasGroup không block visibility
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 1f; // Đảm bảo alpha = 1 (không transparent)
+            canvasGroup.blocksRaycasts = true;
+            canvasGroup.interactable = true;
+            Debug.Log($"[HotbarController] CanvasGroup alpha set to 1 for '{newItem.name}'");
+        }
+        
+        // Đảm bảo RectTransform có size > 0
+        if (rectTransform != null)
+        {
+            // Force set size nếu size = 0
+            if (rectTransform.rect.size.x <= 0 || rectTransform.rect.size.y <= 0)
+            {
+                Debug.LogWarning($"[HotbarController] Item '{newItem.name}' has zero size! Setting default size...");
+                rectTransform.sizeDelta = new Vector2(100, 100); // Default size
+                Canvas.ForceUpdateCanvases();
+            }
         }
         
         // Đảm bảo item có ItemDragHandler để có thể drag

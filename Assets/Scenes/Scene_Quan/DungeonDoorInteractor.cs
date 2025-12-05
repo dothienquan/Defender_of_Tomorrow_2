@@ -35,7 +35,11 @@ public class DungeonDoorInteractor : MonoBehaviour
         if (other.CompareTag(playerTag))
         {
             playerInRange = true;
-            if (!panelOpen && hint != null) hint.SetActive(true);
+            if (!panelOpen)
+            {
+                // Tự động mở panel khi player chạm vào collider
+                OpenPanel();
+            }
         }
     }
 
@@ -52,22 +56,8 @@ public class DungeonDoorInteractor : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        if (!playerInRange) return;
-
-        if (Input.GetKeyDown(interactKey))
-        {
-            if (!panelOpen)
-            {
-                OpenPanel();
-            }
-            else
-            {
-                ClosePanel();
-            }
-        }
-    }
+    // Removed Update() - panel now opens automatically on trigger enter
+    // Player can still close panel manually if needed via UI button
 
     public void OpenPanel()
     {
@@ -78,9 +68,10 @@ public class DungeonDoorInteractor : MonoBehaviour
 
         if (hint != null) hint.SetActive(false);
 
-        // Cập nhật trạng thái diamond panel nếu có
+        // Khởi tạo slots và cập nhật trạng thái diamond panel nếu có
         if (diamondPanel != null)
         {
+            diamondPanel.InitializeSlots(); // Spawn slots khi panel mở
             diamondPanel.UpdateStatus();
         }
     }
