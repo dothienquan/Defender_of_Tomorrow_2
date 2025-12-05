@@ -86,6 +86,8 @@ public class CutsceneManager : Singleton<CutsceneManager>
             previousSceneName = SceneManager.GetActiveScene().name;
             // Lưu vào PlayerPrefs để persist qua scene load
             PlayerPrefs.SetString(PREVIOUS_SCENE_KEY, previousSceneName);
+            // Lưu tên cutscene scene để debug
+            PlayerPrefs.SetString("CutsceneManager_CutsceneScene", cutsceneSceneName);
             // Lưu flag có dùng return point hay không
             PlayerPrefs.SetInt(USE_RETURN_POINT_KEY, useReturnPoint ? 1 : 0);
             // Lưu return point ID nếu có và được bật
@@ -98,7 +100,7 @@ public class CutsceneManager : Singleton<CutsceneManager>
                 PlayerPrefs.DeleteKey(RETURN_POINT_ID_KEY);
             }
             PlayerPrefs.Save();
-            Debug.Log($"[CutsceneManager] Lưu scene hiện tại để quay lại: {previousSceneName}, UseReturnPoint: {useReturnPoint}, ReturnPointID: {returnPointID}");
+            Debug.Log($"[CutsceneManager] Lưu scene hiện tại để quay lại: {previousSceneName}, Cutscene: {cutsceneSceneName}, UseReturnPoint: {useReturnPoint}, ReturnPointID: {returnPointID}");
         }
         else
         {
@@ -224,22 +226,32 @@ public class CutsceneManager : Singleton<CutsceneManager>
         // Kiểm tra xem có nên dùng return point không (từ PlayerPrefs)
         bool shouldUseReturnPoint = PlayerPrefs.GetInt(USE_RETURN_POINT_KEY, 0) == 1;
         
-        Debug.Log($"[CutsceneManager] Checking return point: useCustomReturnPosition={useCustomReturnPosition}, shouldUseReturnPoint={shouldUseReturnPoint}");
+        // Lấy tên cutscene scene để debug
+        string cutsceneSceneName = PlayerPrefs.GetString("CutsceneManager_CutsceneScene", "");
+        
+        Debug.Log($"[CutsceneManager] Checking return point: useCustomReturnPosition={useCustomReturnPosition}, shouldUseReturnPoint={shouldUseReturnPoint}, cutsceneScene={cutsceneSceneName}");
         
         // Set player position từ CutsceneReturnPoint nếu được bật
-        if (useCustomReturnPosition && shouldUseReturnPoint)
+        if (shouldUseReturnPoint)
         {
-            SetPlayerReturnPosition();
-        }
-        else if (shouldUseReturnPoint)
-        {
-            // Nếu shouldUseReturnPoint = true nhưng useCustomReturnPosition = false, vẫn thử set
-            Debug.LogWarning("[CutsceneManager] useCustomReturnPosition is false but shouldUseReturnPoint is true. Still attempting to set return position...");
-            SetPlayerReturnPosition();
+            if (useCustomReturnPosition)
+            {
+                SetPlayerReturnPosition();
+            }
+            else
+            {
+                // Nếu shouldUseReturnPoint = true nhưng useCustomReturnPosition = false, vẫn thử set
+                Debug.LogWarning("[CutsceneManager] useCustomReturnPosition is false but shouldUseReturnPoint is true. Still attempting to set return position...");
+                SetPlayerReturnPosition();
+            }
         }
         else
         {
-            Debug.Log("[CutsceneManager] Không sử dụng return point. Player sẽ ở vị trí mặc định hoặc từ save file.");
+            // Không dùng return point (cutscene1) - SaveController đã load position và confiner từ save file
+            Debug.Log("[CutsceneManager] Không sử dụng return point. Player và confiner đã được load từ save file (cutscene1).");
+            
+            // Đảm bảo confiner được update đúng với vị trí player hiện tại
+            UpdateCameraConfinerForPlayerPosition();
         }
 
         // Re-enable player
@@ -260,6 +272,7 @@ public class CutsceneManager : Singleton<CutsceneManager>
         PlayerPrefs.DeleteKey(PREVIOUS_SCENE_KEY);
         PlayerPrefs.DeleteKey(RETURN_POINT_ID_KEY);
         PlayerPrefs.DeleteKey(USE_RETURN_POINT_KEY);
+        PlayerPrefs.DeleteKey("CutsceneManager_CutsceneScene");
         PlayerPrefs.Save();
     }
 
@@ -399,6 +412,67 @@ public class CutsceneManager : Singleton<CutsceneManager>
             // Vẫn cố gắng update confiner với boundary mặc định
             UpdateCameraConfiner(null);
         }
+    }
+
+    /// <summary>
+    /// Update camera confiner dựa trên vị trí player hiện tại
+    /// </summary>
+    private void UpdateCameraConfinerForPlayerPosition()
+    {
+        PlayerController player = FindFirstObjectByType<PlayerController>();
+        if (player == null) return;
+
+        CinemachineConfiner confiner = FindFirstObjectByType<CinemachineConfiner>();
+        if (confiner == null)
+        {
+            Debug.LogWarning("[CutsceneManager] Không tìm thấy CinemachineConfiner.");
+            return;
+        }
+
+        PolygonCollider2D boundary = FindBoundaryForPlayerPosition(player.transform.position);
+        
+        if (boundary != null)
+        {
+            confiner.m_ConfineMode = CinemachineConfiner.Mode.Confine2D;
+            confiner.m_BoundingShape2D = boundary;
+            confiner.InvalidatePathCache();
+            Debug.Log($"[CutsceneManager] Updated camera confiner to '{boundary.name}' based on player position: {player.transform.position}");
+        }
+        else
+        {
+            Debug.LogWarning("[CutsceneManager] Không tìm thấy boundary phù hợp cho player position.");
+        }
+    }
+
+    /// <summary>
+    /// Tìm boundary phù hợp với vị trí player
+    /// </summary>
+    private PolygonCollider2D FindBoundaryForPlayerPosition(Vector3 playerPosition)
+    {
+        PolygonCollider2D[] allBoundaries = FindObjectsByType<PolygonCollider2D>(FindObjectsSortMode.None);
+        PolygonCollider2D bestBoundary = null;
+        float closestDistance = float.MaxValue;
+
+        foreach (var boundary in allBoundaries)
+        {
+            // Kiểm tra xem boundary có chứa player không
+            if (boundary.bounds.Contains(playerPosition))
+            {
+                // Nếu boundary chứa player, ưu tiên boundary này
+                bestBoundary = boundary;
+                break;
+            }
+
+            // Hoặc tìm boundary gần nhất
+            float distance = Vector2.Distance(boundary.bounds.center, playerPosition);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                bestBoundary = boundary;
+            }
+        }
+
+        return bestBoundary;
     }
 
     /// <summary>

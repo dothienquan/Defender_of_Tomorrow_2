@@ -181,36 +181,68 @@ public class SaveController : MonoBehaviour
             Debug.Log($"[SaveController] Loaded save data: {saveData.inventorySaveData?.Count ?? 0} inventory items, {saveData.hotbarSaveData?.Count ?? 0} hotbar items.");
 
             // Kiểm tra xem có đang quay lại từ cutscene không
-            // Nếu có, không load player position vì CutsceneManager sẽ set từ CutsceneReturnPoint
-            bool isReturningFromCutscene = PlayerPrefs.GetInt("CutsceneManager_UseReturnPoint", 0) == 1;
+            // Nếu có useReturnPoint = true, không load player position và confiner vì CutsceneManager sẽ set từ CutsceneReturnPoint
+            // Nếu có useReturnPoint = false, vẫn load player position và confiner từ save file (vị trí mặc định)
+            bool isReturningFromCutscene = PlayerPrefs.HasKey("CutsceneManager_PreviousScene");
+            bool useReturnPoint = PlayerPrefs.GetInt("CutsceneManager_UseReturnPoint", 0) == 1;
             
-            if (!isReturningFromCutscene)
+            if (!isReturningFromCutscene || !useReturnPoint)
             {
-                // Chỉ load player position nếu không quay lại từ cutscene
+                // Load player position từ save file nếu:
+                // 1. Không quay lại từ cutscene, HOẶC
+                // 2. Quay lại từ cutscene nhưng useReturnPoint = false (cutscene1)
                 var player = GameObject.FindGameObjectWithTag("Player");
                 if (player != null)
                 {
                     player.transform.position = saveData.playerPosition;
-                    Debug.Log($"[SaveController] Loaded player position from save: {saveData.playerPosition}");
+                    Debug.Log($"[SaveController] Loaded player position from save: {saveData.playerPosition} (isReturningFromCutscene={isReturningFromCutscene}, useReturnPoint={useReturnPoint})");
                 }
                 else
                 {
                     Debug.LogError("[SaveController] Player not found in scene when trying to load position!");
                 }
 
+                // Load confiner từ save file hoặc tìm boundary phù hợp với player position
                 var confiner = FindFirstObjectByType<CinemachineConfiner>();
                 if (confiner != null)
                 {
-                    var boundary = GameObject.Find(saveData.mapBoundary);
+                    PolygonCollider2D boundary = null;
+                    
+                    // Thử load từ save file trước
+                    if (!string.IsNullOrEmpty(saveData.mapBoundary))
+                    {
+                        var boundaryObj = GameObject.Find(saveData.mapBoundary);
+                        if (boundaryObj != null)
+                        {
+                            boundary = boundaryObj.GetComponent<PolygonCollider2D>();
+                        }
+                    }
+                    
+                    // Nếu không tìm thấy từ save file, tìm boundary chứa player position
+                    if (boundary == null && player != null)
+                    {
+                        boundary = FindBoundaryForPlayer(player.transform.position);
+                        if (boundary != null)
+                        {
+                            Debug.Log($"[SaveController] Found boundary '{boundary.name}' for player position {player.transform.position}");
+                        }
+                    }
+                    
                     if (boundary != null)
-                        confiner.m_BoundingShape2D = boundary.GetComponent<PolygonCollider2D>();
+                    {
+                        confiner.m_BoundingShape2D = boundary;
+                        confiner.InvalidatePathCache();
+                        Debug.Log($"[SaveController] Updated camera confiner to: {boundary.name}");
+                    }
                     else
-                        Debug.LogError($"[SaveController] Map boundary '{saveData.mapBoundary}' not found in scene!");
+                    {
+                        Debug.LogWarning($"[SaveController] Could not find suitable boundary for player position!");
+                    }
                 }
             }
             else
             {
-                Debug.Log("[SaveController] Returning from cutscene - skipping player position load (CutsceneManager will handle it).");
+                Debug.Log("[SaveController] Returning from cutscene with return point - skipping player position and confiner load (CutsceneManager will handle it).");
             }
 
             // Tìm lại controllers nếu chưa có
@@ -264,6 +296,38 @@ public class SaveController : MonoBehaviour
         {
             Debug.LogError($"[SaveController] Error loading game: {e.Message}\n{e.StackTrace}");
         }
+    }
+
+    /// <summary>
+    /// Tìm boundary phù hợp với vị trí player
+    /// </summary>
+    private PolygonCollider2D FindBoundaryForPlayer(Vector3 playerPosition)
+    {
+        PolygonCollider2D[] allBoundaries = FindObjectsByType<PolygonCollider2D>(FindObjectsSortMode.None);
+        PolygonCollider2D bestBoundary = null;
+        float closestDistance = float.MaxValue;
+
+        foreach (var boundary in allBoundaries)
+        {
+            // Bỏ qua boundary không phải là map boundary (có thể là collider khác)
+            // Kiểm tra xem boundary có chứa player không
+            if (boundary.bounds.Contains(playerPosition))
+            {
+                // Nếu boundary chứa player, ưu tiên boundary này
+                bestBoundary = boundary;
+                break;
+            }
+
+            // Hoặc tìm boundary gần nhất
+            float distance = Vector2.Distance(boundary.bounds.center, playerPosition);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                bestBoundary = boundary;
+            }
+        }
+
+        return bestBoundary;
     }
 
     public void DeleteSave()
