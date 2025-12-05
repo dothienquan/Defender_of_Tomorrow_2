@@ -18,7 +18,10 @@ public class AutoFitToSlot : MonoBehaviour
 
     void OnRectTransformDimensionsChange() { Apply(); }
 
-    void Apply()
+    /// <summary>
+    /// Public method để có thể gọi Apply() từ bên ngoài
+    /// </summary>
+    public void Apply()
     {
         if (rt == null || rt.parent == null) return;
 

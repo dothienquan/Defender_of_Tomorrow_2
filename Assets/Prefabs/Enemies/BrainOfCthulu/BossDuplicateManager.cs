@@ -1,6 +1,7 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.UI;
 using DG.Tweening;
 
 public class BossDuplicateManager : MonoBehaviour
@@ -34,6 +35,14 @@ public class BossDuplicateManager : MonoBehaviour
     [SerializeField] private float shrinkDuration = 0.2f;  // Thời gian thu nhỏ
     [SerializeField] private float expandDuration = 0.2f;  // Thời gian phục hồi kích thước
 
+    [Header("On Death - NPC Spawn")]
+    [SerializeField] private GameObject npcToActivate;  // NPC GameObject cần active khi boss chết
+    [SerializeField] private float spawnDelay = 1f;  // Delay trước khi spawn NPC (sau khi boss chết)
+    [SerializeField] private float fadeInDuration = 1f;  // Thời gian fade in
+    [SerializeField] private float scaleUpDuration = 0.8f;  // Thời gian scale up
+    [SerializeField] private Ease fadeInEase = Ease.OutQuad;  // Easing cho fade in
+    [SerializeField] private Ease scaleUpEase = Ease.OutBack;  // Easing cho scale up (có bounce effect)
+
     private GameObject realVisual;
     private GameObject fakeVisual;
 
@@ -65,10 +74,37 @@ public class BossDuplicateManager : MonoBehaviour
         fi_currentHealth = t.GetField("currentHealth", BindingFlags.NonPublic | BindingFlags.Instance);
         fi_startingHealth = t.GetField("startingHealth", BindingFlags.NonPublic | BindingFlags.Instance);
     }
-
+    
     private void Start()
     {
+        // Subscribe vào OnDeath event của realHealth
+        if (realHealth != null)
+        {
+            realHealth.OnDeath += OnBossDeath;
+        }
+        
+        // Đảm bảo NPC bắt đầu inactive
+        if (npcToActivate != null)
+        {
+            npcToActivate.SetActive(false);
+        }
+        
+        // Spawn visuals
         SpawnVisuals();
+    }
+    
+    private void OnDestroy()
+    {
+        // Unsubscribe để tránh memory leak
+        if (realHealth != null)
+        {
+            realHealth.OnDeath -= OnBossDeath;
+        }
+        
+        // Kill tất cả DOTween sequences để tránh lỗi khi object bị destroy
+        if (realVisual != null) realVisual.transform.DOKill();
+        if (fakeVisual != null) fakeVisual.transform.DOKill();
+        if (npcToActivate != null) npcToActivate.transform.DOKill();
     }
 
     private void SpawnVisuals()
@@ -500,5 +536,144 @@ public class BossDuplicateManager : MonoBehaviour
         // Tween 2 bản thể trượt qua vị trí của nhau
         realVisual.transform.DOMove(p2, swapMoveDuration).SetEase(swapEase);
         fakeVisual.transform.DOMove(p1, swapMoveDuration).SetEase(swapEase);
+    }
+    
+    // ======================
+    //   BOSS DEATH HANDLER
+    // ======================
+    
+    /// <summary>
+    /// Được gọi khi boss chết (từ EnemyHealth.OnDeath event)
+    /// </summary>
+    private void OnBossDeath()
+    {
+        Debug.Log("[BossDuplicateManager] Boss died! Activating NPC with spawn effect...");
+        
+        if (npcToActivate == null)
+        {
+            Debug.LogWarning("[BossDuplicateManager] npcToActivate is not assigned!");
+            return;
+        }
+        
+        // Tạo một temporary GameObject để chạy coroutine (tránh bị dừng khi boss bị destroy)
+        GameObject coroutineRunner = new GameObject("NPCSpawningCoroutineRunner");
+        NPCSpawningHelper helper = coroutineRunner.AddComponent<NPCSpawningHelper>();
+        
+        // Gọi coroutine trên helper, truyền reference đến npcToActivate
+        helper.StartSpawnEffect(npcToActivate, spawnDelay, fadeInDuration, scaleUpDuration, fadeInEase, scaleUpEase);
+    }
+    
+}
+
+/// <summary>
+/// Helper component để chạy spawn effect coroutine
+/// Tránh bị dừng khi boss GameObject bị destroy
+/// </summary>
+public class NPCSpawningHelper : MonoBehaviour
+{
+    public void StartSpawnEffect(GameObject npc, float delay, float fadeDuration, float scaleDuration, DG.Tweening.Ease fadeEase, DG.Tweening.Ease scaleEase)
+    {
+        StartCoroutine(SpawnEffectCoroutine(npc, delay, fadeDuration, scaleDuration, fadeEase, scaleEase));
+    }
+    
+    private System.Collections.IEnumerator SpawnEffectCoroutine(GameObject npc, float delay, float fadeDuration, float scaleDuration, DG.Tweening.Ease fadeEase, DG.Tweening.Ease scaleEase)
+    {
+        Debug.Log($"[NPCSpawningHelper] SpawnEffectCoroutine started. Delay: {delay}s, NPC: {(npc != null ? npc.name : "NULL")}");
+        
+        // Kiểm tra npc
+        if (npc == null)
+        {
+            Debug.LogError("[NPCSpawningHelper] NPC GameObject is null!");
+            Destroy(gameObject);
+            yield break;
+        }
+        
+        // Đợi delay trước khi spawn
+        yield return new WaitForSeconds(delay);
+        
+        // Kiểm tra lại sau delay
+        if (npc == null)
+        {
+            Debug.LogError("[NPCSpawningHelper] NPC GameObject became null after delay!");
+            Destroy(gameObject);
+            yield break;
+        }
+        
+        Debug.Log($"[NPCSpawningHelper] Activating NPC: {npc.name}");
+        
+        // Active NPC (nhưng set alpha = 0 và scale = 0 để tạo hiệu ứng)
+        npc.SetActive(true);
+        
+        // Kiểm tra xem NPC đã active chưa
+        if (!npc.activeSelf)
+        {
+            Debug.LogError($"[NPCSpawningHelper] Failed to activate NPC: {npc.name}. Parent might be inactive!");
+            Destroy(gameObject);
+            yield break;
+        }
+        
+        Debug.Log($"[NPCSpawningHelper] NPC activated successfully: {npc.name}");
+        
+        // Lấy SpriteRenderer hoặc CanvasGroup để làm fade in
+        SpriteRenderer spriteRenderer = npc.GetComponent<SpriteRenderer>();
+        CanvasGroup canvasGroup = npc.GetComponent<CanvasGroup>();
+        
+        Debug.Log($"[NPCSpawningHelper] SpriteRenderer: {(spriteRenderer != null ? "Found" : "Not found")}, CanvasGroup: {(canvasGroup != null ? "Found" : "Not found")}");
+        
+        // Lưu scale ban đầu
+        Vector3 originalScale = npc.transform.localScale;
+        Debug.Log($"[NPCSpawningHelper] Original scale: {originalScale}");
+        
+        // Set initial state: invisible và nhỏ
+        if (spriteRenderer != null)
+        {
+            Color originalColor = spriteRenderer.color;
+            originalColor.a = 0f;
+            spriteRenderer.color = originalColor;
+            Debug.Log("[NPCSpawningHelper] Set SpriteRenderer alpha to 0");
+        }
+        else if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 0f;
+            Debug.Log("[NPCSpawningHelper] Set CanvasGroup alpha to 0");
+        }
+        else
+        {
+            Debug.LogWarning("[NPCSpawningHelper] No SpriteRenderer or CanvasGroup found! NPC will appear without fade effect.");
+        }
+        
+        npc.transform.localScale = Vector3.zero;
+        Debug.Log("[NPCSpawningHelper] Set scale to zero, starting animation...");
+        
+        // Tạo sequence cho hiệu ứng xuất hiện
+        DG.Tweening.Sequence spawnSequence = DG.Tweening.DOTween.Sequence();
+        
+        // Fade in
+        if (spriteRenderer != null)
+        {
+            spawnSequence.Append(spriteRenderer.DOFade(1f, fadeDuration).SetEase(fadeEase));
+            Debug.Log("[NPCSpawningHelper] Added SpriteRenderer fade in to sequence");
+        }
+        else if (canvasGroup != null)
+        {
+            spawnSequence.Append(canvasGroup.DOFade(1f, fadeDuration).SetEase(fadeEase));
+            Debug.Log("[NPCSpawningHelper] Added CanvasGroup fade in to sequence");
+        }
+        
+        // Scale up (chạy đồng thời với fade in)
+        spawnSequence.Join(npc.transform.DOScale(originalScale, scaleDuration).SetEase(scaleEase));
+        Debug.Log("[NPCSpawningHelper] Added scale up to sequence");
+        
+        spawnSequence.OnComplete(() =>
+        {
+            Debug.Log($"[NPCSpawningHelper] NPC spawn effect completed! NPC active: {npc != null && npc.activeSelf}");
+        });
+        
+        yield return spawnSequence.WaitForCompletion();
+        
+        Debug.Log("[NPCSpawningHelper] SpawnEffectCoroutine finished.");
+        
+        // Tự destroy helper GameObject sau khi hoàn thành
+        Destroy(gameObject);
     }
 }

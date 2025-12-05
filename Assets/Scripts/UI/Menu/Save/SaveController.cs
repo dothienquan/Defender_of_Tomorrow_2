@@ -30,26 +30,46 @@ public class SaveController : MonoBehaviour
         // Đợi thêm một chút để UI hoàn toàn sẵn sàng
         yield return new WaitForSeconds(loadDelay);
         
-        // Tìm controllers
-        inventoryController = FindFirstObjectByType<InventoryController>();
-        hotbarController = FindFirstObjectByType<HotbarController>();
+        // Tìm controllers với retry logic
+        int maxRetries = 5;
+        int retryCount = 0;
         
-        // Kiểm tra controllers có sẵn sàng không
+        while (inventoryController == null && retryCount < maxRetries)
+        {
+            inventoryController = FindFirstObjectByType<InventoryController>();
+            if (inventoryController == null)
+            {
+                Debug.LogWarning($"[SaveController] InventoryController not found, retrying... ({retryCount + 1}/{maxRetries})");
+                yield return new WaitForSeconds(0.2f);
+                retryCount++;
+            }
+        }
+        
+        retryCount = 0;
+        while (hotbarController == null && retryCount < maxRetries)
+        {
+            hotbarController = FindFirstObjectByType<HotbarController>();
+            if (hotbarController == null)
+            {
+                Debug.LogWarning($"[SaveController] HotbarController not found, retrying... ({retryCount + 1}/{maxRetries})");
+                yield return new WaitForSeconds(0.2f);
+                retryCount++;
+            }
+        }
+        
+        // Kiểm tra lại sau khi retry
         if (inventoryController == null)
         {
-            Debug.LogWarning("[SaveController] InventoryController not found, retrying...");
-            yield return new WaitForSeconds(0.1f);
-            inventoryController = FindFirstObjectByType<InventoryController>();
+            Debug.LogError("[SaveController] InventoryController STILL not found after retries! Inventory items may not load.");
         }
         
         if (hotbarController == null)
         {
-            Debug.LogWarning("[SaveController] HotbarController not found, retrying...");
-            yield return new WaitForSeconds(0.1f);
-            hotbarController = FindFirstObjectByType<HotbarController>();
+            Debug.LogError("[SaveController] HotbarController STILL not found after retries! Hotbar items may not load.");
         }
         
         // Load game
+        Debug.Log("[SaveController] Starting LoadGame()...");
         LoadGame();
     }
 
@@ -256,21 +276,28 @@ public class SaveController : MonoBehaviour
                 hotbarController = FindFirstObjectByType<HotbarController>();
             }
 
+            // QUAN TRỌNG: Luôn load items bất kể có quay lại từ cutscene hay không
+            // Items phải được load trong mọi trường hợp
             if (inventoryController != null)
             {
                 if (saveData.inventorySaveData != null && saveData.inventorySaveData.Count > 0)
                 {
                     Debug.Log($"[SaveController] Loading {saveData.inventorySaveData.Count} items into inventory...");
+                    foreach (var itemData in saveData.inventorySaveData)
+                    {
+                        Debug.Log($"[SaveController] - Inventory item: Slot {itemData.slotIndex}, Item ID {itemData.itemID}");
+                    }
                     inventoryController.SetInventoryItems(saveData.inventorySaveData);
+                    Debug.Log($"[SaveController] Inventory items loaded successfully.");
                 }
                 else
                 {
-                    Debug.Log("[SaveController] No inventory items to load.");
+                    Debug.LogWarning("[SaveController] No inventory items to load. Save data is empty or null.");
                 }
             }
             else
             {
-                Debug.LogWarning("[SaveController] InventoryController not found - skipping inventory load.");
+                Debug.LogError("[SaveController] InventoryController not found - CANNOT load inventory items!");
             }
 
             if (hotbarController != null)
@@ -278,16 +305,21 @@ public class SaveController : MonoBehaviour
                 if (saveData.hotbarSaveData != null && saveData.hotbarSaveData.Count > 0)
                 {
                     Debug.Log($"[SaveController] Loading {saveData.hotbarSaveData.Count} items into hotbar...");
+                    foreach (var itemData in saveData.hotbarSaveData)
+                    {
+                        Debug.Log($"[SaveController] - Hotbar item: Slot {itemData.slotIndex}, Item ID {itemData.itemID}");
+                    }
                     hotbarController.SetHotbarItems(saveData.hotbarSaveData);
+                    Debug.Log($"[SaveController] Hotbar items loaded successfully.");
                 }
                 else
                 {
-                    Debug.Log("[SaveController] No hotbar items to load.");
+                    Debug.LogWarning("[SaveController] No hotbar items to load. Save data is empty or null.");
                 }
             }
             else
             {
-                Debug.LogWarning("[SaveController] HotbarController not found - skipping hotbar load.");
+                Debug.LogError("[SaveController] HotbarController not found - CANNOT load hotbar items!");
             }
 
             Debug.Log("[SaveController] Game loaded successfully.");

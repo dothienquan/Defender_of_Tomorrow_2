@@ -262,12 +262,40 @@ public class MainMenuController : MonoBehaviour
         // Reset tất cả CutsceneTrigger states
         ResetAllCutsceneTriggers();
         
+        // Reset tất cả NPCDialogue auto-trigger states
+        ResetAllNPCDialogueAutoTriggers();
+        
         // Xóa tất cả PlayerPrefs keys liên quan đến CutsceneManager để tránh ảnh hưởng khi New Game
         PlayerPrefs.DeleteKey("CutsceneManager_PreviousScene");
         PlayerPrefs.DeleteKey("CutsceneManager_ReturnPointID");
         PlayerPrefs.DeleteKey("CutsceneManager_UseReturnPoint");
         PlayerPrefs.Save();
         Debug.Log("[MainMenuController] Đã xóa tất cả CutsceneManager PlayerPrefs keys.");
+    }
+    
+    /// <summary>
+    /// Reset tất cả NPCDialogue auto-trigger states
+    /// </summary>
+    private void ResetAllNPCDialogueAutoTriggers()
+    {
+        // Tìm tất cả NPCDialogue trong scene và reset auto-trigger state
+        NPCDialogue[] npcDialogues = FindObjectsByType<NPCDialogue>(FindObjectsSortMode.None);
+        int resetCount = 0;
+        
+        foreach (var npcDialogue in npcDialogues)
+        {
+            if (npcDialogue != null && npcDialogue.enableAutoTrigger)
+            {
+                npcDialogue.ResetAutoTriggerState();
+                resetCount++;
+            }
+        }
+        
+        // Xóa tất cả PlayerPrefs keys có prefix "NPCDialogue_AutoTrigger_"
+        // Vì Unity không hỗ trợ list keys, ta sẽ xóa các keys đã biết từ các NPCDialogue trong scene
+        // Các keys khác sẽ được xóa khi NPCDialogue được load lại
+        
+        Debug.Log($"[MainMenuController] Đã reset {resetCount} NPCDialogue auto-trigger state(s).");
     }
 
     /// <summary>
