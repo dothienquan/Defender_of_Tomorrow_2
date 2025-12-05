@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 530634101744471329}
   - component: {fileID: -8827702358685929317}
   - component: {fileID: 4707692086117040429}
+  - component: {fileID: 8643578154272965026}
   m_Layer: 5
   m_Name: Diamond3
   m_TagString: Item
@@ -168,9 +169,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc010e7939db7b24ea7750ce186a48e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  ID: 6
+  ID: 9
   Name: Diamond Piece 3
   isRaftMaterial: 0
+  weaponInfo: {fileID: 0}
 --- !u!61 &7407619502819793096
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -258,3 +260,24 @@ MonoBehaviour:
   enableRotation: 1
   scaleUpOnMagnet: 1
   scaleDuration: 0.2
+  activationDelay: 1
+  onlyActivateInPlayMode: 1
+  requirePlayerMovement: 1
+--- !u!114 &8643578154272965026
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4713562040881529758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90526a818b3790e41a25d71267e5b74f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDropEffect
+  highlightColor: {r: 1, g: 1, b: 1, a: 1}
+  highlightDuration: 2
+  highlightIntensity: 0.5
+  floatHeight: 0.3
+  floatDuration: 1
+  floatEase: 4

@@ -311,18 +311,36 @@ public class InventoryController : MonoBehaviour
     /// </summary>
     public bool HasItem(int itemID)
     {
+        if (inventoryPanel == null)
+        {
+            Debug.LogWarning("[InventoryController] HasItem: inventoryPanel is null!");
+            return false;
+        }
+        
         foreach (Transform slotTransform in inventoryPanel.transform)
         {
             Slot slot = slotTransform.GetComponent<Slot>();
-            if (slot != null && slot.currentItem != null)
+            if (slot == null) continue;
+            
+            if (slot.currentItem != null)
             {
                 Item item = slot.currentItem.GetComponent<Item>();
-                if (item != null && item.ID == itemID)
+                if (item != null)
                 {
-                    return true;
+                    if (item.ID == itemID)
+                    {
+                        Debug.Log($"[InventoryController] Found item ID {itemID} (Name: {item.Name}) in inventory.");
+                        return true;
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[InventoryController] Item in slot {slotTransform.GetSiblingIndex()} does not have Item component!");
                 }
             }
         }
+        
+        Debug.Log($"[InventoryController] Item ID {itemID} not found in inventory.");
         return false;
     }
 

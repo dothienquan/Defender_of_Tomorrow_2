@@ -45,15 +45,50 @@ public class LockedGateUI : MonoBehaviour
         if (confirmButton != null)
         {
             confirmButton.onClick.AddListener(OnConfirmClicked);
+            // Đảm bảo button có thể tương tác
+            confirmButton.interactable = true;
         }
 
         if (cancelButton != null)
         {
             cancelButton.onClick.AddListener(OnCancelClicked);
+            // Đảm bảo button có thể tương tác
+            cancelButton.interactable = true;
         }
 
         // Ẩn panel ban đầu
         gameObject.SetActive(false);
+    }
+
+    private void OnEnable()
+    {
+        // Khi panel được enable, đảm bảo buttons có thể tương tác
+        if (confirmButton != null)
+        {
+            confirmButton.interactable = true;
+        }
+        if (cancelButton != null)
+        {
+            cancelButton.interactable = true;
+        }
+        
+        // Reset animation state
+        isAnimating = false;
+        
+        // Force update Canvas để đảm bảo UI được render đúng
+        Canvas.ForceUpdateCanvases();
+        
+        // Đảm bảo EventSystem hoạt động
+        UnityEngine.EventSystems.EventSystem eventSystem = UnityEngine.EventSystems.EventSystem.current;
+        if (eventSystem != null)
+        {
+            // Clear selected object để tránh conflict
+            eventSystem.SetSelectedGameObject(null);
+        }
+        else
+        {
+            Debug.LogWarning("[LockedGateUI] EventSystem not found! UI interactions may not work.");
+        }
     }
 
     private void OnDestroy()
@@ -101,9 +136,12 @@ public class LockedGateUI : MonoBehaviour
         }
 
         // Enable/disable confirm button dựa trên việc có Key
+        // LƯU Ý: Luôn cho phép button interactable để có thể click và hiển thị message nếu không có key
+        // Logic kiểm tra key sẽ được xử lý trong OnConfirmClicked
         if (confirmButton != null)
         {
-            confirmButton.interactable = hasKey;
+            // Luôn cho phép button interactable để có thể click
+            confirmButton.interactable = true;
             
             // Cập nhật text button
             TextMeshProUGUI buttonText = confirmButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -112,6 +150,9 @@ public class LockedGateUI : MonoBehaviour
                 buttonText.text = confirmButtonText;
             }
         }
+        
+        // Force update Canvas sau khi update UI
+        Canvas.ForceUpdateCanvases();
 
         // Cập nhật key icon nếu có
         if (keyIcon != null && hasKey)
@@ -188,40 +229,35 @@ public class LockedGateUI : MonoBehaviour
     {
         if (lockedGate == null)
         {
+            Debug.LogWarning("[LockedGateUI] LockedGate is null!");
             return false;
         }
 
-        // Sử dụng reflection hoặc public method từ LockedGate
-        // Hoặc tự kiểm tra từ InventoryController
         InventoryController inventoryController = FindFirstObjectByType<InventoryController>();
         if (inventoryController == null)
         {
+            Debug.LogWarning("[LockedGateUI] InventoryController not found!");
             return false;
         }
 
-        // Lấy requiredKeyID từ LockedGate
-        // Vì LockedGate không expose public field, ta cần dùng reflection hoặc thêm public method
-        // Tạm thời dùng cách đơn giản: kiểm tra qua lockedGate
-        // Nếu lockedGate có method CheckHasKey, dùng nó
-        var checkHasKeyMethod = lockedGate.GetType().GetMethod("CheckHasKey", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        // Sử dụng public method GetRequiredKeyID() từ LockedGate
+        int requiredKeyID = lockedGate.GetRequiredKeyID();
+        bool hasKey = inventoryController.HasItem(requiredKeyID);
         
-        if (checkHasKeyMethod != null)
-        {
-            return (bool)checkHasKeyMethod.Invoke(lockedGate, null);
-        }
-
-        // Fallback: tìm requiredKeyID từ LockedGate bằng reflection
-        var requiredKeyIDField = lockedGate.GetType().GetField("requiredKeyID",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Debug.Log($"[LockedGateUI] Checking for key ID {requiredKeyID}: {(hasKey ? "FOUND" : "NOT FOUND")}");
         
-        if (requiredKeyIDField != null)
+        // Debug: In ra tất cả items trong inventory nếu không tìm thấy
+        if (!hasKey)
         {
-            int requiredKeyID = (int)requiredKeyIDField.GetValue(lockedGate);
-            return inventoryController.HasItem(requiredKeyID);
+            int itemCount = inventoryController.GetItemCount(requiredKeyID);
+            Debug.LogWarning($"[LockedGateUI] Key ID {requiredKeyID} not found. Item count: {itemCount}");
+            
+            // Debug: In ra tất cả items trong inventory (nếu có thể)
+            // Note: inventoryPanel có thể không public, nên chỉ log item count
+            Debug.Log($"[LockedGateUI] Item count for ID {requiredKeyID}: {itemCount}");
         }
-
-        return false;
+        
+        return hasKey;
     }
 
     private void OnCancelClicked()

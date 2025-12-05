@@ -17,6 +17,8 @@ GameObject:
   - component: {fileID: -5443378852345239405}
   - component: {fileID: -991853320885028631}
   - component: {fileID: -2325480500677759367}
+  - component: {fileID: -4958538494823845842}
+  - component: {fileID: 641537840960331263}
   m_Layer: 0
   m_Name: Key
   m_TagString: Item
@@ -229,3 +231,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AutoFitToSlot
   padding: 4
   preserveAspectForImage: 1
+--- !u!114 &-4958538494823845842
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5192320848714803689}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90526a818b3790e41a25d71267e5b74f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDropEffect
+  highlightColor: {r: 1, g: 0.9976436, b: 0, a: 1}
+  highlightDuration: 5
+  highlightIntensity: 1
+  floatHeight: 0.3
+  floatDuration: 1
+  floatEase: 4
+--- !u!114 &641537840960331263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5192320848714803689}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbfa7d5e6ec3cd64f8349818ff793e99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemMagnet
+  magnetDistance: 4
+  magnetSpeed: 8
+  accelerationRate: 2
+  rotationSpeed: 0
+  enableRotation: 1
+  scaleUpOnMagnet: 1
+  scaleDuration: 0
+  activationDelay: 1
+  onlyActivateInPlayMode: 1
+  requirePlayerMovement: 1

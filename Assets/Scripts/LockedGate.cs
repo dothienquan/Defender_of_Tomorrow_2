@@ -81,6 +81,17 @@ public class LockedGate : MonoBehaviour
         if (lockPanel != null)
         {
             lockPanel.SetActive(true);
+            
+            // Đảm bảo UI được update sau khi active
+            // Force update Canvas để đảm bảo layout được tính toán
+            Canvas.ForceUpdateCanvases();
+            
+            // Đảm bảo EventSystem hoạt động
+            UnityEngine.EventSystems.EventSystem eventSystem = UnityEngine.EventSystems.EventSystem.current;
+            if (eventSystem == null)
+            {
+                Debug.LogWarning("[LockedGate] EventSystem not found! UI interactions may not work.");
+            }
         }
 
         // Cập nhật UI với trạng thái Key
@@ -116,7 +127,26 @@ public class LockedGate : MonoBehaviour
             return false;
         }
 
-        return inventoryController.HasItem(requiredKeyID);
+        bool hasKey = inventoryController.HasItem(requiredKeyID);
+        Debug.Log($"[LockedGate] Checking for key ID {requiredKeyID}: {(hasKey ? "FOUND" : "NOT FOUND")}");
+        
+        // Debug: In ra tất cả items trong inventory
+        if (!hasKey)
+        {
+            Debug.LogWarning($"[LockedGate] Key ID {requiredKeyID} not found in inventory. Checking all items...");
+            int itemCount = inventoryController.GetItemCount(requiredKeyID);
+            Debug.Log($"[LockedGate] Item count for ID {requiredKeyID}: {itemCount}");
+        }
+        
+        return hasKey;
+    }
+    
+    /// <summary>
+    /// Public method để lấy requiredKeyID (dùng cho LockedGateUI)
+    /// </summary>
+    public int GetRequiredKeyID()
+    {
+        return requiredKeyID;
     }
 
     /// <summary>

@@ -216,21 +216,30 @@ public class CutsceneManager : Singleton<CutsceneManager>
             SceneManager.LoadScene("Defender Of Tomorrow");
         }
 
-        // Đợi scene load xong
+        // Đợi scene load xong và đảm bảo SaveController đã chạy xong
         yield return null;
         yield return null;
+        yield return new WaitForSeconds(0.2f); // Đợi SaveController.LoadGameDelayed() hoàn thành
 
         // Kiểm tra xem có nên dùng return point không (từ PlayerPrefs)
         bool shouldUseReturnPoint = PlayerPrefs.GetInt(USE_RETURN_POINT_KEY, 0) == 1;
+        
+        Debug.Log($"[CutsceneManager] Checking return point: useCustomReturnPosition={useCustomReturnPosition}, shouldUseReturnPoint={shouldUseReturnPoint}");
         
         // Set player position từ CutsceneReturnPoint nếu được bật
         if (useCustomReturnPosition && shouldUseReturnPoint)
         {
             SetPlayerReturnPosition();
         }
+        else if (shouldUseReturnPoint)
+        {
+            // Nếu shouldUseReturnPoint = true nhưng useCustomReturnPosition = false, vẫn thử set
+            Debug.LogWarning("[CutsceneManager] useCustomReturnPosition is false but shouldUseReturnPoint is true. Still attempting to set return position...");
+            SetPlayerReturnPosition();
+        }
         else
         {
-            Debug.Log("[CutsceneManager] Không sử dụng return point. Player sẽ ở vị trí mặc định.");
+            Debug.Log("[CutsceneManager] Không sử dụng return point. Player sẽ ở vị trí mặc định hoặc từ save file.");
         }
 
         // Re-enable player

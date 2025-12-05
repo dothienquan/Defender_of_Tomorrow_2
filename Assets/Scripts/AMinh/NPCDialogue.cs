@@ -40,7 +40,7 @@ public class NPCDialogue : MonoBehaviour
         // Luôn hiện F hint khi lại gần, dù có dialogue hay không
         if (!dialogueUI.gameObject.activeSelf && fHint != null)
         {
-            fHint.text = $"[{key}] {npcName}";
+            fHint.text = $"{npcName}";
             fHint.gameObject.SetActive(true);
         }
 
