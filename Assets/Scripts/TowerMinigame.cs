@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections;
-// Nếu bạn dùng VFX Graph thì uncomment dòng dưới
-// using UnityEngine.VFX;
 
 [RequireComponent(typeof(Collider2D))]
 public class TowerMinigame : MonoBehaviour
@@ -27,15 +25,11 @@ public class TowerMinigame : MonoBehaviour
     [Header("3 Waves")]
     public Wave[] waves = new Wave[3];
 
-    [Header("VFX (dùng sẵn, không Instantiate)")]
-    [Tooltip("Particle/VFX khi bắt đầu mini game (kích hoạt trụ) - gắn sẵn trong scene")]
+    [Header("VFX (dùng sẵn trong scene, KHÔNG Instantiate)")]
+    [Tooltip("Particle/VFX khi bắt đầu mini game (kích hoạt trụ) - gắn sẵn trong scene, ban đầu tắt")]
     public ParticleSystem activateVfx;
-    [Tooltip("Particle/VFX khi hoàn thành mini game - gắn sẵn trong scene")]
+    [Tooltip("Particle/VFX khi hoàn thành mini game - gắn sẵn trong scene, ban đầu tắt")]
     public ParticleSystem completeVfx;
-
-    // Nếu dùng VFX Graph thay vì ParticleSystem, có thể thêm:
-    // public VisualEffect activateVfxGraph;
-    // public VisualEffect completeVfxGraph;
 
     public bool IsCompleted { get; private set; }
     public bool IsActive { get; private set; }
@@ -57,8 +51,20 @@ public class TowerMinigame : MonoBehaviour
         _col = GetComponent<Collider2D>();
         if (indicator == null) indicator = GetComponentInChildren<SpriteRenderer>();
 
-        // Tự tìm VFX nếu chưa set trong Inspector
         AutoFindVfx();
+
+        // 🔹 Đảm bảo VFX ban đầu tắt hết
+        if (activateVfx != null)
+        {
+            activateVfx.gameObject.SetActive(false);
+            activateVfx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+
+        if (completeVfx != null)
+        {
+            completeVfx.gameObject.SetActive(false);
+            completeVfx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
 
         SetIndicator(idleColor);
     }
@@ -68,7 +74,6 @@ public class TowerMinigame : MonoBehaviour
         if (activateVfx != null && completeVfx != null) return;
 
         var particles = GetComponentsInChildren<ParticleSystem>(true);
-
         foreach (var p in particles)
         {
             var n = p.gameObject.name.ToLower();
@@ -103,31 +108,29 @@ public class TowerMinigame : MonoBehaviour
         _currentWave = -1;
         SetIndicator(activeColor);
 
-        // Routine kích hoạt: VFX + delay 2s rồi mới chạy wave
         if (_activateRoutine != null)
-        {
             StopCoroutine(_activateRoutine);
-        }
+
         _activateRoutine = StartCoroutine(ActivateRoutine());
     }
 
     private IEnumerator ActivateRoutine()
     {
-        // Play VFX kích hoạt có sẵn
+        // 🔹 Bật VFX kích hoạt
         if (activateVfx != null)
         {
             activateVfx.transform.position = transform.position;
+            activateVfx.gameObject.SetActive(true);
             activateVfx.Play();
         }
 
-        // Nếu dùng VFX Graph:
-        // if (activateVfxGraph != null)
-        // {
-        //     activateVfxGraph.transform.position = transform.position;
-        //     activateVfxGraph.Play();
-        // }
+        // Đảm bảo VFX hoàn thành vẫn tắt
+        if (completeVfx != null)
+        {
+            completeVfx.gameObject.SetActive(false);
+        }
 
-        yield return new WaitForSeconds(2f); // Delay mini game 2s
+        yield return new WaitForSeconds(2f);
 
         NextWave();
         _activateRoutine = null;
@@ -196,19 +199,20 @@ public class TowerMinigame : MonoBehaviour
         IsActive = false;
         SetIndicator(doneColor);
 
-        // Play VFX hoàn thành có sẵn
+        // 🔹 Tắt VFX kích hoạt
+        if (activateVfx != null)
+        {
+            activateVfx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            activateVfx.gameObject.SetActive(false);
+        }
+
+        // 🔹 Bật VFX hoàn thành
         if (completeVfx != null)
         {
             completeVfx.transform.position = transform.position;
+            completeVfx.gameObject.SetActive(true);
             completeVfx.Play();
         }
-
-        // Nếu dùng VFX Graph:
-        // if (completeVfxGraph != null)
-        // {
-        //     completeVfxGraph.transform.position = transform.position;
-        //     completeVfxGraph.Play();
-        // }
 
         OnTowerCompleted?.Invoke(this);
         Debug.Log($"[TowerMinigame] Tower {name} completed.");
