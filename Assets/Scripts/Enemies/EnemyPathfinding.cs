@@ -1,5 +1,4 @@
-﻿
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -51,6 +50,7 @@ public class EnemyPathfinding : MonoBehaviour
         float finalSpeed = moveSpeed * CurrentSlowMultiplier;
         rb.MovePosition(rb.position + moveDir * (finalSpeed * Time.fixedDeltaTime));
 
+        // Nếu dùng EnemyAnimator để flip sprite thì có thể xoá đoạn này
         if (moveDir.x < 0)
         {
             spriteRenderer.flipX = true;
@@ -63,7 +63,8 @@ public class EnemyPathfinding : MonoBehaviour
 
     public void MoveTo(Vector2 targetDirection)
     {
-        moveDir = targetDirection; // giả định đã normalized từ AI
+        // giả định đã normalized từ AI
+        moveDir = targetDirection;
     }
 
     public void StopMoving()
@@ -101,4 +102,10 @@ public class EnemyPathfinding : MonoBehaviour
 
     public float GetMoveSpeed() => moveSpeed;
     public void SetMoveSpeed(float newSpeed) => moveSpeed = Mathf.Max(0f, newSpeed);
+
+    // ✅ HÀM THÊM CHO ANIMATOR
+    public Vector2 GetCurrentVelocity()
+    {
+        return moveDir;
+    }
 }
