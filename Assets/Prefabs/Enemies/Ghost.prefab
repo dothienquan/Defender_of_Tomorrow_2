@@ -210,10 +210,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9015f75b026bc3f439ef0172a0cb81af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startingHealth: 3
+  startingHealth: 6
   deathVFXPrefab: {fileID: 2948048360338672110, guid: 3d13b6848d0f25c46b3afa0411533229, type: 3}
   knockBackThrust: 15
   expPickupPrefab: {fileID: 5210306458450560170, guid: 3d47f448c66c9d643b09632d924025e7, type: 3}
+  dotFlashColor: {r: 1, g: 0.5, b: 0, a: 1}
+  slowFlashColor: {r: 0.3, g: 0.6, b: 1, a: 1}
+  destroyOnDeath: 1
 --- !u!114 &2111707359881463380
 MonoBehaviour:
   m_ObjectHideFlags: 0
