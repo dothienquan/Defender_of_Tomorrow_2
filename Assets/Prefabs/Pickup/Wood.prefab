@@ -17,6 +17,8 @@ GameObject:
   - component: {fileID: 5676165113926382967}
   - component: {fileID: 8842800134001512206}
   - component: {fileID: 439748306224263480}
+  - component: {fileID: 4327039951616314920}
+  - component: {fileID: 2103682675005149158}
   m_Layer: 0
   m_Name: Wood
   m_TagString: Item
@@ -154,6 +156,7 @@ MonoBehaviour:
   ID: 33
   Name: Wood
   isRaftMaterial: 1
+  weaponInfo: {fileID: 0}
 --- !u!114 &1914826284813222765
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -238,3 +241,43 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 2.125}
   m_EdgeRadius: 0
+--- !u!114 &4327039951616314920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 352553367220645985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90526a818b3790e41a25d71267e5b74f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDropEffect
+  highlightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  highlightDuration: 2
+  highlightIntensity: 0.5
+  floatHeight: 0.3
+  floatDuration: 1
+  floatEase: 4
+--- !u!114 &2103682675005149158
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 352553367220645985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbfa7d5e6ec3cd64f8349818ff793e99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemMagnet
+  magnetDistance: 3
+  magnetSpeed: 8
+  accelerationRate: 2
+  rotationSpeed: 360
+  enableRotation: 1
+  scaleUpOnMagnet: 1.2
+  scaleDuration: 0.2
+  activationDelay: 1
+  onlyActivateInPlayMode: 1
+  requirePlayerMovement: 1
