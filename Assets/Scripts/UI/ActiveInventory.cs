@@ -294,6 +294,14 @@ public class ActiveInventory : Singleton<ActiveInventory>
 
         GameObject newWeapon = Object.Instantiate(weaponToSpawn, ActiveWeapon.Instance.transform);
         
+        // QUAN TRỌNG: Enable Animator nếu có (để weapon có thể animate khi equip)
+        Animator weaponAnimator = newWeapon.GetComponent<Animator>();
+        if (weaponAnimator != null)
+        {
+            weaponAnimator.enabled = true;
+            Debug.Log($"[ActiveInventory] Enabled Animator on equipped weapon: {newWeapon.name}");
+        }
+        
         // Đảm bảo weapon instance sử dụng đúng WeaponInfo từ Item
         // Tìm tất cả các component IWeapon và set WeaponInfo nếu có thể
         MonoBehaviour[] weaponComponents = newWeapon.GetComponents<MonoBehaviour>();

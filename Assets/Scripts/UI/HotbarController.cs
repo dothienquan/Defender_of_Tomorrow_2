@@ -235,7 +235,8 @@ public class HotbarController : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogWarning($"[HotbarController] Item prefab with ID {data.itemID} not found in ItemDictionary!");
+                    Debug.LogError($"[HotbarController] Item prefab with ID {data.itemID} not found in ItemDictionary! Slot: {data.slotIndex}. " +
+                        $"This item will not be loaded. Make sure ItemDictionary contains an item with ID {data.itemID}.");
                 }
             }
         }

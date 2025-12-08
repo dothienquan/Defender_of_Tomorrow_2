@@ -17,7 +17,6 @@ GameObject:
   - component: {fileID: -879760526975525505}
   - component: {fileID: -6304660545611264017}
   - component: {fileID: 1529068270340285941}
-  - component: {fileID: -7899796391710741254}
   m_Layer: 0
   m_Name: Fire Bow
   m_TagString: Item
@@ -141,7 +140,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5230466394355095501}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 9a9862bed7e984e4c988c51c469d1c1a, type: 2}
   m_CullingMode: 0
@@ -237,20 +236,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.3333334, y: 1.3333334}
   m_EdgeRadius: 0
---- !u!114 &-7899796391710741254
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5230466394355095501}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1d7fef0c817bdd4ba0bce749372498e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WorldItemUIHandler
-  autoDisableUIInWorld: 1
-  autoEnableUIInInventory: 1
 --- !u!1 &7007428255817775201
 GameObject:
   m_ObjectHideFlags: 0
