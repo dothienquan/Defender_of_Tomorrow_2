@@ -138,12 +138,20 @@ public class SaveController : MonoBehaviour
             }
         }
 
+        // Lấy gold coin từ EconomyManager
+        int goldCoin = 0;
+        if (EconomyManager.Instance != null)
+        {
+            goldCoin = EconomyManager.Instance.CurrentGold;
+        }
+
         SaveData saveData = new SaveData
         {
             playerPosition = player.transform.position,
             mapBoundary = confiner.m_BoundingShape2D?.gameObject.name ?? "",
             inventorySaveData = inventoryData ?? new List<InventorySaveData>(),
-            hotbarSaveData = hotbarData ?? new List<InventorySaveData>()
+            hotbarSaveData = hotbarData ?? new List<InventorySaveData>(),
+            goldCoin = goldCoin
         };
 
         string jsonData = JsonUtility.ToJson(saveData);
@@ -198,7 +206,18 @@ public class SaveController : MonoBehaviour
                 return;
             }
 
-            Debug.Log($"[SaveController] Loaded save data: {saveData.inventorySaveData?.Count ?? 0} inventory items, {saveData.hotbarSaveData?.Count ?? 0} hotbar items.");
+            Debug.Log($"[SaveController] Loaded save data: {saveData.inventorySaveData?.Count ?? 0} inventory items, {saveData.hotbarSaveData?.Count ?? 0} hotbar items, {saveData.goldCoin} gold coins.");
+
+            // Load gold coin
+            if (EconomyManager.Instance != null)
+            {
+                EconomyManager.Instance.SetGold(saveData.goldCoin);
+                Debug.Log($"[SaveController] Loaded {saveData.goldCoin} gold coins.");
+            }
+            else
+            {
+                Debug.LogWarning("[SaveController] EconomyManager.Instance is null! Cannot load gold coins.");
+            }
 
             // Kiểm tra xem có đang quay lại từ cutscene không
             // Nếu có useReturnPoint = true, không load player position và confiner vì CutsceneManager sẽ set từ CutsceneReturnPoint

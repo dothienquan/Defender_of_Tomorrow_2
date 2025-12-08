@@ -79,6 +79,14 @@ public class PlayerItemCollector : MonoBehaviour
         Item item = itemObj.GetComponent<Item>();
         if (item == null) return;
 
+        // QUAN TRỌNG: Stop ItemDropEffect trước khi collect để tránh tweens can thiệp vào inventory UI
+        ItemDropEffect dropEffect = itemObj.GetComponent<ItemDropEffect>();
+        if (dropEffect != null)
+        {
+            dropEffect.StopEffect();
+            Debug.Log($"[PlayerItemCollector] Stopped ItemDropEffect on {itemObj.name} before collecting.");
+        }
+
         // Lấy prefab từ ItemDictionary dựa trên Item.ID
         ItemDictionary itemDictionary = FindFirstObjectByType<ItemDictionary>();
         GameObject itemPrefab = null;

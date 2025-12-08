@@ -63,6 +63,16 @@ public class InventoryController : MonoBehaviour
                 // QUAN TRỌNG: Instantiate với worldPositionStays = false để item được đặt đúng trong UI space
                 GameObject newItem = Instantiate(itemPrefab, slotTransform, false);
                 
+                // QUAN TRỌNG: Stop và disable ItemDropEffect nếu có (để tránh tweens can thiệp vào inventory UI)
+                ItemDropEffect dropEffect = newItem.GetComponent<ItemDropEffect>();
+                if (dropEffect != null)
+                {
+                    dropEffect.StopEffect();
+                    // Disable component để tránh tự động start lại trong OnEnable
+                    dropEffect.enabled = false;
+                    Debug.Log($"[InventoryController] Stopped and disabled ItemDropEffect on {newItem.name}.");
+                }
+                
                 // Nếu item có WorldItemUIHandler, enable UI components
                 WorldItemUIHandler worldItemHandler = newItem.GetComponent<WorldItemUIHandler>();
                 if (worldItemHandler != null)
@@ -352,11 +362,9 @@ public class InventoryController : MonoBehaviour
             if (image.sprite != null)
             {
                 image.enabled = true;
-                // Đảm bảo color alpha = 1 (không transparent)
-                Color imgColor = image.color;
-                imgColor.a = 1f;
-                image.color = imgColor;
-                Debug.Log($"[InventoryController] Image enabled for '{newItem.name}' with sprite: {image.sprite.name}");
+                // QUAN TRỌNG: Reset color về white (alpha = 1) để đảm bảo không bị ảnh hưởng bởi ItemDropEffect
+                image.color = Color.white;
+                Debug.Log($"[InventoryController] Image enabled for '{newItem.name}' with sprite: {image.sprite.name}, color reset to white.");
             }
             else
             {
@@ -366,6 +374,14 @@ public class InventoryController : MonoBehaviour
         else
         {
             Debug.LogWarning($"[InventoryController] No Image component found for '{newItem.name}' after setup!");
+        }
+        
+        // QUAN TRỌNG: Reset SpriteRenderer color nếu có (để đảm bảo không bị ảnh hưởng bởi ItemDropEffect)
+        // Sử dụng lại biến spriteRenderer đã khai báo ở đầu method
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = Color.white;
+            Debug.Log($"[InventoryController] SpriteRenderer color reset to white for '{newItem.name}'.");
         }
         
         // Đảm bảo GameObject được active
@@ -705,6 +721,16 @@ Debug.Log($"[InventoryController] ItemDictionary found. Attempting to load {inve
 
             // Instantiate item
             GameObject newItem = Instantiate(itemPrefab, slotTransform, false);
+            
+            // QUAN TRỌNG: Stop và disable ItemDropEffect nếu có (để tránh tweens can thiệp vào inventory UI)
+            ItemDropEffect dropEffect = newItem.GetComponent<ItemDropEffect>();
+            if (dropEffect != null)
+            {
+                dropEffect.StopEffect();
+                // Disable component để tránh tự động start lại trong OnEnable
+                dropEffect.enabled = false;
+                Debug.Log($"[InventoryController] Stopped and disabled ItemDropEffect on {newItem.name} during load.");
+            }
             
             // Nếu item có WorldItemUIHandler, enable UI components
             WorldItemUIHandler worldItemHandler = newItem.GetComponent<WorldItemUIHandler>();
