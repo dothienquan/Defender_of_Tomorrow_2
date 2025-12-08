@@ -194,30 +194,36 @@ ShopSlot (GameObject)
 
 ## Bước 6: Tích Hợp Vào Game
 
-### 6.1. Tạo NPC Hoặc Trigger Để Mở Shop
+### 6.1. Tạo NPC Shop (Khuyến Nghị)
 
-**Option A: NPC với Interact Button**
+**Cách 1: Sử dụng ShopNPC Script (Đơn giản nhất)**
 
-```csharp
-// Trong NPC script
-private void OnTriggerEnter2D(Collider2D other)
-{
-    if (other.CompareTag("Player"))
-    {
-        // Hiển thị "Press E to open shop"
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            ShopController shop = FindFirstObjectByType<ShopController>();
-            if (shop != null)
-            {
-                shop.OpenShop();
-            }
-        }
-    }
-}
-```
+1. Chọn NPC GameObject trong scene
+2. Add Component → `ShopNPC`
+3. Cấu hình:
+   - **Shop Controller**: Kéo ShopPanel (có ShopController component) vào đây
+     - Hoặc để `Auto Find Shop = true` để tự động tìm
+   - **Interact Key**: KeyCode.F (mặc định)
+   - **Interaction UI**: Kéo InteractionUI GameObject vào đây (optional)
+   - **Interaction Text**: "Mở Shop" (hoặc tên NPC)
 
-**Option B: Button Trong Menu**
+4. Đảm bảo NPC có:
+   - **Collider2D** với **Is Trigger = ✅**
+   - **Tag = "Player"** không cần (NPC không phải Player)
+
+**Cách 2: Sử dụng ShopInteractable (Tương thích với PlayerInteraction system)**
+
+1. Chọn NPC GameObject trong scene
+2. Add Component → `ShopInteractable`
+3. Cấu hình:
+   - **Shop Controller**: Kéo ShopPanel vào đây
+   - **Display Name**: "Shop Keeper" (hiển thị khi player đến gần)
+
+4. Đảm bảo Player có `PlayerInteraction` component:
+   - Player GameObject → Add Component → `PlayerInteraction`
+   - **Interaction UI**: Kéo InteractionUI GameObject vào đây
+
+**Cách 3: Button Trong Menu**
 
 1. Tạo button "Shop" trong main menu hoặc pause menu
 2. OnClick → `ShopController.OpenShop()`
