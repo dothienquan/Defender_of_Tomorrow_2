@@ -3,40 +3,54 @@
 public class EnemyAnimator : MonoBehaviour
 {
     [SerializeField] private Animator animator;
-    [SerializeField] private Transform model; // sẽ auto tìm, không cần kéo nữa
+    [SerializeField] private Transform model;   // auto lấy từ Animator nếu để trống
 
-    [Header("Attack")]
-    [SerializeField] private Collider2D attackHitbox;
+    [System.Serializable]
+    public class AttackHitbox
+    {
+        public string name;          // chỉ để dễ nhìn trong Inspector
+        public Collider2D collider;  // hitbox của attack này
+    }
+
+    [Header("Attack Hitboxes (mỗi attack 1 hitbox)")]
+    [SerializeField] private AttackHitbox[] attackHitboxes;
 
     private bool _isDead;
-    private Vector3 _hitboxDefaultLocalPos;
 
     private void Awake()
     {
         AutoAssignModelAndAnimator();
-
-        if (attackHitbox != null)
-            _hitboxDefaultLocalPos = attackHitbox.transform.localPosition;
+        InitHitboxes();
     }
 
     private void AutoAssignModelAndAnimator()
     {
-        // Nếu animator chưa gán → tìm trong con
         if (!animator)
             animator = GetComponentInChildren<Animator>();
 
-        // Nếu model chưa gán → lấy transform của object chứa Animator
-        if (animator)
+        if (animator && model == null)
             model = animator.transform;
 
-        // Nếu model vẫn không có (quá hiếm) → fallback lấy chính object này
         if (!model)
             model = transform;
     }
 
+    private void InitHitboxes()
+    {
+        if (attackHitboxes == null) return;
+
+        // Tắt hết hitbox khi start
+        for (int i = 0; i < attackHitboxes.Length; i++)
+        {
+            if (attackHitboxes[i].collider != null)
+                attackHitboxes[i].collider.enabled = false;
+        }
+    }
+
+    // ================== MOVE / FACING ==================
     public void SetMoveDirection(Vector2 dir)
     {
-        if (_isDead) return;
+        if (_isDead || animator == null) return;
 
         float speedSqr = dir.sqrMagnitude;
         animator.SetFloat("Speed", speedSqr);
@@ -60,26 +74,28 @@ public class EnemyAnimator : MonoBehaviour
         if (xDir < -0.01f)
         {
             model.localScale = new Vector3(-1, 1, 1);
-            FlipHitbox(true);
         }
         else if (xDir > 0.01f)
         {
             model.localScale = new Vector3(1, 1, 1);
-            FlipHitbox(false);
         }
+        // colliders là con của model nên tự flip luôn
     }
 
-    private void FlipHitbox(bool faceLeft)
+    // ================== ATTACK ANIM ==================
+    // Dùng nếu bạn chỉ có 1 kiểu attack, hoặc IEnemy tự set trigger riêng.
+    public void PlayAttack()
     {
-        if (attackHitbox == null) return;
-
-        float baseX = Mathf.Abs(_hitboxDefaultLocalPos.x);
-        Vector3 pos = _hitboxDefaultLocalPos;
-        pos.x = faceLeft ? -baseX : baseX;
-        attackHitbox.transform.localPosition = pos;
+        animator.SetTrigger("Attack");
     }
 
-    public void PlayAttack() => animator.SetTrigger("Attack");
+    // Nếu bạn có nhiều animation tấn công khác nhau (Attack1, Attack2,...)
+    // bạn có thể dùng hàm này:
+    public void PlayAttackByIndex(int index)
+    {
+        animator.SetInteger("AttackIndex", index); // trong Animator phải có int AttackIndex
+        animator.SetTrigger("Attack");
+    }
 
     public void PlayDeath()
     {
@@ -87,16 +103,55 @@ public class EnemyAnimator : MonoBehaviour
         animator.SetBool("IsDead", true);
     }
 
-    // Animation Events
-    public void EnableHitbox()
+    // ================== HITBOX (Animation Event) ==================
+
+    // Gọi từ Animation Event, với tham số int (0, 1, 2,...)
+    public void EnableHitbox(int index)
     {
-        if (attackHitbox != null)
-            attackHitbox.enabled = true;
+        DisableAllHitboxes();
+
+        if (attackHitboxes == null) return;
+        if (index < 0 || index >= attackHitboxes.Length) return;
+
+        var col = attackHitboxes[index].collider;
+        if (col != null)
+            col.enabled = true;
     }
 
-    public void DisableHitbox()
+    // Nếu bạn muốn tắt 1 hitbox cụ thể (ít dùng, thường tắt tất cả)
+    public void DisableHitbox(int index)
     {
-        if (attackHitbox != null)
-            attackHitbox.enabled = false;
+        if (attackHitboxes == null) return;
+        if (index < 0 || index >= attackHitboxes.Length) return;
+
+        var col = attackHitboxes[index].collider;
+        if (col != null)
+            col.enabled = false;
+    }
+
+    // Gọi ở cuối animation attack (Animation Event) hoặc khi đổi state
+    public void DisableAllHitboxes()
+    {
+        if (attackHitboxes == null) return;
+
+        for (int i = 0; i < attackHitboxes.Length; i++)
+        {
+            if (attackHitboxes[i].collider != null)
+                attackHitboxes[i].collider.enabled = false;
+        }
+    }
+
+    // Tuỳ chọn: nếu muốn ép về Idle + tắt hitbox khi player rời AttackZone
+    public void ForceIdle()
+    {
+        if (animator == null) return;
+
+        animator.ResetTrigger("Attack");
+        animator.SetBool("IsMoving", false);
+        animator.SetFloat("Speed", 0f);
+
+        DisableAllHitboxes();
+
+        animator.Play("Idle", 0, 0f); // "Idle" = tên state idle trong Animator
     }
 }
