@@ -148,6 +148,13 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         originalParent = transform.parent; //Save OG parent
         originalSiblingIndex = transform.GetSiblingIndex();
         
+        // QUAN TRỌNG: Kiểm tra xem item có đang ở đúng slot không
+        Slot currentSlot = originalParent != null ? originalParent.GetComponent<Slot>() : null;
+        if (currentSlot == null)
+        {
+            Debug.LogWarning($"[ItemDragHandler] Item '{gameObject.name}' is not in a slot! Parent: {originalParent?.name}. This may cause dragging issues.");
+        }
+        
         // Lưu tất cả RectTransform properties
         if (rectTransform == null)
         {
@@ -164,14 +171,86 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             originalPivot = rectTransform.pivot;
             originalParentScale = originalParent != null ? originalParent.localScale : Vector3.one;
             
-            // Lưu kích thước visual thực tế (kích thước hiển thị trên màn hình)
-            // Sử dụng rect.size để lấy kích thước local, sau đó nhân với lossyScale để có world size
-            Vector2 localRectSize = rectTransform.rect.size;
-            Vector3 currentLossyScale = rectTransform.lossyScale;
-            originalWorldSize = new Vector2(
-                localRectSize.x * currentLossyScale.x,
-                localRectSize.y * currentLossyScale.y
-            );
+            // QUAN TRỌNG: Tính kích thước visual thực tế từ sprite size, không phải từ rect.size
+            // Vì với stretch anchors (0-1), rect.size sẽ là kích thước của slot, không phải item
+            Vector2 spriteSize = Vector2.zero;
+            
+            // Thử lấy từ Image component trước
+            Image image = GetComponent<Image>();
+            if (image != null && image.sprite != null)
+            {
+                spriteSize = image.sprite.rect.size;
+            }
+            else
+            {
+                // Nếu không có Image, thử từ SpriteRenderer
+                SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+                if (spriteRenderer != null && spriteRenderer.sprite != null)
+                {
+                    spriteSize = spriteRenderer.sprite.rect.size;
+                }
+            }
+            
+            // Nếu có sprite size, sử dụng nó nhân với lossyScale
+            if (spriteSize.x > 0 && spriteSize.y > 0)
+            {
+                Vector3 currentLossyScale = rectTransform.lossyScale;
+                originalWorldSize = new Vector2(
+                    spriteSize.x * currentLossyScale.x * originalScale.x,
+                    spriteSize.y * currentLossyScale.y * originalScale.y
+                );
+                Debug.Log($"[ItemDragHandler] Using sprite size for '{gameObject.name}': sprite={spriteSize}, world={originalWorldSize}, scale={currentLossyScale}");
+            }
+            else
+            {
+                // Fallback: sử dụng rect.size (chỉ khi anchors không phải stretch)
+                Vector2 localRectSize = rectTransform.rect.size;
+                Vector3 currentLossyScale = rectTransform.lossyScale;
+                
+                // Nếu anchors là stretch (0-1), rect.size sẽ là slot size, không đúng
+                // Trong trường hợp này, sử dụng sizeDelta nếu có
+                if (rectTransform.anchorMin == Vector2.zero && rectTransform.anchorMax == Vector2.one)
+                {
+                    // Stretch anchors - rect.size không đáng tin cậy
+                    // Sử dụng sizeDelta nếu có, nếu không thì dùng default
+                    if (originalSizeDelta.x > 0 && originalSizeDelta.y > 0)
+                    {
+                        originalWorldSize = new Vector2(
+                            originalSizeDelta.x * currentLossyScale.x * originalScale.x,
+                            originalSizeDelta.y * currentLossyScale.y * originalScale.y
+                        );
+                        Debug.Log($"[ItemDragHandler] Using sizeDelta for '{gameObject.name}' (stretch anchors): sizeDelta={originalSizeDelta}, world={originalWorldSize}");
+                    }
+                    else
+                    {
+                        // Không có sizeDelta hợp lệ, dùng rect size nhưng log warning
+                        originalWorldSize = new Vector2(
+                            localRectSize.x * currentLossyScale.x,
+                            localRectSize.y * currentLossyScale.y
+                        );
+                        Debug.LogWarning($"[ItemDragHandler] Item '{gameObject.name}' has stretch anchors but no valid sprite size or sizeDelta. Using rect.size (may be incorrect): {originalWorldSize}");
+                    }
+                }
+                else
+                {
+                    // Không phải stretch anchors - rect.size đáng tin cậy
+                    originalWorldSize = new Vector2(
+                        localRectSize.x * currentLossyScale.x,
+                        localRectSize.y * currentLossyScale.y
+                    );
+                    Debug.Log($"[ItemDragHandler] Using rect.size for '{gameObject.name}': rect={localRectSize}, world={originalWorldSize}");
+                }
+            }
+            
+            // QUAN TRỌNG: Kiểm tra anchors
+            // Với stretch anchors (0-1), anchors không bằng nhau là bình thường và không phải vấn đề
+            // Chỉ cảnh báo nếu anchors không phải stretch và không bằng nhau (có thể gây constraints)
+            bool isStretchAnchors = (rectTransform.anchorMin == Vector2.zero && rectTransform.anchorMax == Vector2.one);
+            if (!isStretchAnchors && rectTransform.anchorMin != rectTransform.anchorMax)
+            {
+                // Anchors không bằng nhau và không phải stretch - có thể gây ra constraints
+                Debug.LogWarning($"[ItemDragHandler] Item '{gameObject.name}' has non-matching anchors before drag (min: {rectTransform.anchorMin}, max: {rectTransform.anchorMax}). This may restrict movement.");
+            }
         }
         
         // Tìm hoặc tạo drag container với scale = 1 để tránh ảnh hưởng của CanvasScaler
@@ -200,43 +279,73 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             targetParent = transform.root;
         }
         
+        // QUAN TRỌNG: Lấy kích thước visual thực tế TRƯỚC KHI chuyển parent
+        // Với stretch anchors, rect.size = slot size - offsets, đó chính là kích thước visual
+        Vector2 visualSizeBeforeParentChange = Vector2.zero;
+        Vector3 lossyScaleBeforeParentChange = Vector3.one;
+        if (rectTransform != null)
+        {
+            visualSizeBeforeParentChange = rectTransform.rect.size;
+            lossyScaleBeforeParentChange = rectTransform.lossyScale;
+            Debug.Log($"[ItemDragHandler] Item '{gameObject.name}' before parent change - visual: {visualSizeBeforeParentChange}, lossyScale: {lossyScaleBeforeParentChange}");
+        }
+        
         // Set parent
         transform.SetParent(targetParent, false);
         
-        // Tính toán sizeDelta mới để giữ nguyên kích thước visual (không bị ảnh hưởng bởi CanvasScaler)
+        // QUAN TRỌNG: Giữ nguyên kích thước visual khi drag (không zoom)
+        // Visual size đã là kích thước trên màn hình, dùng trực tiếp
         if (rectTransform != null)
         {
-            // Lấy CanvasScaler để tính scale factor
-            UnityEngine.UI.CanvasScaler canvasScaler = canvas != null ? canvas.GetComponent<UnityEngine.UI.CanvasScaler>() : null;
-            float canvasScaleFactor = 1f;
+            // Lấy lossyScale mới sau khi chuyển parent
+            Vector3 newLossyScale = rectTransform.lossyScale;
             
-            if (canvasScaler != null)
-            {
-                if (canvasScaler.uiScaleMode == UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize)
-                {
-                    // Tính scale factor từ CanvasScaler
-                    float scaleX = Screen.width / canvasScaler.referenceResolution.x;
-                    float scaleY = Screen.height / canvasScaler.referenceResolution.y;
-                    float match = canvasScaler.matchWidthOrHeight;
-                    canvasScaleFactor = Mathf.Lerp(scaleX, scaleY, match);
-                }
-                else if (canvasScaler.uiScaleMode == UnityEngine.UI.CanvasScaler.ScaleMode.ConstantPixelSize)
-                {
-                    canvasScaleFactor = canvasScaler.scaleFactor;
-                }
-            }
-            
-            // Tính sizeDelta mới
-            // originalWorldSize là kích thước trên màn hình (đã bao gồm CanvasScaler)
-            // DragContainer có scale = 1, nhưng vẫn bị ảnh hưởng bởi CanvasScaler của Canvas
-            // Nên cần chia cho canvasScaleFactor để có sizeDelta đúng
+            // QUAN TRỌNG: Visual size (rect.size) đã là kích thước trên màn hình
+            // Với center anchors (0.5, 0.5), sizeDelta = visual size / lossyScale
+            // DragContainer có scale = 1, nhưng vẫn bị ảnh hưởng bởi CanvasScaler
+            // Nên lossyScale có thể khác 1, cần chia để có sizeDelta đúng
             Vector2 newSizeDelta = new Vector2(
-                canvasScaleFactor != 0 ? originalWorldSize.x / canvasScaleFactor : originalSizeDelta.x,
-                canvasScaleFactor != 0 ? originalWorldSize.y / canvasScaleFactor : originalSizeDelta.y
+                newLossyScale.x != 0 ? visualSizeBeforeParentChange.x / newLossyScale.x : visualSizeBeforeParentChange.x,
+                newLossyScale.y != 0 ? visualSizeBeforeParentChange.y / newLossyScale.y : visualSizeBeforeParentChange.y
             );
             
-            // Set sizeDelta để giữ nguyên kích thước visual
-            rectTransform.sizeDelta = newSizeDelta;
+            // Nếu visual size hợp lệ, sử dụng nó
+            if (visualSizeBeforeParentChange.x > 0 && visualSizeBeforeParentChange.y > 0)
+            {
+                rectTransform.sizeDelta = newSizeDelta;
+                Debug.Log($"[ItemDragHandler] Item '{gameObject.name}' drag size - visual: {visualSizeBeforeParentChange}, lossyScale: {lossyScaleBeforeParentChange} -> {newLossyScale}, sizeDelta: {newSizeDelta}");
+            }
+            else
+            {
+                // Fallback: sử dụng originalSizeDelta nếu có
+                if (originalSizeDelta.x > 0 && originalSizeDelta.y > 0)
+                {
+                    rectTransform.sizeDelta = originalSizeDelta;
+                    Debug.Log($"[ItemDragHandler] Item '{gameObject.name}' using originalSizeDelta: {originalSizeDelta}");
+                }
+                else
+                {
+                    // Nếu không có gì, dùng sprite size nhưng scale down
+                    Image image = GetComponent<Image>();
+                    SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+                    Sprite sprite = image?.sprite ?? spriteRenderer?.sprite;
+                    
+                    if (sprite != null)
+                    {
+                        Vector2 spriteSize = sprite.rect.size;
+                        // Scale down sprite size để phù hợp với inventory slot (thường ~64-100 pixels)
+                        float maxSlotSize = 100f; // Giả định slot size tối đa
+                        float scaleFactor = Mathf.Min(maxSlotSize / spriteSize.x, maxSlotSize / spriteSize.y, 1f);
+                        rectTransform.sizeDelta = spriteSize * scaleFactor;
+                        Debug.LogWarning($"[ItemDragHandler] Item '{gameObject.name}' has no visual size. Using scaled sprite size: {rectTransform.sizeDelta}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[ItemDragHandler] Item '{gameObject.name}' has no visual size, sizeDelta, or sprite. Using default 64x64.");
+                        rectTransform.sizeDelta = new Vector2(64, 64);
+                    }
+                }
+            }
             
             // Set scale = 1 để không bị scale thêm
             transform.localScale = Vector3.one;
@@ -302,6 +411,15 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 parentRect = canvas.transform as RectTransform;
             }
             
+            // QUAN TRỌNG: Đảm bảo RectTransform không có constraints ngăn cản movement
+            // Unity không có API để set constraints trực tiếp, nhưng đảm bảo anchors cho phép free movement
+            if (rectTransform.anchorMin != rectTransform.anchorMax)
+            {
+                // Nếu anchors không bằng nhau, có thể bị lock. Set anchors về center để free movement
+                rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+                rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            }
+            
             // Convert screen position to local position trong parent
             Vector2 localPoint;
             
@@ -312,15 +430,35 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera,
                 out localPoint))
             {
-                // Set position của item theo chuột (cả X và Y)
+                // QUAN TRỌNG: Set position của item theo chuột (cả X và Y) - không bị giới hạn
+                // Sử dụng SetInsetAndSizeFromParentEdge để đảm bảo không bị constraints
                 rectTransform.anchoredPosition = localPoint;
                 
-                // Debug: Kiểm tra nếu chỉ có X được update
+                // Force update để đảm bảo position được apply
+                Canvas.ForceUpdateCanvases();
+                
+                // Debug: Kiểm tra nếu chỉ có X được update (có thể do constraints)
                 if (Mathf.Abs(rectTransform.anchoredPosition.y - localPoint.y) > 0.01f)
                 {
-                    Debug.LogWarning($"[ItemDragHandler] Y position mismatch! Expected: {localPoint.y}, Actual: {rectTransform.anchoredPosition.y}");
-                    // Force set lại Y
-                    rectTransform.anchoredPosition = new Vector2(localPoint.x, localPoint.y);
+                    Debug.LogWarning($"[ItemDragHandler] Y position mismatch detected! Expected: {localPoint.y}, Actual: {rectTransform.anchoredPosition.y}. Forcing update...");
+                    // Force set lại cả X và Y bằng cách set position trực tiếp
+                    rectTransform.anchoredPosition = localPoint;
+                    Canvas.ForceUpdateCanvases();
+                    
+                    // Nếu vẫn không được, thử dùng world position
+                    if (Mathf.Abs(rectTransform.anchoredPosition.y - localPoint.y) > 0.01f)
+                    {
+                        Vector3 worldPos;
+                        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
+                            parentRect,
+                            eventData.position,
+                            canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera,
+                            out worldPos))
+                        {
+                            rectTransform.position = worldPos;
+                            Canvas.ForceUpdateCanvases();
+                        }
+                    }
                 }
             }
             else
@@ -334,6 +472,7 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                     out worldPos))
                 {
                     rectTransform.position = worldPos;
+                    Canvas.ForceUpdateCanvases();
                 }
                 else
                 {

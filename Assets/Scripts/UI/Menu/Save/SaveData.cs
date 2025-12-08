@@ -7,4 +7,5 @@ public class SaveData
     public string mapBoundary;
     public List<InventorySaveData> inventorySaveData;
     public List<InventorySaveData> hotbarSaveData;
+    public int goldCoin = 0; // Gold coin amount
 }

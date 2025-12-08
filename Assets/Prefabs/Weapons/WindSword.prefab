@@ -14,9 +14,10 @@ GameObject:
   - component: {fileID: 6790180792055787228}
   - component: {fileID: 9213494508194247195}
   - component: {fileID: 7780132212884638332}
+  - component: {fileID: 333391148150043170}
   m_Layer: 0
   m_Name: WindSword
-  m_TagString: Untagged
+  m_TagString: Item
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -168,3 +169,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfc7f87a5596bca4ebbded3420214b3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemDragHandler
+--- !u!114 &333391148150043170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8503334030487256024}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc010e7939db7b24ea7750ce186a48e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  ID: 0
+  Name: Wind Sword
+  isRaftMaterial: 0
+  weaponInfo: {fileID: 11400000, guid: 6d0faad04333deb46aea8c8d0b07ee4a, type: 2}

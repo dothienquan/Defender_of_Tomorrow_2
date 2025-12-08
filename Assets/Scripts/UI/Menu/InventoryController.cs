@@ -11,13 +11,27 @@ public class InventoryController : MonoBehaviour
     public int slotCount;
     public GameObject[] itemPrefabs;
 
-    private void Start()
+   private void Start()
+{
+    // Ưu tiên dùng singleton
+    if (ItemDictionary.Instance != null)
+    {
+        itemDictionary = ItemDictionary.Instance;
+    }
+    else
     {
         itemDictionary = FindFirstObjectByType<ItemDictionary>();
-        
-        // Tự động tạo slots nếu chưa có
-        CreateSlotsIfNeeded();
     }
+
+    if (itemDictionary == null)
+    {
+        Debug.LogError("[InventoryController] ItemDictionary not found in scene! Inventory items will not be able to load.");
+    }
+
+    // Tự động tạo slots nếu chưa có
+    CreateSlotsIfNeeded();
+}
+
 
     public bool AddItem(GameObject itemPrefab)
     {
@@ -48,6 +62,16 @@ public class InventoryController : MonoBehaviour
             {
                 // QUAN TRỌNG: Instantiate với worldPositionStays = false để item được đặt đúng trong UI space
                 GameObject newItem = Instantiate(itemPrefab, slotTransform, false);
+                
+                // QUAN TRỌNG: Stop và disable ItemDropEffect nếu có (để tránh tweens can thiệp vào inventory UI)
+                ItemDropEffect dropEffect = newItem.GetComponent<ItemDropEffect>();
+                if (dropEffect != null)
+                {
+                    dropEffect.StopEffect();
+                    // Disable component để tránh tự động start lại trong OnEnable
+                    dropEffect.enabled = false;
+                    Debug.Log($"[InventoryController] Stopped and disabled ItemDropEffect on {newItem.name}.");
+                }
                 
                 // Nếu item có WorldItemUIHandler, enable UI components
                 WorldItemUIHandler worldItemHandler = newItem.GetComponent<WorldItemUIHandler>();
@@ -155,10 +179,31 @@ public class InventoryController : MonoBehaviour
             }
         }
         
+        // QUAN TRỌNG: Tính toán size từ sprite TRƯỚC KHI setup RectTransform
+        // Lấy sprite để tính size (ưu tiên Image, sau đó SpriteRenderer)
+        Sprite itemSprite = null;
+        if (image != null && image.sprite != null)
+        {
+            itemSprite = image.sprite;
+        }
+        else if (spriteRenderer != null && spriteRenderer.sprite != null)
+        {
+            itemSprite = spriteRenderer.sprite;
+        }
+        
+        // Tính size từ sprite nếu có
+        Vector2 spriteSize = Vector2.zero;
+        if (itemSprite != null)
+        {
+            spriteSize = itemSprite.rect.size;
+            Debug.Log($"[InventoryController] Item '{newItem.name}' sprite size: {spriteSize}");
+        }
+        
         // QUAN TRỌNG: Đảm bảo item có parent đúng (slotTransform)
+        // Set parent TRƯỚC KHI setup RectTransform để đảm bảo coordinates đúng
         if (newItem.transform.parent != slotTransform)
         {
-            Debug.LogWarning($"[InventoryController] Item parent mismatch! Setting parent to slot.");
+            Debug.LogWarning($"[InventoryController] Item parent mismatch! Setting parent to slot. Current parent: {newItem.transform.parent?.name}, Expected: {slotTransform.name}");
             newItem.transform.SetParent(slotTransform, false);
         }
         
@@ -166,16 +211,24 @@ public class InventoryController : MonoBehaviour
         // Force update Canvas để đảm bảo layout được tính toán
         Canvas.ForceUpdateCanvases();
         
+        // QUAN TRỌNG: Reset tất cả transform properties trước khi setup
+        rectTransform.localPosition = Vector3.zero;
+        rectTransform.localRotation = Quaternion.identity;
+        rectTransform.localScale = Vector3.one;
+        
         // Setup RectTransform để fit vào slot
         // Đảm bảo anchors và pivot đúng để item không bị snap
         rectTransform.anchorMin = Vector2.zero;
         rectTransform.anchorMax = Vector2.one;
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
         rectTransform.anchoredPosition = Vector2.zero;
+        
+        // QUAN TRỌNG: Với stretch anchors (0-1), sizeDelta phải = 0
+        // AutoFitToSlot sẽ dùng offsetMin/offsetMax để tạo padding và size sẽ được tính từ parent
         rectTransform.sizeDelta = Vector2.zero;
-        rectTransform.localScale = Vector3.one;
-        rectTransform.localRotation = Quaternion.identity;
-        rectTransform.localPosition = Vector3.zero; // Đảm bảo local position = 0
+        
+        // Force update lại để đảm bảo tất cả changes được apply
+        Canvas.ForceUpdateCanvases();
         
         // Set offsetMin và offsetMax (sẽ được AutoFitToSlot override với padding)
         rectTransform.offsetMin = Vector2.zero;
@@ -184,13 +237,30 @@ public class InventoryController : MonoBehaviour
         // Force update lại sau khi setup
         Canvas.ForceUpdateCanvases();
         
-        // Debug log để kiểm tra
+        // Debug log để kiểm tra và đảm bảo parent đúng
         if (rectTransform.parent != slotTransform)
         {
             Debug.LogError($"[InventoryController] CRITICAL: Item '{newItem.name}' parent is not slot! Parent: {rectTransform.parent?.name}, Expected: {slotTransform.name}");
-            // Force set parent lại
+            // Force set parent lại và reset position
             rectTransform.SetParent(slotTransform, false);
+            rectTransform.localPosition = Vector3.zero;
+            rectTransform.anchoredPosition = Vector2.zero;
             Canvas.ForceUpdateCanvases();
+        }
+        
+        // QUAN TRỌNG: Đảm bảo item không bị positioned ở giữa inventory panel
+        // Kiểm tra nếu parent là inventory panel thay vì slot
+        InventoryController invController = slotTransform.GetComponentInParent<InventoryController>();
+        if (invController != null && invController.inventoryPanel != null)
+        {
+            if (rectTransform.parent == invController.inventoryPanel.transform)
+            {
+                Debug.LogError($"[InventoryController] CRITICAL: Item '{newItem.name}' is parented to inventory panel instead of slot! Fixing...");
+                rectTransform.SetParent(slotTransform, false);
+                rectTransform.localPosition = Vector3.zero;
+                rectTransform.anchoredPosition = Vector2.zero;
+                Canvas.ForceUpdateCanvases();
+            }
         }
         
         // Thêm AutoFitToSlot component nếu chưa có (để item tự động fit vào slot)
@@ -292,11 +362,9 @@ public class InventoryController : MonoBehaviour
             if (image.sprite != null)
             {
                 image.enabled = true;
-                // Đảm bảo color alpha = 1 (không transparent)
-                Color imgColor = image.color;
-                imgColor.a = 1f;
-                image.color = imgColor;
-                Debug.Log($"[InventoryController] Image enabled for '{newItem.name}' with sprite: {image.sprite.name}");
+                // QUAN TRỌNG: Reset color về white (alpha = 1) để đảm bảo không bị ảnh hưởng bởi ItemDropEffect
+                image.color = Color.white;
+                Debug.Log($"[InventoryController] Image enabled for '{newItem.name}' with sprite: {image.sprite.name}, color reset to white.");
             }
             else
             {
@@ -306,6 +374,14 @@ public class InventoryController : MonoBehaviour
         else
         {
             Debug.LogWarning($"[InventoryController] No Image component found for '{newItem.name}' after setup!");
+        }
+        
+        // QUAN TRỌNG: Reset SpriteRenderer color nếu có (để đảm bảo không bị ảnh hưởng bởi ItemDropEffect)
+        // Sử dụng lại biến spriteRenderer đã khai báo ở đầu method
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = Color.white;
+            Debug.Log($"[InventoryController] SpriteRenderer color reset to white for '{newItem.name}'.");
         }
         
         // Đảm bảo GameObject được active
@@ -333,16 +409,40 @@ public class InventoryController : MonoBehaviour
             Debug.Log($"[InventoryController] CanvasGroup alpha set to 1 for '{newItem.name}'");
         }
         
-        // Đảm bảo RectTransform có size > 0
+        // Đảm bảo RectTransform có size > 0 SAU KHI AutoFitToSlot đã apply
+        // Với stretch anchors, size được tính từ parent size - offsets
         if (rectTransform != null)
         {
-            // Force set size nếu size = 0
-            if (rectTransform.rect.size.x <= 0 || rectTransform.rect.size.y <= 0)
+            // Force update để đảm bảo rect size được tính toán sau khi AutoFitToSlot apply
+            Canvas.ForceUpdateCanvases();
+            
+            // Kiểm tra rect size (sau khi AutoFitToSlot đã setup offsets)
+            Vector2 rectSize = rectTransform.rect.size;
+            
+            // Kiểm tra parent (slot) có size hợp lệ không
+            RectTransform slotRectTransform = slotTransform as RectTransform;
+            Vector2 slotSize = slotRectTransform != null ? slotRectTransform.rect.size : Vector2.zero;
+            
+            // Nếu slot có size nhưng item size vẫn = 0, có thể do offsets hoặc parent chưa được layout
+            if (slotSize.x > 0 && slotSize.y > 0 && (rectSize.x <= 0.1f || rectSize.y <= 0.1f))
             {
-                Debug.LogWarning($"[InventoryController] Item '{newItem.name}' has zero size! Setting default size...");
-                rectTransform.sizeDelta = new Vector2(100, 100); // Default size
-                Canvas.ForceUpdateCanvases();
+                Debug.LogWarning($"[InventoryController] Item '{newItem.name}' has zero rect size but slot has size {slotSize}. " +
+                    $"Rect size: {rectSize}, Offsets: min={rectTransform.offsetMin}, max={rectTransform.offsetMax}. " +
+                    $"This may be a layout timing issue. Item should resize automatically.");
+                
+                // Không force set sizeDelta vì với stretch anchors, sizeDelta = 0 là đúng
+                // AutoFitToSlot đã set offsets, size sẽ được tính tự động khi layout updates
+                // Chỉ log warning, không force fix vì có thể là timing issue
             }
+            else if (slotSize.x <= 0.1f || slotSize.y <= 0.1f)
+            {
+                Debug.LogWarning($"[InventoryController] Slot '{slotTransform.name}' has zero size! This will cause item '{newItem.name}' to have zero size. " +
+                    $"Slot size: {slotSize}. Please check slot RectTransform setup.");
+            }
+            
+            // Log thông tin để debug
+            Debug.Log($"[InventoryController] Item '{newItem.name}' setup complete - Slot size: {slotSize}, Item rect size: {rectSize}, " +
+                $"Sprite size: {spriteSize}, SizeDelta: {rectTransform.sizeDelta}, Offsets: min={rectTransform.offsetMin}, max={rectTransform.offsetMax}");
         }
         
         // Đảm bảo item có ItemDragHandler để có thể drag
@@ -546,15 +646,26 @@ public class InventoryController : MonoBehaviour
 
         // Đảm bảo itemDictionary đã được khởi tạo
         if (itemDictionary == null)
-        {
-            itemDictionary = FindFirstObjectByType<ItemDictionary>();
-        }
+{
+    if (ItemDictionary.Instance != null)
+    {
+        itemDictionary = ItemDictionary.Instance;
+    }
+    else
+    {
+        itemDictionary = FindFirstObjectByType<ItemDictionary>();
+    }
+}
 
-        if (itemDictionary == null)
-        {
-            Debug.LogError("[InventoryController] Cannot set inventory items: ItemDictionary not found!");
-            return;
-        }
+if (itemDictionary == null)
+{
+    Debug.LogError("[InventoryController] Cannot set inventory items: ItemDictionary not found (even after trying singleton + FindFirstObjectByType)!");
+    return;
+}
+
+Debug.Log($"[InventoryController] ItemDictionary found. Attempting to load {inventorySaveData.Count} items...");
+        
+        Debug.Log($"[InventoryController] ItemDictionary found. Attempting to load {inventorySaveData.Count} items...");
 
         // Load items vào slots
         int loadedCount = 0;
@@ -601,12 +712,25 @@ public class InventoryController : MonoBehaviour
             GameObject itemPrefab = itemDictionary.GetItemPrefab(data.itemID);
             if (itemPrefab == null)
             {
-                Debug.LogWarning($"[InventoryController] Item prefab with ID {data.itemID} not found in ItemDictionary!");
+                Debug.LogError($"[InventoryController] Item prefab with ID {data.itemID} not found in ItemDictionary! Slot: {data.slotIndex}. " +
+                    $"Make sure ItemDictionary is initialized and contains item with ID {data.itemID}.");
                 continue;
             }
+            
+            Debug.Log($"[InventoryController] Found item prefab for ID {data.itemID}: {itemPrefab.name}");
 
             // Instantiate item
             GameObject newItem = Instantiate(itemPrefab, slotTransform, false);
+            
+            // QUAN TRỌNG: Stop và disable ItemDropEffect nếu có (để tránh tweens can thiệp vào inventory UI)
+            ItemDropEffect dropEffect = newItem.GetComponent<ItemDropEffect>();
+            if (dropEffect != null)
+            {
+                dropEffect.StopEffect();
+                // Disable component để tránh tự động start lại trong OnEnable
+                dropEffect.enabled = false;
+                Debug.Log($"[InventoryController] Stopped and disabled ItemDropEffect on {newItem.name} during load.");
+            }
             
             // Nếu item có WorldItemUIHandler, enable UI components
             WorldItemUIHandler worldItemHandler = newItem.GetComponent<WorldItemUIHandler>();
