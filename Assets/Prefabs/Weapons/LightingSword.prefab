@@ -13,11 +13,11 @@ GameObject:
   - component: {fileID: 9149098466116906972}
   - component: {fileID: 6790180792055787228}
   - component: {fileID: 9213494508194247195}
-  - component: {fileID: 8701138270835371857}
   - component: {fileID: 7780132212884638332}
+  - component: {fileID: 5597901618218647349}
   m_Layer: 0
   m_Name: LightingSword
-  m_TagString: Untagged
+  m_TagString: Item
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -157,20 +157,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &8701138270835371857
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8503334030487256024}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e34063fb1a67e94fa6a2a30e8dc0216, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIItem
-  itemData: {fileID: 11400000, guid: 829c189f79a1b6442aef3eca7b3ff847, type: 2}
-  iconImage: {fileID: 0}
 --- !u!114 &7780132212884638332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -183,3 +169,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfc7f87a5596bca4ebbded3420214b3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemDragHandler
+--- !u!114 &5597901618218647349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8503334030487256024}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc010e7939db7b24ea7750ce186a48e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  ID: 0
+  Name: Lighting Sword
+  isRaftMaterial: 0
+  weaponInfo: {fileID: 11400000, guid: 829c189f79a1b6442aef3eca7b3ff847, type: 2}
