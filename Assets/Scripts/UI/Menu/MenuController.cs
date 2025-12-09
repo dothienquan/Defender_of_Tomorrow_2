@@ -2,11 +2,22 @@ using UnityEngine;
 
 public class MenuController : MonoBehaviour
 {
+    [Header("Panels")]
     public GameObject menuCanvas;
+    public GameObject secondaryPanel;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        menuCanvas.SetActive(false);
+        if (menuCanvas != null)
+        {
+            menuCanvas.SetActive(false);
+        }
+        
+        if (secondaryPanel != null)
+        {
+            secondaryPanel.SetActive(false);
+        }
     }
 
     // Update is called once per frame
@@ -14,7 +25,18 @@ public class MenuController : MonoBehaviour
     {
         if(Input.GetKeyUp(KeyCode.Tab))
         {
-            menuCanvas.SetActive(!menuCanvas.activeSelf);
+            if (menuCanvas != null)
+            {
+                menuCanvas.SetActive(!menuCanvas.activeSelf);
+            }
+        }
+
+        if(Input.GetKeyUp(KeyCode.Q))
+        {
+            if (secondaryPanel != null)
+            {
+                secondaryPanel.SetActive(!secondaryPanel.activeSelf);
+            }
         }
     }
 }

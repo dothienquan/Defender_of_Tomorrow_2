@@ -139,8 +139,8 @@ public class ShopController : MonoBehaviour
         // Setup ScrollRect properties
         scrollRect.horizontal = false; // Chỉ scroll dọc
         scrollRect.vertical = true;    // Scroll dọc
-        scrollRect.movementType = ScrollRect.MovementType.Elastic;
-        scrollRect.elasticity = 0.1f;
+        scrollRect.movementType = ScrollRect.MovementType.Clamped; // Giới hạn scroll không vượt quá bounds
+        scrollRect.elasticity = 0f; // Không có bounce effect
         scrollRect.inertia = true;
         scrollRect.decelerationRate = 0.135f;
         scrollRect.scrollSensitivity = 40f; // Độ nhạy mouse wheel
@@ -163,6 +163,9 @@ public class ShopController : MonoBehaviour
         {
             LayoutRebuilder.ForceRebuildLayoutImmediate(shopSlotsParent.GetComponent<RectTransform>());
         }
+
+        // Clamp scroll position sau khi setup
+        ClampScrollPosition();
 
         Debug.Log("[ShopController] ScrollRect setup complete.");
     }
@@ -266,11 +269,42 @@ public class ShopController : MonoBehaviour
             }
         }
 
-        // Reset scroll position về đầu
+        // Reset scroll position về đầu và clamp để tránh khoảng trắng
         if (scrollRect != null)
         {
             scrollRect.verticalNormalizedPosition = 1f; // 1 = top, 0 = bottom
+            ClampScrollPosition();
         }
+    }
+
+    /// <summary>
+    /// Clamp scroll position để không scroll quá item đầu tiên hoặc cuối cùng
+    /// Được gọi sau khi content được rebuild để đảm bảo scroll position hợp lệ
+    /// </summary>
+    private void ClampScrollPosition()
+    {
+        if (scrollRect == null || shopSlotsParent == null) return;
+
+        RectTransform contentRect = shopSlotsParent.GetComponent<RectTransform>();
+        RectTransform viewportRect = scrollRect.viewport != null ? scrollRect.viewport : scrollRect.GetComponent<RectTransform>();
+        
+        if (contentRect == null || viewportRect == null) return;
+
+        // Tính toán bounds
+        float contentHeight = contentRect.rect.height;
+        float viewportHeight = viewportRect.rect.height;
+
+        // Nếu content nhỏ hơn viewport, không cần scroll - giữ ở top
+        if (contentHeight <= viewportHeight)
+        {
+            scrollRect.verticalNormalizedPosition = 1f; // 1 = top
+            return;
+        }
+
+        // Clamp normalized position (0 = bottom, 1 = top)
+        // MovementType.Clamped sẽ tự động clamp, nhưng gọi thêm để đảm bảo
+        float normalizedPos = scrollRect.verticalNormalizedPosition;
+        scrollRect.verticalNormalizedPosition = Mathf.Clamp01(normalizedPos);
     }
 
     /// <summary>

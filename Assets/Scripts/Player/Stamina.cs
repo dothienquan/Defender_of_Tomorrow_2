@@ -2,18 +2,19 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class Stamina : Singleton<Stamina>
 {
     public int CurrentStamina { get; private set; }
 
-    [SerializeField] private Sprite fullStaminaImage, emptyStaminaImage;
     [SerializeField] private int timeBetweenStaminaRefresh = 3;
+    [SerializeField] private Slider staminaSlider;
+    [SerializeField] private float fillAnimationDuration = 0.3f;
 
-    private Transform staminaContainer;
     private int startingStamina = 3;
     private int maxStamina;
-    const string STAMINA_CONTAINER_TEXT = "Stamina Container";
+    private Tweener sliderTween;
 
     protected override void Awake() {
         base.Awake();
@@ -23,19 +24,23 @@ public class Stamina : Singleton<Stamina>
     }
 
     private void Start() {
-        staminaContainer = GameObject.Find(STAMINA_CONTAINER_TEXT).transform;
+        UpdateStaminaSlider();
     }
 
     public void UseStamina() {
         CurrentStamina--;
-        UpdateStaminaImages();
+        UpdateStaminaSlider();
     }
 
     public void RefreshStamina() {
         if (CurrentStamina < maxStamina) {
             CurrentStamina++;
         }
-        UpdateStaminaImages();
+        UpdateStaminaSlider();
+    }
+
+    public void UpdateUI() {
+        UpdateStaminaSlider();
     }
 
     private IEnumerator RefreshStaminaRoutine() {
@@ -46,19 +51,29 @@ public class Stamina : Singleton<Stamina>
         }
     }
 
-    private void UpdateStaminaImages() {
-        for (int i = 0; i < maxStamina; i++)
-        {
-            if (i <= CurrentStamina - 1) {
-                staminaContainer.GetChild(i).GetComponent<Image>().sprite = fullStaminaImage;
-            } else {
-                staminaContainer.GetChild(i).GetComponent<Image>().sprite = emptyStaminaImage;
+    private void UpdateStaminaSlider() {
+        if (staminaSlider != null) {
+            staminaSlider.maxValue = maxStamina;
+            
+            // Kill previous tween if exists
+            if (sliderTween != null && sliderTween.IsActive()) {
+                sliderTween.Kill();
             }
+            
+            // Animate slider value smoothly
+            sliderTween = staminaSlider.DOValue(CurrentStamina, fillAnimationDuration)
+                .SetEase(Ease.OutQuad);
         }
 
         if (CurrentStamina < maxStamina) {
             StopAllCoroutines();
             StartCoroutine(RefreshStaminaRoutine());
+        }
+    }
+
+    private void OnDestroy() {
+        if (sliderTween != null && sliderTween.IsActive()) {
+            sliderTween.Kill();
         }
     }
 }
