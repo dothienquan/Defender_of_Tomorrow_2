@@ -401867,7 +401867,7 @@ GameObject:
   - component: {fileID: 1312171222}
   m_Layer: 0
   m_Name: Ground
-  m_TagString: Untagged
+  m_TagString: Gound
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -489302,63 +489302,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3.5077724, y: 0.44829035}
   m_EdgeRadius: 0
---- !u!1001 &1565529847
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 961849257336412909, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
-      propertyPath: m_Name
-      value: Malugaz
-      objectReference: {fileID: 0}
-    - target: {fileID: 6346382983548627176, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 138.42734
-      objectReference: {fileID: 0}
-    - target: {fileID: 6346382983548627176, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 179.62444
-      objectReference: {fileID: 0}
-    - target: {fileID: 6346382983548627176, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6346382983548627176, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6346382983548627176, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6346382983548627176, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6346382983548627176, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6346382983548627176, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6346382983548627176, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6346382983548627176, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
 --- !u!1 &1566845838
 GameObject:
   m_ObjectHideFlags: 0
@@ -517367,6 +517310,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1703046897}
   - component: {fileID: 1703046896}
+  - component: {fileID: 1703046898}
   m_Layer: 0
   m_Name: BossArena_Root
   m_TagString: BossArenaRoot
@@ -517404,7 +517348,7 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
@@ -517441,6 +517385,21 @@ Transform:
   - {fileID: 603415534}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1703046898
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1703046895}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a486a0b94038c947822bf552194f839, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MalugazSpawner
+  malugazPrefab: {fileID: 961849257336412909, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
+  bossSpawnPoint: {fileID: 1422265574}
+  miniGameManager: {fileID: 206326014}
 --- !u!1 &1703333181
 GameObject:
   m_ObjectHideFlags: 0
@@ -657329,4 +657288,3 @@ SceneRoots:
   - {fileID: 883636981}
   - {fileID: 1536661834}
   - {fileID: 1703046897}
-  - {fileID: 1565529847}

@@ -12,13 +12,18 @@ GameObject:
   - component: {fileID: 8114320192872254106}
   - component: {fileID: 5663759727584296021}
   - component: {fileID: 8160371364774287586}
-  - component: {fileID: 5982248735498995750}
-  - component: {fileID: 2266242257266943831}
   - component: {fileID: 1523232844322768137}
   - component: {fileID: 1269391738391826164}
+  - component: {fileID: 5822937054125635886}
+  - component: {fileID: 2939454595019508779}
+  - component: {fileID: 4809025712449278709}
+  - component: {fileID: 4901462426888096186}
+  - component: {fileID: 1991657029776819351}
+  - component: {fileID: 4745548132883126394}
+  - component: {fileID: 4642743613605500753}
   m_Layer: 0
-  m_Name: FinalBoss
-  m_TagString: Untagged
+  m_Name: FinalBossPhase1
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32,7 +37,7 @@ Transform:
   m_GameObject: {fileID: 651635359998628667}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 44.787945, y: 18.070974, z: 0}
+  m_LocalPosition: {x: 2.0325503, y: -8.179073, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -160,47 +165,6 @@ CapsuleCollider2D:
   m_Offset: {x: 0.25574112, y: 0}
   m_Size: {x: 16.511482, y: 16.511482}
   m_Direction: 0
---- !u!114 &5982248735498995750
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 651635359998628667}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d06cd81c1ad44624f9dcd9826a17f230, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossController
-  bossHealth: {fileID: 2266242257266943831}
-  phase2ThresholdPercent: 0.5
-  vulnerableDuration: 6
-  orbPrefab: {fileID: 5674176728142008466, guid: dc5e904d5be2f9546adfc49a408301ae, type: 3}
-  orbCount: 3
-  orbOrbitRadius: 2.5
-  minTimeBetweenAttacks: 1.5
-  maxTimeBetweenAttacks: 3
-  lightningStrikeAreaPrefab: {fileID: 350684465464902927, guid: 47b4f62eff1dd644fa18290815a61167, type: 3}
-  lightningProjectilePrefab: {fileID: 2170008764661724214, guid: 47b4f62eff1dd644fa18290815a61167, type: 3}
---- !u!114 &2266242257266943831
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 651635359998628667}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1e7839db466c184f81fcb61b22a6025, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossHealth
-  startingHealth: 1000
-  deathVFXPrefab: {fileID: 3220534778681142951, guid: ae483d6a6ccf26f4daaa8d439025620c, type: 3}
-  knockBackThrust: 15
-  expPickupPrefab: {fileID: 0}
-  dotFlashColor: {r: 1, g: 0.5, b: 0, a: 1}
-  slowFlashColor: {r: 0.3, g: 0.6, b: 1, a: 1}
-  destroyOnDeath: 1
 --- !u!114 &1523232844322768137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -228,3 +192,116 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Flash
   whiteFlashMat: {fileID: 2100000, guid: 76964a66dd24d674698913b31984b443, type: 2}
   restoreDefaultMatTime: 0.2
+--- !u!114 &5822937054125635886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651635359998628667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32efe2ab44e5f044b930d3709dffb438, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
+  roamChangeDirFloat: 2
+  enemyType: {fileID: 2939454595019508779}
+  attackCooldown: 2
+  stopMovingWhileAttacking: 1
+  inAttackZone: 1
+--- !u!114 &2939454595019508779
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651635359998628667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72646e06c6b0cb94fbf38a5b33c80d64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
+  enemyHealth: {fileID: 4809025712449278709}
+  playerOverride: {fileID: 0}
+  vulnerableDuration: 6
+  orbPrefab: {fileID: 5674176728142008466, guid: dc5e904d5be2f9546adfc49a408301ae, type: 3}
+  orbCount: 3
+  orbOrbitRadius: 7
+  lightningStrikeAreaPrefab: {fileID: 3693410554736894749, guid: f3832fb983b74f943be41596c50ccebd, type: 3}
+  lightningProjectilePrefab: {fileID: 2170008764661724214, guid: 47b4f62eff1dd644fa18290815a61167, type: 3}
+--- !u!114 &4809025712449278709
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651635359998628667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9015f75b026bc3f439ef0172a0cb81af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
+  startingHealth: 3
+  deathVFXPrefab: {fileID: 3220534778681142951, guid: ae483d6a6ccf26f4daaa8d439025620c, type: 3}
+  knockBackThrust: 15
+  expPickupPrefab: {fileID: 5210306458450560170, guid: 3d47f448c66c9d643b09632d924025e7, type: 3}
+  dotFlashColor: {r: 1, g: 0.5, b: 0, a: 1}
+  slowFlashColor: {r: 0.3, g: 0.6, b: 1, a: 1}
+  destroyOnDeath: 1
+--- !u!114 &4901462426888096186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651635359998628667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f2c2e5b0e13fe74f82147b3f38d4c09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyPathfinding
+  moveSpeed: 0
+--- !u!114 &1991657029776819351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651635359998628667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4283e2600b189f408231c684a46d81d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyStatusTint
+  colorProp: _Color
+  slowTint: {r: 0.5, g: 0.7, b: 1, a: 1}
+  fadeOutTime: 0.15
+--- !u!114 &4745548132883126394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651635359998628667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a3e3aae6a5e95845a84dd1e977a9f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyExpDropper
+  expPrefab: {fileID: 5210306458450560170, guid: 3d47f448c66c9d643b09632d924025e7, type: 3}
+  spawnOffset: {x: 0, y: 0}
+--- !u!114 &4642743613605500753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651635359998628667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 491d52704ec304a4aa7cea27cc0a060b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PickUpSpawner
+  goldCoin: {fileID: 4439132808754776824, guid: b1d0d2b16b06b3b429d217b768548927, type: 3}
+  healthGlobe: {fileID: 4439132808754776824, guid: 37dde58c701ad2f4d83e3debca95bda9, type: 3}
+  staminaGlobe: {fileID: 4439132808754776824, guid: b63083ec6c8606d4d88f507fb3d2e2f7, type: 3}

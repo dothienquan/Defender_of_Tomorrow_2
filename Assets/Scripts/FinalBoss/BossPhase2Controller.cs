@@ -1,98 +1,176 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
-public class BossController : MonoBehaviour
+[RequireComponent(typeof(EnemyHealth))]
+public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
 {
-    [Header("Health / Phase")]
-    [SerializeField] private BossHealth bossHealth;
-    [SerializeField] private float phase2ThresholdPercent = 0.5f;
-    [SerializeField] private float vulnerableDuration = 6f;
+    [Header("References")]
+    [SerializeField] private EnemyHealth enemyHealth;
+
+    [Header("Player")]
+    [SerializeField] private Transform playerOverride;
+
+    [Header("Vulnerable Window (Orbs)")]
+    [SerializeField] private float vulnerableDuration = 5f; // 5s khi tất cả orbs nằm đất
 
     [Header("Orbs")]
     [SerializeField] private BossOrb orbPrefab;
     [SerializeField] private int orbCount = 3;
     [SerializeField] private float orbOrbitRadius = 2.5f;
 
-    private readonly List<BossOrb> orbs = new List<BossOrb>();
-    private int groundedOrbCount = 0;
-    private bool inVulnerableWindow = false;
-
-    [Header("Attack timing")]
-    [SerializeField] private float minTimeBetweenAttacks = 1.5f;
-    [SerializeField] private float maxTimeBetweenAttacks = 3.0f;
-
-    [Header("Lightning prefabs (Phase 1)")]
+    [Header("Lightning (Phase 2)")]
     [SerializeField] private LightningStrikeArea lightningStrikeAreaPrefab;
     [SerializeField] private LightningProjectile lightningProjectilePrefab;
 
-    [Header("Phase 2 VFX")]
-    [SerializeField] private GameObject voidBGPrefab;     // hiệu ứng nền Void
-    [SerializeField] private GameObject voidCastWavePrefab; // hiệu ứng cast Void
+    [Header("Void Field")]
+    [SerializeField] private SafeZone safeZonePrefab;
+    [SerializeField] private GameObject voidBGPrefab;
+    [SerializeField] private GameObject voidCastWavePrefab;
+    [SerializeField] private float voidFieldDuration = 10f;
 
     private Transform player;
-    private bool isPhase2 = false;
-    private bool fightActive = false;
+    private bool isAttacking;
 
-    private enum BossState { Waiting, Phase1, Phase2, Dead }
-    private BossState state = BossState.Waiting;
+    // Orbs data riêng cho Phase 2
+    private readonly List<BossOrb> orbs = new List<BossOrb>();
+    private int groundedOrbCount;      // bao nhiêu orb đã rơi xuống đất
+    private bool isVulnerable;         // đang trong 5s boss ăn damage được
 
-    [SerializeField] private SafeZone safeZonePrefab;
-
+    // Hack invul: đọc/ghi currentHealth bằng reflection
+    private FieldInfo currentHealthField;
+    private int lastRecordedHealth;
 
     private void Awake()
     {
-        if (!bossHealth) bossHealth = GetComponent<BossHealth>();
+        if (!enemyHealth)
+            enemyHealth = GetComponent<EnemyHealth>();
+
+        // chuẩn bị reflection để chọc currentHealth trong EnemyHealth
+        var type = typeof(EnemyHealth);
+        currentHealthField = type.GetField("currentHealth",
+            BindingFlags.NonPublic | BindingFlags.Instance);
     }
 
     private void Start()
     {
-        player = PlayerHealth.Instance.transform;
+        if (playerOverride != null)
+            player = playerOverride;
+        else if (PlayerHealth.Instance != null)
+            player = PlayerHealth.Instance.transform;
 
-        bossHealth.IsInvulnerable = true;
+        // lấy HP ban đầu làm mốc
+        if (enemyHealth != null && currentHealthField != null)
+        {
+            lastRecordedHealth = (int)currentHealthField.GetValue(enemyHealth);
+        }
 
         SpawnOrbs();
-
-        state = BossState.Phase1;
-        fightActive = true;
-        StartCoroutine(Phase1Loop());
+        groundedOrbCount = 0;
+        isVulnerable = false; // ban đầu có orbs bay -> boss không ăn damage
     }
 
-    private void Update()
+    private void LateUpdate()
     {
-        if (!fightActive) return;
+        if (enemyHealth == null || currentHealthField == null) return;
 
-        if (!isPhase2 && bossHealth.HealthPercent <= phase2ThresholdPercent)
+        int current = (int)currentHealthField.GetValue(enemyHealth);
+
+        // Boss CHỈ vulnerable trong 5s khi TẤT CẢ orbs đã rơi (isVulnerable == true)
+        bool bossInvulnerable = !isVulnerable;
+
+        if (bossInvulnerable)
         {
-            isPhase2 = true;
-            state = BossState.Phase2;
-            // TODO: dừng Phase1Loop và start Phase2Loop
+            // Nếu máu tụt trong trạng thái invul -> rollback về lastRecordedHealth
+            if (current < lastRecordedHealth)
+            {
+                currentHealthField.SetValue(enemyHealth, lastRecordedHealth);
+                current = lastRecordedHealth;
+            }
+            else
+            {
+                // nếu được heal thì vẫn chấp nhận
+                lastRecordedHealth = current;
+            }
+        }
+        else
+        {
+            // đang vulnerable -> chấp nhận damage
+            lastRecordedHealth = current;
         }
     }
 
-    #region ORBS
+    /// <summary>
+    /// EnemyAI gọi khi ở trong AttackZone.
+    /// </summary>
+    public void Attack()
+    {
+        if (isAttacking) return;
+
+        StartCoroutine(AttackRoutine());
+    }
+
+    private IEnumerator AttackRoutine()
+    {
+        isAttacking = true;
+
+        if (!player)
+        {
+            isAttacking = false;
+            yield break;
+        }
+
+        int skill = Random.Range(0, 3);
+
+        switch (skill)
+        {
+            case 0:
+                yield return CastRandomLightningStrikes();
+                break;
+            case 1:
+                yield return CastSingleFastLightning();
+                break;
+            case 2:
+                yield return CastVoidField();
+                break;
+        }
+
+        isAttacking = false;
+    }
+
+    #region ORBS + VULNERABLE (Phase 2)
 
     private void SpawnOrbs()
     {
         orbs.Clear();
+        groundedOrbCount = 0;
+
         if (orbPrefab == null) return;
 
-        float angleStep = 360f / orbCount;
+        float angleStep = 360f / Mathf.Max(1, orbCount);
 
         for (int i = 0; i < orbCount; i++)
         {
             float angle = i * angleStep;
             BossOrb orb = Instantiate(orbPrefab, transform.position, Quaternion.identity);
+
+            // owner = this (IBossOrbOwner), boss = transform, player, góc bắt đầu, bán kính
             orb.Setup(this, transform, player, angle, orbOrbitRadius);
+
             orbs.Add(orb);
         }
     }
 
+    /// <summary>
+    /// Gọi bởi BossOrb khi orb của phase 2 chạm đất (hết máu).
+    /// </summary>
     public void NotifyOrbGrounded(BossOrb orb)
     {
         groundedOrbCount++;
 
-        if (groundedOrbCount >= orbs.Count)
+        // CHỈ khi TẤT CẢ orbs đều đã rơi xuống đất -> boss bắt đầu nhận sát thương
+        if (!isVulnerable && groundedOrbCount >= orbs.Count && orbs.Count > 0)
         {
             StartCoroutine(VulnerableWindowRoutine());
         }
@@ -101,7 +179,6 @@ public class BossController : MonoBehaviour
     private void ResetOrbs()
     {
         groundedOrbCount = 0;
-
         if (orbs.Count == 0) return;
 
         float angleStep = 360f / orbs.Count;
@@ -111,91 +188,30 @@ public class BossController : MonoBehaviour
             var orb = orbs[i];
             if (orb == null) continue;
 
-            // nếu muốn vị trí cố định:
             float startAngle = i * angleStep;
-
-            // nếu muốn random hoàn toàn:
-            // float startAngle = Random.Range(0f, 360f);
-
             orb.ResetToOrbit(startAngle);
         }
-    }
 
+        // Sau khi reset: orbs lại bay quanh boss -> boss invul trở lại
+        isVulnerable = false;
+    }
 
     private IEnumerator VulnerableWindowRoutine()
     {
-        if (inVulnerableWindow) yield break;
+        if (isVulnerable) yield break;
 
-        inVulnerableWindow = true;
-
-        bossHealth.IsInvulnerable = false;
-        // TODO: animation stun
+        // Bắt đầu 5s: all orbs nằm đất -> boss ăn sát thương
+        isVulnerable = true;
 
         yield return new WaitForSeconds(vulnerableDuration);
 
-        bossHealth.IsInvulnerable = true;
+        // Hết 5s: orbs hồi lại, bay quanh boss, boss lại không ăn sát thương
         ResetOrbs();
-
-        inVulnerableWindow = false;
     }
 
     #endregion
 
-    #region PHASE 1 LOOP
-
-    private IEnumerator Phase1Loop()
-    {
-        while (state == BossState.Phase1)
-        {
-            float wait = Random.Range(minTimeBetweenAttacks, maxTimeBetweenAttacks);
-            yield return new WaitForSeconds(wait);
-
-            if (inVulnerableWindow) continue;
-
-            int skillIndex = Random.Range(0, 2);
-
-            switch (skillIndex)
-            {
-                case 0:
-                    yield return CastRandomLightningStrikes();
-                    break;
-                case 1:
-                    yield return CastSingleFastLightning();
-                    break;
-            }
-        }
-    }
-
-    private IEnumerator Phase2Loop()
-    {
-        while (state == BossState.Phase2)
-        {
-            float wait = Random.Range(1.5f, 2.5f);
-            yield return new WaitForSeconds(wait);
-
-            if (inVulnerableWindow) continue;
-
-            int skill = Random.Range(0, 3);
-
-            switch (skill)
-            {
-                case 0:
-                    yield return CastRandomLightningStrikes();
-                    break;
-                case 1:
-                    yield return CastSingleFastLightning();
-                    break;
-                case 2:
-                    yield return CastVoidField();   // skill phase 2
-                    break;
-            }
-        }
-    }
-
-
-    #endregion
-
-    #region SKILLS
+    #region LIGHTNING
 
     private IEnumerator CastRandomLightningStrikes()
     {
@@ -263,8 +279,15 @@ public class BossController : MonoBehaviour
 
         yield return null;
     }
+
+    #endregion
+
+    #region VOID FIELD
+
     private void SpawnLightningAroundSafeZone(SafeZone zone)
     {
+        if (zone == null || lightningStrikeAreaPrefab == null) return;
+
         float r = zone.CurrentRadius;
         int count = 6;
         float step = 360f / count;
@@ -281,17 +304,19 @@ public class BossController : MonoBehaviour
 
     private IEnumerator CastVoidField()
     {
-        float duration = 10f;
+        if (safeZonePrefab == null || voidBGPrefab == null || voidCastWavePrefab == null)
+            yield break;
 
-        // tạo object vô hình điều khiển void damage
+        // object vô hình điều khiển sát thương Void
         var voidObj = new GameObject("VoidDamageController");
         var voidDamage = voidObj.AddComponent<VoidDamageController>();
+
+        // nền Void lớn
         var bg = Instantiate(voidBGPrefab, transform.position, Quaternion.identity);
         bg.transform.localScale = Vector3.one * 14f;
 
-
-        // tạo 3 vùng an toàn gần boss
-        List<SafeZone> zones = new();
+        // 3 vùng an toàn
+        List<SafeZone> zones = new List<SafeZone>();
 
         for (int i = 0; i < 3; i++)
         {
@@ -310,13 +335,8 @@ public class BossController : MonoBehaviour
 
         float timer = 0f;
 
-        while (timer < duration)
+        while (timer < voidFieldDuration)
         {
-            // nếu boss bị tê liệt -> kết thúc ngay
-            if (inVulnerableWindow)
-                break;
-
-            // với mỗi safe zone, bắn sét vòng quanh nó giống phase 1
             foreach (var z in zones)
             {
                 if (z != null && z.IsActive)
@@ -327,39 +347,14 @@ public class BossController : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
 
-        // dọn sạch
+        // dọn dẹp
         Destroy(voidObj);
         foreach (var z in zones)
             if (z != null) Destroy(z.gameObject);
 
-        // tạo hiệu ứng cast
         Instantiate(voidCastWavePrefab, transform.position, Quaternion.identity);
-
-        // tạo nền void
-        var voidBG = Instantiate(voidBGPrefab, transform.position, Quaternion.identity);
-
-        // …
-        while (timer < duration)
-        {
-            if (inVulnerableWindow)
-                break;
-
-            // sét quanh safe zones
-            foreach (var z in zones)
-            {
-                if (z != null && z.IsActive)
-                    SpawnLightningAroundSafeZone(z);
-            }
-
-            timer += 1f;
-            yield return new WaitForSeconds(1f);
-        }
-
-        // skill kết thúc → dọn vfx
-        Destroy(voidBG);
-
+        Destroy(bg);
     }
-
 
     #endregion
 }

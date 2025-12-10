@@ -12,7 +12,8 @@ public class BossOrb : MonoBehaviour
     [SerializeField] private GameObject pentagonProjectilePrefab;
     [SerializeField] private float pentagonShootInterval = 1.2f;
 
-    private BossController controller;
+    private IBossOrbOwner owner;
+
     private Transform center;   // boss
     private Transform player;
 
@@ -30,10 +31,10 @@ public class BossOrb : MonoBehaviour
     }
 
     // Boss gọi khi spawn lần đầu
-    public void Setup(BossController controller, Transform center, Transform player,
+    public void Setup(IBossOrbOwner owner, Transform center, Transform player,
                       float startAngleDeg, float radiusOverride = -1f)
     {
-        this.controller = controller;
+        this.owner = owner;
         this.center = center;
         this.player = player;
 
@@ -78,14 +79,15 @@ public class BossOrb : MonoBehaviour
         // rơi xuống 1 tí cho dễ thấy
         transform.position = new Vector2(transform.position.x, transform.position.y - 1f);
 
-        controller.NotifyOrbGrounded(this);
+        // báo cho boss biết orb đã rơi
+        if (owner != null)
+            owner.NotifyOrbGrounded(this);
 
         turretRoutine = StartCoroutine(PentagonShootRoutine());
     }
 
     /// <summary>
-    /// Gọi khi boss hết stun: orb full máu + trở lại quỹ đạo ở góc mới,
-    /// KHÔNG quay tiếp từ chỗ rơi.
+    /// Gọi khi boss hết vulnerable: orb full máu + trở lại quỹ đạo ở góc mới.
     /// </summary>
     public void ResetToOrbit(float startAngleDeg)
     {
