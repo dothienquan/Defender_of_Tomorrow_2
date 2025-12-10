@@ -16,8 +16,8 @@ public class LockedGateUI : MonoBehaviour
     [SerializeField] private Image keyIcon; // Icon của Key (tùy chọn)
 
     [Header("Messages")]
-    [SerializeField] private string confirmButtonText = "Mo cong";
-    [SerializeField] private string cancelButtonText = "Huy";
+    [SerializeField] private string confirmButtonText = "Mở khóa";
+    [SerializeField] private string cancelButtonText = "Hủy";
     [SerializeField] private string statusFormat = "{0}/{1}"; // Format: "0/1" hoặc "1/1"
     
     [Header("Confirm Animation")]
@@ -132,7 +132,7 @@ public class LockedGateUI : MonoBehaviour
         if (keyInfoText != null)
         {
             string keyName = GetKeyName(keyID);
-            keyInfoText.text = $"Yeu cau";
+            keyInfoText.text = $"Yêu cầu";
         }
 
         // Enable/disable confirm button dựa trên việc có Key

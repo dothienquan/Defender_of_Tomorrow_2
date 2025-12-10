@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,6 +32,7 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
     private InventoryController inventoryController;
     private ItemDictionary itemDictionary;
     private bool isDoorOpened = false;
+    private int lastDiamondCount = 0; // Để theo dõi thay đổi
 
     private void Awake()
     {
@@ -68,6 +70,28 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
     {
         // Clear slots khi panel tắt để spawn lại lần sau
         ClearSlots();
+        lastDiamondCount = 0;
+    }
+
+    private void Update()
+    {
+        // Kiểm tra liên tục khi panel đang mở để đảm bảo tự động tắt khi đủ item
+        if (gameObject.activeSelf && !isDoorOpened)
+        {
+            int currentCount = GetDiamondCount();
+            
+            // Nếu số lượng thay đổi, cập nhật status
+            if (currentCount != lastDiamondCount)
+            {
+                lastDiamondCount = currentCount;
+                UpdateStatus();
+            }
+            // Nếu đã đủ nhưng chưa tắt, kiểm tra lại
+            else if (currentCount >= requiredDiamondCount)
+            {
+                UpdateStatus();
+            }
+        }
     }
 
     /// <summary>
@@ -82,6 +106,7 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
         CreateSlots();
 
         // Cập nhật status ban đầu
+        lastDiamondCount = 0;
         UpdateStatus();
     }
 
@@ -116,7 +141,29 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
             {
                 slot = slotObj.AddComponent<Slot>();
             }
+            
+            // QUAN TRỌNG: Đảm bảo Slot component được enable (có thể bị disabled trong prefab)
+            if (!slot.enabled)
+            {
+                slot.enabled = true;
+            }
+            
+            // Đánh dấu slot là DiamondSlot để phân biệt với slot inventory/hotbar
+            DiamondSlot diamondSlot = slotObj.GetComponent<DiamondSlot>();
+            if (diamondSlot == null)
+            {
+                diamondSlot = slotObj.AddComponent<DiamondSlot>();
+            }
+            
+            // Đảm bảo DiamondSlot component được enable
+            if (!diamondSlot.enabled)
+            {
+                diamondSlot.enabled = true;
+            }
+            
             diamondSlots.Add(slot);
+            
+            Debug.Log($"[DungeonDoorDiamondPanel] Created slot {i}: Slot enabled={slot.enabled}, DiamondSlot enabled={diamondSlot.enabled}");
         }
     }
 
@@ -168,12 +215,50 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
     }
 
     /// <summary>
+    /// Kiểm tra xem tất cả slots đã có item đúng ID chưa
+    /// </summary>
+    public bool AreAllSlotsFilledWithValidDiamonds()
+    {
+        if (diamondSlots.Count < requiredDiamondCount)
+        {
+            return false;
+        }
+
+        int validCount = 0;
+        foreach (Slot slot in diamondSlots)
+        {
+            if (slot != null && slot.currentItem != null && IsValidDiamond(slot.currentItem))
+            {
+                validCount++;
+            }
+        }
+
+        return validCount >= requiredDiamondCount;
+    }
+
+    /// <summary>
     /// Cập nhật trạng thái UI
     /// </summary>
     public void UpdateStatus()
     {
         int currentCount = GetDiamondCount();
         bool hasEnough = currentCount >= requiredDiamondCount;
+        bool allSlotsFilled = AreAllSlotsFilledWithValidDiamonds();
+
+        Debug.Log($"[DungeonDoorDiamondPanel] UpdateStatus - Count: {currentCount}/{requiredDiamondCount}, HasEnough: {hasEnough}, AllFilled: {allSlotsFilled}, AutoClose: {autoCloseOnComplete}, DoorOpened: {isDoorOpened}");
+        
+        // Debug chi tiết từng slot
+        for (int i = 0; i < diamondSlots.Count; i++)
+        {
+            Slot slot = diamondSlots[i];
+            if (slot != null)
+            {
+                bool hasItem = slot.currentItem != null;
+                bool isValid = hasItem && IsValidDiamond(slot.currentItem);
+                string itemName = hasItem ? slot.currentItem.GetComponent<Item>()?.Name ?? "Unknown" : "None";
+                Debug.Log($"[DungeonDoorDiamondPanel] Slot {i}: HasItem={hasItem}, IsValid={isValid}, ItemName={itemName}");
+            }
+        }
 
         // Cập nhật status text
         if (statusText != null)
@@ -187,10 +272,23 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
             confirmButton.interactable = hasEnough && !isDoorOpened;
         }
 
-        // Tự động đóng panel và mở cổng nếu đủ item
-        if (hasEnough && autoCloseOnComplete && !isDoorOpened)
+        // Tự động đóng panel và mở cổng nếu đủ item đúng ID
+        if (hasEnough && allSlotsFilled && autoCloseOnComplete && !isDoorOpened)
         {
+            Debug.Log($"[DungeonDoorDiamondPanel] ✓ All {requiredDiamondCount} diamonds placed correctly. Auto-closing panel...");
             OnComplete();
+        }
+        else if (hasEnough && !allSlotsFilled)
+        {
+            Debug.LogWarning($"[DungeonDoorDiamondPanel] Has enough count ({currentCount}) but not all slots filled with valid diamonds!");
+        }
+        else if (hasEnough && !autoCloseOnComplete)
+        {
+            Debug.Log($"[DungeonDoorDiamondPanel] Has enough diamonds but autoCloseOnComplete is false. Waiting for confirm button.");
+        }
+        else if (hasEnough && isDoorOpened)
+        {
+            Debug.LogWarning($"[DungeonDoorDiamondPanel] Has enough diamonds but door already opened!");
         }
     }
 
@@ -227,6 +325,32 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
     /// </summary>
     public void OnItemDroppedInSlot(Slot slot)
     {
+        // Kiểm tra slot có phải là diamond slot không
+        if (slot == null)
+        {
+            Debug.LogWarning("[DungeonDoorDiamondPanel] OnItemDroppedInSlot called with null slot!");
+            return;
+        }
+
+        // Kiểm tra slot có trong danh sách diamondSlots không
+        if (!diamondSlots.Contains(slot))
+        {
+            Debug.LogWarning($"[DungeonDoorDiamondPanel] Slot {slot.name} is not in diamondSlots list!");
+            return;
+        }
+
+        Debug.Log($"[DungeonDoorDiamondPanel] Item dropped into slot. Current diamond count: {GetDiamondCount()}/{requiredDiamondCount}");
+
+        // Delay một frame để đảm bảo item đã được set vào slot
+        StartCoroutine(UpdateStatusDelayed());
+    }
+
+    /// <summary>
+    /// Cập nhật status sau một frame để đảm bảo item đã được set vào slot
+    /// </summary>
+    private System.Collections.IEnumerator UpdateStatusDelayed()
+    {
+        yield return null; // Đợi một frame
         UpdateStatus();
     }
 

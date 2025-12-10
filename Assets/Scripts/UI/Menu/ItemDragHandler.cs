@@ -696,10 +696,20 @@ public class ItemDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         // Thông báo cho diamond panel nếu item được kéo vào
         if (itemMoved && dropSlot != null)
         {
-            DungeonDoorDiamondPanel diamondPanel = dropSlot.GetComponentInParent<DungeonDoorDiamondPanel>();
-            if (diamondPanel != null)
+            // Kiểm tra slot có phải là DiamondSlot không
+            DiamondSlot diamondSlot = dropSlot.GetComponent<DiamondSlot>();
+            if (diamondSlot != null)
             {
-                diamondPanel.OnItemDroppedInSlot(dropSlot);
+                DungeonDoorDiamondPanel diamondPanel = dropSlot.GetComponentInParent<DungeonDoorDiamondPanel>();
+                if (diamondPanel != null)
+                {
+                    Debug.Log($"[ItemDragHandler] Item dropped into DiamondSlot. Notifying DungeonDoorDiamondPanel...");
+                    diamondPanel.OnItemDroppedInSlot(dropSlot);
+                }
+                else
+                {
+                    Debug.LogWarning("[ItemDragHandler] DiamondSlot found but DungeonDoorDiamondPanel not found in parent!");
+                }
             }
         }
 
