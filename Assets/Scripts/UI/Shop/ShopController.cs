@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using DG.Tweening;
 
 /// <summary>
 /// Controller cho shop panel - quản lý việc mua bán vũ khí
@@ -24,6 +25,22 @@ public class ShopController : MonoBehaviour
     
     [Tooltip("ScrollRect component (optional, nếu có sẽ tự động setup)")]
     [SerializeField] private ScrollRect scrollRect;
+
+    [Header("Purchase Success Message")]
+    [Tooltip("Text hiển thị thông báo mua thành công (mặc định ẩn, sẽ fade in/out khi mua thành công)")]
+    [SerializeField] private TextMeshProUGUI purchaseSuccessText;
+
+    [Tooltip("Thời gian fade in (giây)")]
+    [SerializeField] private float fadeInDuration = 0.3f;
+
+    [Tooltip("Thời gian hiển thị text (giây)")]
+    [SerializeField] private float displayDuration = 1.5f;
+
+    [Tooltip("Thời gian fade out (giây)")]
+    [SerializeField] private float fadeOutDuration = 0.5f;
+
+    private Color originalTextColor;
+    private Tween currentMessageTween;
 
     [Header("Shop Items")]
     [Tooltip("Danh sách WeaponInfo của các vũ khí có thể mua trong shop")]
@@ -187,6 +204,9 @@ public class ShopController : MonoBehaviour
             // Refresh gold text khi gold thay đổi
             InvokeRepeating(nameof(UpdateGoldText), 0f, 0.5f);
         }
+
+        // Setup purchase success text (ẩn mặc định)
+        SetupPurchaseSuccessText();
     }
 
     private void OnEnable()
@@ -385,6 +405,10 @@ public class ShopController : MonoBehaviour
             {
                 UpdateGoldText();
                 Debug.Log($"[ShopController] Successfully bought '{weaponInfo.itemName}' for {weaponInfo.shopPrice} gold!");
+                
+                // Hiển thị thông báo mua thành công
+                ShowPurchaseSuccessMessage(weaponInfo.itemName);
+                
                 return true;
             }
             else
@@ -436,9 +460,81 @@ public class ShopController : MonoBehaviour
         UpdateGoldText();
     }
 
+    /// <summary>
+    /// Setup purchase success text - ẩn mặc định
+    /// </summary>
+    private void SetupPurchaseSuccessText()
+    {
+        if (purchaseSuccessText == null) return;
+
+        // Lưu màu gốc
+        originalTextColor = purchaseSuccessText.color;
+
+        // Ẩn text ban đầu (alpha = 0)
+        Color hiddenColor = originalTextColor;
+        hiddenColor.a = 0f;
+        purchaseSuccessText.color = hiddenColor;
+    }
+
+    /// <summary>
+    /// Hiển thị thông báo mua thành công với fade in/out
+    /// </summary>
+    private void ShowPurchaseSuccessMessage(string itemName)
+    {
+        if (purchaseSuccessText == null) return;
+
+        // Dừng animation hiện tại nếu có
+        KillCurrentMessageTween();
+
+        // Set text
+        purchaseSuccessText.text = $"Đã mua {itemName}!";
+
+        // Đảm bảo GameObject đang active
+        if (!purchaseSuccessText.gameObject.activeSelf)
+        {
+            purchaseSuccessText.gameObject.SetActive(true);
+        }
+
+        // Set alpha về 0 để bắt đầu fade in
+        Color fadeInColor = originalTextColor;
+        fadeInColor.a = 0f;
+        purchaseSuccessText.color = fadeInColor;
+
+        // Tạo sequence animation
+        Sequence sequence = DOTween.Sequence();
+        
+        // Fade in
+        sequence.Append(purchaseSuccessText.DOFade(originalTextColor.a, fadeInDuration)
+            .SetEase(Ease.OutQuad));
+
+        // Giữ nguyên độ trong suốt trong thời gian hiển thị
+        sequence.AppendInterval(displayDuration);
+
+        // Fade out
+        sequence.Append(purchaseSuccessText.DOFade(0f, fadeOutDuration)
+            .SetEase(Ease.InQuad));
+
+        currentMessageTween = sequence;
+    }
+
+    /// <summary>
+    /// Dừng animation thông báo hiện tại
+    /// </summary>
+    private void KillCurrentMessageTween()
+    {
+        if (currentMessageTween != null && currentMessageTween.IsActive())
+        {
+            currentMessageTween.Kill();
+            currentMessageTween = null;
+        }
+    }
+
     private void OnDestroy()
     {
         // Unsubscribe
         CancelInvoke(nameof(UpdateGoldText));
+        
+        // Kill tween nếu còn
+        KillCurrentMessageTween();
     }
 }

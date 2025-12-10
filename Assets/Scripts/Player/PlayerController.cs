@@ -25,6 +25,8 @@ public class PlayerController : Singleton<PlayerController>
 
     private bool facingLeft = false;
     private bool isDashing = false;
+    private float dashCooldownRemaining = 0f;
+    private float dashCooldownTotal = 0.45f; // dashTime (0.2) + dashCD (0.25)
 
     protected override void Awake()
     {
@@ -72,6 +74,7 @@ public class PlayerController : Singleton<PlayerController>
     private void Update()
     {
         PlayerInput();
+        UpdateDashCooldown();
     }
 
     private void FixedUpdate()
@@ -125,10 +128,11 @@ public class PlayerController : Singleton<PlayerController>
 
     private void Dash()
     {
-        if (!isDashing && Stamina.Instance.CurrentStamina > 0)
+        if (!isDashing && Stamina.Instance.CurrentStamina > 0 && dashCooldownRemaining <= 0f)
         {
             Stamina.Instance.UseStamina();
             isDashing = true;
+            dashCooldownRemaining = dashCooldownTotal; // Bắt đầu cooldown
             moveSpeed *= dashSpeed;
             myTrailRenderer.emitting = true;
             StartCoroutine(EndDashRoutine());
@@ -144,6 +148,45 @@ public class PlayerController : Singleton<PlayerController>
         myTrailRenderer.emitting = false;
         yield return new WaitForSeconds(dashCD);
         isDashing = false;
+    }
+
+    /// <summary>
+    /// Update dash cooldown timer
+    /// </summary>
+    private void UpdateDashCooldown()
+    {
+        if (dashCooldownRemaining > 0f)
+        {
+            dashCooldownRemaining -= Time.deltaTime;
+            if (dashCooldownRemaining < 0f)
+            {
+                dashCooldownRemaining = 0f;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Lấy thời gian cooldown còn lại của dash
+    /// </summary>
+    public float GetDashCooldownRemaining()
+    {
+        return dashCooldownRemaining;
+    }
+
+    /// <summary>
+    /// Lấy tổng thời gian cooldown của dash
+    /// </summary>
+    public float GetDashCooldownTotal()
+    {
+        return dashCooldownTotal;
+    }
+
+    /// <summary>
+    /// Kiểm tra dash có đang trong cooldown không
+    /// </summary>
+    public bool IsDashOnCooldown()
+    {
+        return dashCooldownRemaining > 0f;
     }
 
     // WIND: hàm cho vùng gió gọi vào
