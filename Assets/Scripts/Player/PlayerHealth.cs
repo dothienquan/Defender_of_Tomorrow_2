@@ -21,7 +21,7 @@ public class PlayerHealth : Singleton<PlayerHealth>
     private Flash flash;
 
     const string HEALTH_SLIDER_TEXT = "Health Slider";
-    const string TOWN_TEXT = "Scene1";
+    const string TOWN_TEXT = "Defender Of Tomorrow";
     readonly int DEATH_HASH = Animator.StringToHash("Death");
 
     protected override void Awake() {
@@ -94,5 +94,15 @@ public class PlayerHealth : Singleton<PlayerHealth>
 
         healthSlider.maxValue = maxHealth;
         healthSlider.value = currentHealth;
+    }
+
+    /// <summary>
+    /// Nâng cấp max health (dùng cho upgrade system)
+    /// </summary>
+    public void UpgradeMaxHealth(int amount)
+    {
+        maxHealth += amount;
+        currentHealth += amount; // Heal thêm một lượng tương ứng
+        UpdateHealthSlider();
     }
 }

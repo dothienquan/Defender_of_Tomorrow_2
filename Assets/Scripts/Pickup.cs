@@ -19,6 +19,16 @@ public class Pickup : MonoBehaviour
     [SerializeField] private float heightY = 1.5f;
     [SerializeField] private float popDuration = 1f;
 
+    [Header("Gold Coin Settings")]
+    [Tooltip("Giá trị gold của coin này (chỉ áp dụng cho GoldCoin). Nếu = 0, sẽ random từ 50-200")]
+    [SerializeField] private int goldValue = 0;
+
+    [Tooltip("Giá trị gold tối thiểu khi random (chỉ dùng khi goldValue = 0)")]
+    [SerializeField] private int minGoldValue = 50;
+
+    [Tooltip("Giá trị gold tối đa khi random (chỉ dùng khi goldValue = 0)")]
+    [SerializeField] private int maxGoldValue = 200;
+
     private Vector3 moveDir;
     private Rigidbody2D rb;
 
@@ -27,6 +37,12 @@ public class Pickup : MonoBehaviour
     }
 
     private void Start() {
+        // Random gold value cho GoldCoin nếu chưa được set
+        if (pickUpType == PickUpType.GoldCoin && goldValue == 0)
+        {
+            goldValue = Random.Range(minGoldValue, maxGoldValue + 1); // +1 vì Random.Range int exclusive max
+        }
+
         StartCoroutine(AnimCurveSpawnRoutine());
     }
 
@@ -78,8 +94,17 @@ public class Pickup : MonoBehaviour
         switch (pickUpType)
         {
             case PickUpType.GoldCoin:
-                EconomyManager.Instance.UpdateCurrentGold();
-                
+                // Sử dụng goldValue đã được random hoặc set sẵn
+                if (goldValue > 0)
+                {
+                    EconomyManager.Instance.AddGold(goldValue);
+                }
+                else
+                {
+                    // Fallback: nếu goldValue vẫn = 0, random ngay tại đây
+                    int randomGold = Random.Range(minGoldValue, maxGoldValue + 1);
+                    EconomyManager.Instance.AddGold(randomGold);
+                }
                 break;
             case PickUpType.HealthGlobe:
                 PlayerHealth.Instance.HealPlayer();

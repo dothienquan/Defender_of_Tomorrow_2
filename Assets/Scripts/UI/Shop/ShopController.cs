@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using DG.Tweening;
 
 /// <summary>
 /// Controller cho shop panel - quản lý việc mua bán vũ khí
@@ -24,6 +25,22 @@ public class ShopController : MonoBehaviour
     
     [Tooltip("ScrollRect component (optional, nếu có sẽ tự động setup)")]
     [SerializeField] private ScrollRect scrollRect;
+
+    [Header("Purchase Success Message")]
+    [Tooltip("Text hiển thị thông báo mua thành công (mặc định ẩn, sẽ fade in/out khi mua thành công)")]
+    [SerializeField] private TextMeshProUGUI purchaseSuccessText;
+
+    [Tooltip("Thời gian fade in (giây)")]
+    [SerializeField] private float fadeInDuration = 0.3f;
+
+    [Tooltip("Thời gian hiển thị text (giây)")]
+    [SerializeField] private float displayDuration = 1.5f;
+
+    [Tooltip("Thời gian fade out (giây)")]
+    [SerializeField] private float fadeOutDuration = 0.5f;
+
+    private Color originalTextColor;
+    private Tween currentMessageTween;
 
     [Header("Shop Items")]
     [Tooltip("Danh sách WeaponInfo của các vũ khí có thể mua trong shop")]
@@ -139,8 +156,8 @@ public class ShopController : MonoBehaviour
         // Setup ScrollRect properties
         scrollRect.horizontal = false; // Chỉ scroll dọc
         scrollRect.vertical = true;    // Scroll dọc
-        scrollRect.movementType = ScrollRect.MovementType.Elastic;
-        scrollRect.elasticity = 0.1f;
+        scrollRect.movementType = ScrollRect.MovementType.Clamped; // Giới hạn scroll không vượt quá bounds
+        scrollRect.elasticity = 0f; // Không có bounce effect
         scrollRect.inertia = true;
         scrollRect.decelerationRate = 0.135f;
         scrollRect.scrollSensitivity = 40f; // Độ nhạy mouse wheel
@@ -164,6 +181,9 @@ public class ShopController : MonoBehaviour
             LayoutRebuilder.ForceRebuildLayoutImmediate(shopSlotsParent.GetComponent<RectTransform>());
         }
 
+        // Clamp scroll position sau khi setup
+        ClampScrollPosition();
+
         Debug.Log("[ShopController] ScrollRect setup complete.");
     }
 
@@ -184,6 +204,9 @@ public class ShopController : MonoBehaviour
             // Refresh gold text khi gold thay đổi
             InvokeRepeating(nameof(UpdateGoldText), 0f, 0.5f);
         }
+
+        // Setup purchase success text (ẩn mặc định)
+        SetupPurchaseSuccessText();
     }
 
     private void OnEnable()
@@ -266,11 +289,42 @@ public class ShopController : MonoBehaviour
             }
         }
 
-        // Reset scroll position về đầu
+        // Reset scroll position về đầu và clamp để tránh khoảng trắng
         if (scrollRect != null)
         {
             scrollRect.verticalNormalizedPosition = 1f; // 1 = top, 0 = bottom
+            ClampScrollPosition();
         }
+    }
+
+    /// <summary>
+    /// Clamp scroll position để không scroll quá item đầu tiên hoặc cuối cùng
+    /// Được gọi sau khi content được rebuild để đảm bảo scroll position hợp lệ
+    /// </summary>
+    private void ClampScrollPosition()
+    {
+        if (scrollRect == null || shopSlotsParent == null) return;
+
+        RectTransform contentRect = shopSlotsParent.GetComponent<RectTransform>();
+        RectTransform viewportRect = scrollRect.viewport != null ? scrollRect.viewport : scrollRect.GetComponent<RectTransform>();
+        
+        if (contentRect == null || viewportRect == null) return;
+
+        // Tính toán bounds
+        float contentHeight = contentRect.rect.height;
+        float viewportHeight = viewportRect.rect.height;
+
+        // Nếu content nhỏ hơn viewport, không cần scroll - giữ ở top
+        if (contentHeight <= viewportHeight)
+        {
+            scrollRect.verticalNormalizedPosition = 1f; // 1 = top
+            return;
+        }
+
+        // Clamp normalized position (0 = bottom, 1 = top)
+        // MovementType.Clamped sẽ tự động clamp, nhưng gọi thêm để đảm bảo
+        float normalizedPos = scrollRect.verticalNormalizedPosition;
+        scrollRect.verticalNormalizedPosition = Mathf.Clamp01(normalizedPos);
     }
 
     /// <summary>
@@ -351,6 +405,10 @@ public class ShopController : MonoBehaviour
             {
                 UpdateGoldText();
                 Debug.Log($"[ShopController] Successfully bought '{weaponInfo.itemName}' for {weaponInfo.shopPrice} gold!");
+                
+                // Hiển thị thông báo mua thành công
+                ShowPurchaseSuccessMessage(weaponInfo.itemName);
+                
                 return true;
             }
             else
@@ -402,9 +460,81 @@ public class ShopController : MonoBehaviour
         UpdateGoldText();
     }
 
+    /// <summary>
+    /// Setup purchase success text - ẩn mặc định
+    /// </summary>
+    private void SetupPurchaseSuccessText()
+    {
+        if (purchaseSuccessText == null) return;
+
+        // Lưu màu gốc
+        originalTextColor = purchaseSuccessText.color;
+
+        // Ẩn text ban đầu (alpha = 0)
+        Color hiddenColor = originalTextColor;
+        hiddenColor.a = 0f;
+        purchaseSuccessText.color = hiddenColor;
+    }
+
+    /// <summary>
+    /// Hiển thị thông báo mua thành công với fade in/out
+    /// </summary>
+    private void ShowPurchaseSuccessMessage(string itemName)
+    {
+        if (purchaseSuccessText == null) return;
+
+        // Dừng animation hiện tại nếu có
+        KillCurrentMessageTween();
+
+        // Set text
+        purchaseSuccessText.text = $"Đã mua {itemName}!";
+
+        // Đảm bảo GameObject đang active
+        if (!purchaseSuccessText.gameObject.activeSelf)
+        {
+            purchaseSuccessText.gameObject.SetActive(true);
+        }
+
+        // Set alpha về 0 để bắt đầu fade in
+        Color fadeInColor = originalTextColor;
+        fadeInColor.a = 0f;
+        purchaseSuccessText.color = fadeInColor;
+
+        // Tạo sequence animation
+        Sequence sequence = DOTween.Sequence();
+        
+        // Fade in
+        sequence.Append(purchaseSuccessText.DOFade(originalTextColor.a, fadeInDuration)
+            .SetEase(Ease.OutQuad));
+
+        // Giữ nguyên độ trong suốt trong thời gian hiển thị
+        sequence.AppendInterval(displayDuration);
+
+        // Fade out
+        sequence.Append(purchaseSuccessText.DOFade(0f, fadeOutDuration)
+            .SetEase(Ease.InQuad));
+
+        currentMessageTween = sequence;
+    }
+
+    /// <summary>
+    /// Dừng animation thông báo hiện tại
+    /// </summary>
+    private void KillCurrentMessageTween()
+    {
+        if (currentMessageTween != null && currentMessageTween.IsActive())
+        {
+            currentMessageTween.Kill();
+            currentMessageTween = null;
+        }
+    }
+
     private void OnDestroy()
     {
         // Unsubscribe
         CancelInvoke(nameof(UpdateGoldText));
+        
+        // Kill tween nếu còn
+        KillCurrentMessageTween();
     }
 }
