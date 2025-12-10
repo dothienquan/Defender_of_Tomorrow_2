@@ -151,4 +151,21 @@ public class PlayerController : Singleton<PlayerController>
     {
         currentWind = wind;
     }
+
+    /// <summary>
+    /// Nâng cấp movement speed (dùng cho upgrade system)
+    /// </summary>
+    public void UpgradeMovementSpeed(float amount)
+    {
+        moveSpeed += amount;
+        startingMoveSpeed += amount; // Cập nhật cả starting speed để dash vẫn đúng
+    }
+
+    /// <summary>
+    /// Lấy movement speed hiện tại
+    /// </summary>
+    public float GetMovementSpeed()
+    {
+        return moveSpeed;
+    }
 }

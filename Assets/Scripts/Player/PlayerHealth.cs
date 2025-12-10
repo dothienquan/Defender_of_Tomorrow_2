@@ -95,4 +95,14 @@ public class PlayerHealth : Singleton<PlayerHealth>
         healthSlider.maxValue = maxHealth;
         healthSlider.value = currentHealth;
     }
+
+    /// <summary>
+    /// Nâng cấp max health (dùng cho upgrade system)
+    /// </summary>
+    public void UpgradeMaxHealth(int amount)
+    {
+        maxHealth += amount;
+        currentHealth += amount; // Heal thêm một lượng tương ứng
+        UpdateHealthSlider();
+    }
 }
