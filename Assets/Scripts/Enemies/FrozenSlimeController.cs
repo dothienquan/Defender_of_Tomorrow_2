@@ -324,7 +324,8 @@ public class FrozenSlimeController : MonoBehaviour
         _postAttackStunTimer = postAttackStunDuration;
 
         // Set LastX/LastY dựa trên hướng tới player (không phải velocity)
-        // Đảo ngược X và Y để fix animation bị ngược
+        // Đảo ngược X để fix animation trái/phải bị ngược
+        // KHÔNG đảo ngược Y vì attack animation cần đúng hướng
         if (player != null && _enemyAnim != null)
         {
             Vector2 dirToPlayer = ((Vector2)player.position - (Vector2)transform.position).normalized;
@@ -332,9 +333,9 @@ public class FrozenSlimeController : MonoBehaviour
             if (anim != null)
             {
                 // Đảo ngược X: player ở bên phải → LastX âm (AttackLeft), player ở bên trái → LastX dương (AttackRight)
-                // Đảo ngược Y: player ở trên → LastY âm (AttackUp), player ở dưới → LastY dương (AttackDown)
+                // Giữ nguyên Y: player ở trên → LastY dương (AttackUp), player ở dưới → LastY âm (AttackDown)
                 anim.SetFloat("LastX", -dirToPlayer.x);
-                anim.SetFloat("LastY", -dirToPlayer.y);
+                anim.SetFloat("LastY", dirToPlayer.y);
             }
         }
 
