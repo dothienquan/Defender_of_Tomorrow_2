@@ -148575,7 +148575,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -53.5, y: -48.69995}
+  m_AnchoredPosition: {x: -53.5, y: -48.7}
   m_SizeDelta: {x: 54.1477, y: 88.0365}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &612300545
@@ -477335,7 +477335,6 @@ GameObject:
   - component: {fileID: 2066882375}
   - component: {fileID: 2066882373}
   - component: {fileID: 2066882378}
-  - component: {fileID: 2066882379}
   m_Layer: 0
   m_Name: Gate
   m_TagString: Untagged
@@ -477543,31 +477542,6 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: -0.010948243, y: 1.0735956}
   m_Radius: 1.3175712
---- !u!114 &2066882379
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2066882371}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 33c013dd63e779f4fb8155eb34174338, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DungeonDoorDiamondPanel
-  requiredDiamondIDs: 0c0000000d0000000e000000
-  requiredDiamondCount: 3
-  checkByName: 1
-  diamondSlotsParent: {fileID: 0}
-  diamondSlotPrefab: {fileID: 7333249300040699574, guid: ad2a4fd6cbcab0f45994239102fada30, type: 3}
-  slotCount: 3
-  confirmButton: {fileID: 0}
-  statusText: {fileID: 0}
-  statusFormat: '{0}/{1}'
-  autoCloseOnComplete: 1
-  doorController: {fileID: 0}
-  doorCollider: {fileID: 0}
-  doorInteractor: {fileID: 0}
 --- !u!1 &2067166913
 GameObject:
   m_ObjectHideFlags: 0
@@ -486238,7 +486212,7 @@ PrefabInstance:
     - target: {fileID: 5894145428171462639, guid: a6092feb5a8f2fa48a2dbdf7b8c1876d, type: 3}
       propertyPath: m_BoundingShape2D
       value: 
-      objectReference: {fileID: 1124230932}
+      objectReference: {fileID: 1913739813}
     - target: {fileID: 5901563881500840593, guid: a6092feb5a8f2fa48a2dbdf7b8c1876d, type: 3}
       propertyPath: maxHealth
       value: 50
@@ -486561,11 +486535,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8286426869402452146, guid: a6092feb5a8f2fa48a2dbdf7b8c1876d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1143.5354
+      value: 1068.1393
       objectReference: {fileID: 0}
     - target: {fileID: 8286426869402452146, guid: a6092feb5a8f2fa48a2dbdf7b8c1876d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 582.84973
+      value: 724.2534
       objectReference: {fileID: 0}
     - target: {fileID: 8351181777176134887, guid: a6092feb5a8f2fa48a2dbdf7b8c1876d, type: 3}
       propertyPath: m_fontStyle

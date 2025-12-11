@@ -363,16 +363,18 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
     }
 
     /// <summary>
-    /// Đóng panel
+    /// Đóng panel - chỉ ẩn panel minigame, không ẩn toàn bộ UI canvas
     /// </summary>
     private void ClosePanel()
     {
-        if (transform.parent != null)
+        // Nếu có doorInteractor, dùng nó để đóng panel (đảm bảo đúng panel được đóng)
+        if (doorInteractor != null)
         {
-            transform.parent.gameObject.SetActive(false);
+            doorInteractor.ClosePanel();
         }
         else
         {
+            // Fallback: chỉ ẩn chính GameObject này, không ẩn parent (có thể là Canvas)
             gameObject.SetActive(false);
         }
     }
