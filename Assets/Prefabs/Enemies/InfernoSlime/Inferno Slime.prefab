@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: -8815686171251181440}
   - component: {fileID: 6494760005540952675}
   - component: {fileID: 8888888888888888888}
+  - component: {fileID: 997035959329178382}
   m_Layer: 0
   m_Name: Inferno Slime
   m_TagString: Enemy
@@ -238,3 +239,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnim
   animator: {fileID: 8578411228118065450}
   rb: {fileID: 1318821440285951217}
+--- !u!114 &997035959329178382
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1123712303357717457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b15b76930573d974db743bdc069df093, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InfernoSlimeController
+  player: {fileID: 0}
+  chaseSpeed: 5
+  patrolSpeed: 1.5
+  chaseDistance: 5
+  attackDistance: 1.2
+  losePlayerDistance: 8
+  patrolArea: {fileID: 0}
+  patrolWaitTime: 1
+  patrolPointReachedDistance: 0.3
+  attackCooldown: 1.5
+  attackAnimationDuration: 0.5
+  postAttackStunDuration: 0.3
+  jumpDuration: 0.5
+  jumpArcHeight: 3
+  jumpLandDistance: 0.2
+  projectilePrefab: {fileID: 1799460257370123666, guid: 6c59a60827b7a5e4da0b0c38a53d36ec, type: 3}
+  projectileSpawnDelay: 0.3
+  projectileSpawnOffset: {x: 0, y: 2}
