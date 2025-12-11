@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6600707589686964925}
   - component: {fileID: 980827169833135462}
   - component: {fileID: 5441077602143913303}
+  - component: {fileID: 7945992551298734018}
   m_Layer: 0
   m_Name: VoidBG
   m_TagString: Untagged
@@ -79,8 +80,8 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: -10
-  m_Sprite: {fileID: 1794477503344242297, guid: 9eea4010a7b9d954aa8e790ff6eea844, type: 3}
+  m_SortingOrder: -3
+  m_Sprite: {fileID: 1794477503344242297, guid: f8c7379a91d18dc47b757bc128a5960c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -103,4 +104,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e15f1ba5fc1e7e04b9b41c4e08899b57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VoidBackground
-  rotateSpeed: 15
+  rotateSpeed: 5
+--- !u!114 &7945992551298734018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7280269005539560411}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76d3e3cee0c0f2c44befd1af50558d86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VoidDamageController
+  voidRadius: 15
+  safeZones: []
+  damagePercent: 0.00001
+  tickInterval: 1

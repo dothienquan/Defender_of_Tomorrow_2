@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7959752725531482705}
   - component: {fileID: 3693410554736894749}
   - component: {fileID: 2209526498141336031}
+  - component: {fileID: 3651046171690021568}
   m_Layer: 0
   m_Name: Lightning-bolt_3
   m_TagString: Untagged
@@ -105,7 +106,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LightningStrikeArea
   telegraphTime: 1.4
-  damageRadius: 15.84
+  damageRadius: 2
   damage: 1
 --- !u!70 &2209526498141336031
 CapsuleCollider2D:
@@ -144,3 +145,25 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0}
   m_Size: {x: 2.9, y: 3.6}
   m_Direction: 0
+--- !u!95 &3651046171690021568
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1580152450550376111}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 1e058a8ac330ef4419a0bd4988b4a2ab, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
