@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: 2974879900059146393}
   - component: {fileID: 4547261770350086383}
   - component: {fileID: -8027716615350512977}
+  - component: {fileID: 6224829038446882388}
   m_Layer: 0
   m_Name: Enemie1
   m_TagString: Enemy
@@ -36,7 +37,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2200932645803366277}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 11.14, y: 0.48, z: -0.16856997}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -306,6 +307,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyExpDropper
   expPrefab: {fileID: 5210306458450560170, guid: 3d47f448c66c9d643b09632d924025e7, type: 3}
   spawnOffset: {x: 0, y: 0}
+--- !u!114 &6224829038446882388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2200932645803366277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4df17f6d638022443a56642b417f8a5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyChase
+  speed: 3
 --- !u!1 &6574809744568846326
 GameObject:
   m_ObjectHideFlags: 0

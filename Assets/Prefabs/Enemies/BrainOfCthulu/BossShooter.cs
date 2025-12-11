@@ -107,6 +107,7 @@ public class BossShooter : MonoBehaviour, IEnemy
                 if (newBullet.TryGetComponent(out Projectile projectile))
                 {
                     projectile.UpdateMoveSpeed(bulletMoveSpeed);
+                    projectile.SetIsEnemyProjectile(true);
                 }
 
                 currentAngle += angleStep;

@@ -128,16 +128,19 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // --- New: check boss redirector first ---
-        BossHitRedirector redirector = other.gameObject.GetComponent<BossHitRedirector>();
-        if (redirector != null)
+        // --- New: check boss redirector first (chỉ cho đạn của player) ---
+        if (!isEnemyProjectile)
         {
-            redirector.HandleProjectileHit(this, directDamage, damageMode == DamageMode.Direct,
-                dotDamagePerTick, dotTickInterval, dotDuration, dotStackable,
-                applySlowOnHit, slowMultiplier, slowDuration, slowStackable,
-                particleOnHitPrefabVFX);
-            Destroy(gameObject);
-            return;
+            BossHitRedirector redirector = other.gameObject.GetComponent<BossHitRedirector>();
+            if (redirector != null)
+            {
+                redirector.HandleProjectileHit(this, directDamage, damageMode == DamageMode.Direct,
+                    dotDamagePerTick, dotTickInterval, dotDuration, dotStackable,
+                    applySlowOnHit, slowMultiplier, slowDuration, slowStackable,
+                    particleOnHitPrefabVFX);
+                Destroy(gameObject);
+                return;
+            }
         }
 
         // --- Original behavior (non-boss or not handled by redirector) ---
