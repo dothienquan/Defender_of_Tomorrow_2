@@ -6,20 +6,24 @@ public class BossOrb : MonoBehaviour
 {
     [Header("Orbit")]
     [SerializeField] private float orbitRadius = 2.5f;
-    [SerializeField] private float orbitSpeed = 40f; // độ/giây
+    [SerializeField] private float orbitSpeed = 40f;
 
-    [Header("Ground turret")]
+    [Header("Shooting")]
     [SerializeField] private GameObject pentagonProjectilePrefab;
     [SerializeField] private float pentagonShootInterval = 1.2f;
 
-    private IBossOrbOwner owner;
+    [Header("Ground Return")]
+    [SerializeField] private float returnToOrbitTime = 6f; // ✅ SAU 6S TỰ QUAY LẠI
 
-    private Transform center;   // boss
+    private IBossOrbOwner owner;
+    private Transform center;
     private Transform player;
 
-    private float angle;        // độ
+    private float angle;
     private bool isGrounded = false;
+
     private Coroutine turretRoutine;
+    private Coroutine returnRoutine;
 
     private EnemyHealth enemyHealth;
 
@@ -30,9 +34,12 @@ public class BossOrb : MonoBehaviour
         enemyHealth.OnDeath += OnOrbDeath;
     }
 
-    // Boss gọi khi spawn lần đầu
-    public void Setup(IBossOrbOwner owner, Transform center, Transform player,
-                      float startAngleDeg, float radiusOverride = -1f)
+    public void Setup(
+        IBossOrbOwner owner,
+        Transform center,
+        Transform player,
+        float startAngleDeg,
+        float radiusOverride = -1f)
     {
         this.owner = owner;
         this.center = center;
@@ -46,6 +53,12 @@ public class BossOrb : MonoBehaviour
 
         angle = startAngleDeg;
         UpdateOrbitPosition();
+
+        // ✅ Orb bay cũng bắn luôn
+        if (turretRoutine != null)
+            StopCoroutine(turretRoutine);
+
+        turretRoutine = StartCoroutine(PentagonShootRoutine());
     }
 
     private void Update()
@@ -76,33 +89,38 @@ public class BossOrb : MonoBehaviour
 
         isGrounded = true;
 
-        // rơi xuống 1 tí cho dễ thấy
-        transform.position = new Vector2(transform.position.x, transform.position.y - 1f);
+        // rơi xuống nhẹ cho dễ thấy
+        transform.position += Vector3.down * 1f;
 
-        // báo cho boss biết orb đã rơi
-        if (owner != null)
-            owner.NotifyOrbGrounded(this);
+        // ✅ vẫn báo boss nếu bạn còn dùng logic này
+        owner?.NotifyOrbGrounded(this);
 
-        turretRoutine = StartCoroutine(PentagonShootRoutine());
+        // ✅ Sau 6s tự quay lại bay
+        if (returnRoutine != null)
+            StopCoroutine(returnRoutine);
+
+        returnRoutine = StartCoroutine(ReturnToOrbitAfterDelay());
     }
 
-    /// <summary>
-    /// Gọi khi boss hết vulnerable: orb full máu + trở lại quỹ đạo ở góc mới.
-    /// </summary>
+    private IEnumerator ReturnToOrbitAfterDelay()
+    {
+        yield return new WaitForSeconds(returnToOrbitTime);
+
+        // ✅ Tự hồi lại không cần chờ orb khác
+        ResetToOrbit(angle);
+    }
+
     public void ResetToOrbit(float startAngleDeg)
     {
         isGrounded = false;
-
-        if (turretRoutine != null)
-        {
-            StopCoroutine(turretRoutine);
-            turretRoutine = null;
-        }
 
         enemyHealth.ResetHealthToMax();
 
         angle = startAngleDeg;
         UpdateOrbitPosition();
+
+        if (turretRoutine == null)
+            turretRoutine = StartCoroutine(PentagonShootRoutine());
     }
 
     private IEnumerator PentagonShootRoutine()
