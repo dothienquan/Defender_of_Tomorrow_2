@@ -30,6 +30,11 @@ public class InfernoSlimeController : MonoBehaviour
     [SerializeField] private float jumpArcHeight = 2f;
     [SerializeField] private float jumpLandDistance = 0.2f;  // Khoảng cách coi như đã đáp
 
+    [Header("Projectile")]
+    [SerializeField] private GameObject projectilePrefab;
+    [SerializeField] private float projectileSpawnDelay = 0.3f;  // Delay để sync với animation
+    [SerializeField] private Vector2 projectileSpawnOffset = Vector2.zero;
+
     private enum State
     {
         Patrolling,
@@ -416,6 +421,42 @@ public class InfernoSlimeController : MonoBehaviour
         {
             _enemyAnim.PlayAttack();
         }
+
+        // Spawn 4 projectiles ở 4 hướng với delay để sync với animation
+        if (projectilePrefab != null)
+        {
+            Invoke(nameof(SpawnFourDirectionProjectiles), projectileSpawnDelay);
+        }
+    }
+
+    private void SpawnFourDirectionProjectiles()
+    {
+        if (projectilePrefab == null) return;
+
+        // 4 hướng: trên, dưới, trái, phải
+        Vector2[] directions = new Vector2[]
+        {
+            Vector2.up,      // Trên
+            Vector2.down,    // Dưới
+            Vector2.left,    // Trái
+            Vector2.right   // Phải
+        };
+
+        // Vị trí spawn (vị trí slime + offset)
+        Vector2 spawnPosition = (Vector2)transform.position + projectileSpawnOffset;
+
+        // Spawn 4 projectile cùng lúc
+        foreach (Vector2 direction in directions)
+        {
+            GameObject projectile = Instantiate(projectilePrefab, spawnPosition, Quaternion.identity);
+
+            // Launch projectile
+            FrozenSlimeProjectile projScript = projectile.GetComponent<FrozenSlimeProjectile>();
+            if (projScript != null)
+            {
+                projScript.Launch(direction);
+            }
+        }
     }
 
     private void TryFindPlayer()
@@ -437,6 +478,9 @@ public class InfernoSlimeController : MonoBehaviour
             StopCoroutine(_jumpCoroutine);
             _jumpCoroutine = null;
         }
+
+        // Cancel pending projectile spawn
+        CancelInvoke(nameof(SpawnFourDirectionProjectiles));
 
         if (_enemyAnim != null)
         {
