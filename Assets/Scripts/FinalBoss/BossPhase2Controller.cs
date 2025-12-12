@@ -29,7 +29,7 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
     [SerializeField] private GameObject voidBGPrefab;
     [SerializeField] private GameObject voidCastWavePrefab;
     [SerializeField] private float voidFieldDuration = 10f;
-    [SerializeField] private float voidRadius = 7f; // 🔹 radius gameplay, inspector chỉnh
+    [SerializeField] private float voidRadius = 7f; // radius gameplay
 
     private Transform player;
     private bool isAttacking;
@@ -43,6 +43,12 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
     private FieldInfo currentHealthField;
     private int lastRecordedHealth;
 
+    // ===== Runtime spawned refs (Void Field) =====
+    private GameObject activeVoidObj;                 // "VoidDamageController" object
+    private VoidDamageController activeVoidDamage;    // component on activeVoidObj
+    private GameObject activeVoidBG;                  // spawned BG visual
+    private readonly List<SafeZone> activeSafeZones = new List<SafeZone>(); // safezones spawned by this boss
+
     private void Awake()
     {
         if (!enemyHealth)
@@ -54,7 +60,6 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
             BindingFlags.NonPublic | BindingFlags.Instance);
     }
 
-    // 🔹 ĐĂNG KÝ / HỦY ĐĂNG KÝ SỰ KIỆN CHẾT CỦA BOSS
     private void OnEnable()
     {
         if (enemyHealth == null)
@@ -79,9 +84,7 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
 
         // lấy HP ban đầu làm mốc
         if (enemyHealth != null && currentHealthField != null)
-        {
             lastRecordedHealth = (int)currentHealthField.GetValue(enemyHealth);
-        }
 
         SpawnOrbs();
         groundedOrbCount = 0;
@@ -124,7 +127,6 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
     public void Attack()
     {
         if (isAttacking) return;
-
         StartCoroutine(AttackRoutine());
     }
 
@@ -241,30 +243,29 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
                 Destroy(orbs[i].gameObject);
         orbs.Clear();
 
-        // 🔥 DỌN VÙNG VOID CÒN TỒN TẠI 🔥
+        // ===== DỌN VOID FIELD THEO REFERENCE (KHÔNG QUÉT SCENE) =====
+        if (activeVoidObj != null) Destroy(activeVoidObj);
+        activeVoidObj = null;
+        activeVoidDamage = null;
 
-        // 1) Destroy tất cả VoidDamageController còn đang sống
-        var voidControllers = FindObjectsOfType<VoidDamageController>();
-        foreach (var v in voidControllers)
-            Destroy(v.gameObject);
+        if (activeVoidBG != null) Destroy(activeVoidBG);
+        activeVoidBG = null;
 
-        // 2) Destroy Void BG (vì nó không tự tắt)
-        var allObjects = FindObjectsOfType<GameObject>();
-        foreach (var obj in allObjects)
+        for (int i = 0; i < activeSafeZones.Count; i++)
+            if (activeSafeZones[i] != null)
+                Destroy(activeSafeZones[i].gameObject);
+        activeSafeZones.Clear();
+
+        // Nếu bạn vẫn dùng static list ActiveZones ở SafeZone (tuỳ code của bạn)
+        if (SafeZone.ActiveZones != null)
         {
-            // Nếu prefab đặt tên "VoidBG", "VoidBackground", hoặc tên tương tự thì chỉnh tại đây
-            if (obj.name.Contains("VoidBG") || obj.name.Contains("VoidBackground"))
-                Destroy(obj);
+            foreach (var z in SafeZone.ActiveZones)
+                if (z != null)
+                    Destroy(z.gameObject);
+
+            SafeZone.ActiveZones.Clear();
         }
-
-        // 3) Destroy SafeZones còn sót
-        foreach (var z in SafeZone.ActiveZones)
-            if (z != null)
-                Destroy(z.gameObject);
-
-        SafeZone.ActiveZones.Clear();
     }
-
 
     #endregion
 
@@ -364,29 +365,36 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
         if (safeZonePrefab == null || voidBGPrefab == null || voidCastWavePrefab == null)
             yield break;
 
+        // Nếu đang có void field cũ mà skill lại cast tiếp -> dọn trước để khỏi rác
+        if (activeVoidObj != null) Destroy(activeVoidObj);
+        if (activeVoidBG != null) Destroy(activeVoidBG);
+        for (int i = 0; i < activeSafeZones.Count; i++)
+            if (activeSafeZones[i] != null)
+                Destroy(activeSafeZones[i].gameObject);
+        activeSafeZones.Clear();
+
         // object điều khiển damage void
-        var voidObj = new GameObject("VoidDamageController");
-        var voidDamage = voidObj.AddComponent<VoidDamageController>();
+        activeVoidObj = new GameObject("VoidDamageController");
+        activeVoidDamage = activeVoidObj.AddComponent<VoidDamageController>();
 
         // NỀN VOID (VISUAL)
-        var bg = Instantiate(voidBGPrefab, transform.position, Quaternion.identity);
-        voidObj.transform.position = bg.transform.position;
+        activeVoidBG = Instantiate(voidBGPrefab, transform.position, Quaternion.identity);
+        activeVoidObj.transform.position = activeVoidBG.transform.position;
 
         // scale BG để vòng sprite đúng bằng voidRadius
-        var sr = bg.GetComponentInChildren<SpriteRenderer>();
+        var sr = activeVoidBG.GetComponentInChildren<SpriteRenderer>();
         if (sr != null && sr.sprite != null)
         {
-            // bán kính sprite local khi scale = 1
-            float spriteRadius = sr.sprite.bounds.extents.x;
+            float spriteRadius = sr.sprite.bounds.extents.x; // radius local when scale=1
             if (spriteRadius > 0.0001f)
             {
                 float scaleFactor = voidRadius / spriteRadius;
-                bg.transform.localScale = Vector3.one * scaleFactor;
+                activeVoidBG.transform.localScale = Vector3.one * scaleFactor;
             }
         }
 
         // gameplay radius cho damage + gizmo
-        voidDamage.voidRadius = voidRadius;
+        activeVoidDamage.voidRadius = voidRadius;
 
         // ===== SPAWN SAFE ZONE TẠI VỊ TRÍ ORB =====
         List<SafeZone> zones = new List<SafeZone>();
@@ -397,24 +405,22 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
 
             Vector2 spawnPos = orbs[i].transform.position;
 
-            SafeZone z = Instantiate(
-                 safeZonePrefab,
-                 spawnPos,
-                 Quaternion.identity
-            );
+            SafeZone z = Instantiate(safeZonePrefab, spawnPos, Quaternion.identity);
 
             // cho safezone sống đúng bằng thời gian void tồn tại
             z.Init(voidFieldDuration);
 
             zones.Add(z);
+            activeSafeZones.Add(z);
         }
 
         float timer = 0f;
 
         while (timer < voidFieldDuration)
         {
-            foreach (var z in zones)
+            for (int i = 0; i < zones.Count; i++)
             {
+                var z = zones[i];
                 if (z != null && z.IsActive)
                     SpawnLightningAroundSafeZone(z);
             }
@@ -424,14 +430,21 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
         }
 
         // ===== DỌN DẸP =====
-        Destroy(voidObj);
+        if (activeVoidObj != null) Destroy(activeVoidObj);
+        activeVoidObj = null;
+        activeVoidDamage = null;
 
-        foreach (var z in zones)
-            if (z != null)
-                Destroy(z.gameObject);
+        for (int i = 0; i < zones.Count; i++)
+            if (zones[i] != null)
+                Destroy(zones[i].gameObject);
+
+        zones.Clear();
+        activeSafeZones.Clear();
 
         Instantiate(voidCastWavePrefab, transform.position, Quaternion.identity);
-        Destroy(bg);
+
+        if (activeVoidBG != null) Destroy(activeVoidBG);
+        activeVoidBG = null;
     }
 
     #endregion
