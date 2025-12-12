@@ -203,8 +203,16 @@ public class EnemyHealth : MonoBehaviour
         GetComponent<PickUpSpawner>()?.DropItems();
         GetComponent<SpawnerSlime>()?.SpawnerSlimes();
 
-        if (expPickupPrefab != null)
+        // Drop exp: ưu tiên EnemyExpDropper component, fallback về expPickupPrefab
+        EnemyExpDropper expDropper = GetComponent<EnemyExpDropper>();
+        if (expDropper != null)
+        {
+            expDropper.DropExp();
+        }
+        else if (expPickupPrefab != null)
+        {
             Instantiate(expPickupPrefab, transform.position, Quaternion.identity);
+        }
 
         Destroy(gameObject);
     }

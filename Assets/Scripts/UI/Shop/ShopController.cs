@@ -49,6 +49,7 @@ public class ShopController : MonoBehaviour
 
     private InventoryController inventoryController;
     private ItemDictionary itemDictionary;
+    private SaveController saveController;
 
     private void Awake()
     {
@@ -71,6 +72,13 @@ public class ShopController : MonoBehaviour
         if (itemDictionary == null)
         {
             Debug.LogError("[ShopController] ItemDictionary not found! Shop cannot find item prefabs.");
+        }
+
+        // Tìm SaveController để save game sau khi mua
+        saveController = FindFirstObjectByType<SaveController>();
+        if (saveController == null)
+        {
+            Debug.LogWarning("[ShopController] SaveController not found! Game will not auto-save after purchase.");
         }
 
         // Tự động tìm ScrollRect nếu chưa được gán
@@ -438,6 +446,9 @@ public class ShopController : MonoBehaviour
                 // Hiển thị thông báo mua thành công
                 ShowPurchaseSuccessMessage(weaponInfo.itemName);
                 
+                // Save game sau khi mua thành công
+                SaveGame();
+                
                 return true;
             }
             else
@@ -607,6 +618,28 @@ public class ShopController : MonoBehaviour
         {
             currentMessageTween.Kill();
             currentMessageTween = null;
+        }
+    }
+
+    /// <summary>
+    /// Save game (gọi SaveController nếu có)
+    /// </summary>
+    private void SaveGame()
+    {
+        // Tìm lại SaveController nếu chưa có (tránh null reference)
+        if (saveController == null)
+        {
+            saveController = FindFirstObjectByType<SaveController>();
+        }
+
+        if (saveController != null)
+        {
+            saveController.SaveGame();
+            Debug.Log("[ShopController] Game saved after purchase.");
+        }
+        else
+        {
+            Debug.LogWarning("[ShopController] Cannot save game: SaveController not found!");
         }
     }
 

@@ -17,6 +17,8 @@ GameObject:
   - component: {fileID: 6494760005540952675}
   - component: {fileID: 8888888888888888888}
   - component: {fileID: 997035959329178382}
+  - component: {fileID: 2026097093096277516}
+  - component: {fileID: 261953998370964421}
   m_Layer: 0
   m_Name: Inferno Slime
   m_TagString: Enemy
@@ -269,3 +271,32 @@ MonoBehaviour:
   projectilePrefab: {fileID: 1799460257370123666, guid: 6c59a60827b7a5e4da0b0c38a53d36ec, type: 3}
   projectileSpawnDelay: 0.3
   projectileSpawnOffset: {x: 0, y: 2}
+--- !u!114 &2026097093096277516
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1123712303357717457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 491d52704ec304a4aa7cea27cc0a060b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PickUpSpawner
+  goldCoin: {fileID: 4439132808754776824, guid: b1d0d2b16b06b3b429d217b768548927, type: 3}
+  healthGlobe: {fileID: 4439132808754776824, guid: 37dde58c701ad2f4d83e3debca95bda9, type: 3}
+  staminaGlobe: {fileID: 4439132808754776824, guid: b63083ec6c8606d4d88f507fb3d2e2f7, type: 3}
+--- !u!114 &261953998370964421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1123712303357717457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a3e3aae6a5e95845a84dd1e977a9f68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyExpDropper
+  expPrefab: {fileID: 5210306458450560170, guid: 3d47f448c66c9d643b09632d924025e7, type: 3}
+  spawnOffset: {x: 0, y: 0}

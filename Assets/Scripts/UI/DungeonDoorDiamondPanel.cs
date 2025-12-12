@@ -28,6 +28,10 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
     [SerializeField] private Collider2D doorCollider; // Collider của cổng (sẽ tắt khi mở)
     [SerializeField] private DungeonDoorInteractor doorInteractor; // Interactor để thông báo khi cổng mở
 
+    [Header("Sorting Order Change")]
+    [SerializeField] private GameObject objectToChangeSortingOrder; // Object cần thay đổi sorting order
+    [SerializeField] private int newSortingOrder = 1; // Sorting order mới (mặc định 1)
+
     private List<Slot> diamondSlots = new List<Slot>();
     private InventoryController inventoryController;
     private ItemDictionary itemDictionary;
@@ -436,7 +440,44 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
             doorInteractor.OnDoorOpened();
         }
 
+        // Thay đổi sorting order của object
+        ChangeObjectSortingOrder();
+
         Debug.Log("[DungeonDoorDiamondPanel] Door opened!");
+    }
+
+    /// <summary>
+    /// Thay đổi sorting order của object từ 0 sang 1 (hoặc giá trị được set)
+    /// </summary>
+    private void ChangeObjectSortingOrder()
+    {
+        if (objectToChangeSortingOrder == null)
+        {
+            Debug.LogWarning("[DungeonDoorDiamondPanel] ObjectToChangeSortingOrder is null! Cannot change sorting order.");
+            return;
+        }
+
+        // Tìm SpriteRenderer component
+        SpriteRenderer spriteRenderer = objectToChangeSortingOrder.GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.sortingOrder = newSortingOrder;
+            Debug.Log($"[DungeonDoorDiamondPanel] Changed sorting order of {objectToChangeSortingOrder.name} to {newSortingOrder}");
+        }
+        else
+        {
+            // Nếu không có SpriteRenderer, thử tìm trong children
+            spriteRenderer = objectToChangeSortingOrder.GetComponentInChildren<SpriteRenderer>();
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.sortingOrder = newSortingOrder;
+                Debug.Log($"[DungeonDoorDiamondPanel] Changed sorting order of {spriteRenderer.gameObject.name} (child of {objectToChangeSortingOrder.name}) to {newSortingOrder}");
+            }
+            else
+            {
+                Debug.LogWarning($"[DungeonDoorDiamondPanel] No SpriteRenderer found on {objectToChangeSortingOrder.name} or its children! Cannot change sorting order.");
+            }
+        }
     }
 
     /// <summary>
