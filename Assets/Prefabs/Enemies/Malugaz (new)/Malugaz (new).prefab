@@ -20,10 +20,10 @@ GameObject:
   m_Layer: 0
   m_Name: Malugaz (new)
   m_TagString: Enemy
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6545570242930876484
 Transform:
   m_ObjectHideFlags: 0
@@ -255,6 +255,11 @@ MonoBehaviour:
   enemyAnim: {fileID: 3740754735178206240}
   rb: {fileID: 5964875812797176451}
   animator: {fileID: 5879422259372862482}
+  deathSpawnObject: {fileID: 0}
+  fadeInDuration: 5
+  deathSpawnObject2: {fileID: 0}
+  fadeInDuration2: 8
+  fadeEase: 7
   teleportInterval: 4
   teleportRange: 10
   teleportSpeed: 6

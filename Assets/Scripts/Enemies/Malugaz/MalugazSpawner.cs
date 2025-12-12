@@ -4,14 +4,23 @@ using UnityEngine;
 
 public class MalugazSpawner : MonoBehaviour
 {
-    [Header("Boss Spawn Setup")]
-    [SerializeField] private GameObject malugazPrefab;
-    [SerializeField] private Transform bossSpawnPoint;
+    [Header("Boss Activation Setup")]
+    [SerializeField] private GameObject malugazObject;
+    [Tooltip("Object có sẵn trên map, sẽ được kích hoạt sau khi hoàn thành minigame")]
 
     [Header("Minigame")]
     [SerializeField] private MiniGameManager miniGameManager;
 
-    private bool hasSpawned = false;
+    private bool hasActivated = false;
+
+    private void Awake()
+    {
+        // Đảm bảo object ban đầu tắt
+        if (malugazObject != null)
+        {
+            malugazObject.SetActive(false);
+        }
+    }
 
     private void Start()
     {
@@ -30,7 +39,7 @@ public class MalugazSpawner : MonoBehaviour
                 miniGameManager.towers.Length > 0 &&
                 miniGameManager.towers.All(t => t != null && t.IsCompleted))
             {
-                SpawnBoss();
+                ActivateBoss();
                 yield break;
             }
 
@@ -38,17 +47,17 @@ public class MalugazSpawner : MonoBehaviour
         }
     }
 
-    private void SpawnBoss()
+    private void ActivateBoss()
     {
-        if (hasSpawned) return;
-        hasSpawned = true;
+        if (hasActivated) return;
+        if (malugazObject == null)
+        {
+            Debug.LogWarning("[MalugazSpawner] Malugaz object is not assigned!");
+            return;
+        }
 
-        GameObject boss = Instantiate(
-            malugazPrefab,
-            bossSpawnPoint.position,
-            Quaternion.identity
-        );
-
-        Debug.Log("Malugaz Spawned!");
+        hasActivated = true;
+        malugazObject.SetActive(true);
+        Debug.Log("Malugaz Activated!");
     }
 }
