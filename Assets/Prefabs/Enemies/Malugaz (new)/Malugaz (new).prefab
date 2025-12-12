@@ -218,7 +218,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9015f75b026bc3f439ef0172a0cb81af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  startingHealth: 50
+  startingHealth: 100
   deathVFXPrefab: {fileID: 3220534778681142951, guid: ae483d6a6ccf26f4daaa8d439025620c, type: 3}
   knockBackThrust: 15
   expPickupPrefab: {fileID: 0}
@@ -257,9 +257,11 @@ MonoBehaviour:
   animator: {fileID: 5879422259372862482}
   deathSpawnObject: {fileID: 0}
   fadeInDuration: 5
-  deathSpawnObject2: {fileID: 0}
-  fadeInDuration2: 8
   fadeEase: 7
+  moveObject: {fileID: 0}
+  moveOffset: {x: 0, y: 0, z: 0}
+  moveDuration: 2
+  moveEase: 6
   teleportInterval: 4
   teleportRange: 10
   teleportSpeed: 6
