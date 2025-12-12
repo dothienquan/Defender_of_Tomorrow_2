@@ -264,10 +264,23 @@ public class DungeonDoorDiamondPanel : MonoBehaviour
             }
         }
 
-        // Cập nhật status text
+        // Cập nhật status text (với error handling để tránh TMP crash)
         if (statusText != null)
         {
-            statusText.text = string.Format(statusFormat, currentCount, requiredDiamondCount);
+            try
+            {
+                string statusString = string.Format(statusFormat, currentCount, requiredDiamondCount);
+                statusText.text = statusString;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[DungeonDoorDiamondPanel] Error updating status text: {e.Message}");
+                // Fallback: chỉ set số đơn giản
+                if (statusText != null)
+                {
+                    statusText.text = $"{currentCount}/{requiredDiamondCount}";
+                }
+            }
         }
 
         // Enable/disable confirm button (nếu có)
