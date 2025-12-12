@@ -33,7 +33,23 @@ public class EnemyHealth : MonoBehaviour
         activeDots.Clear();                 // tuỳ chọn: xoá DoT đang còn
     }
 
+    public void SetCanTakeDamage(bool value)
+    {
+        canTakeDamage = value;
+    }
+
+    public int GetCurrentHealth()
+    {
+        return currentHealth;
+    }
+
+    public float GetHealthPercentage()
+    {
+        return startingHealth > 0 ? (float)currentHealth / startingHealth : 0f;
+    }
+
     private int currentHealth;
+    private bool canTakeDamage = true;
     private Knockback knockback;
     private Flash flash;
     private EnemyPathfinding pathfinding;
@@ -102,12 +118,14 @@ public class EnemyHealth : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        if (!canTakeDamage) return;
         InternalDamage(damage, doKnockback: true, isDot: false);
     }
 
     private void InternalDamage(int damage, bool doKnockback, bool isDot)
     {
         if (damage <= 0) return;
+        if (!canTakeDamage) return;
 
         currentHealth -= damage;
 
