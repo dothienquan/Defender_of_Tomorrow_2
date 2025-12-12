@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -13,6 +14,10 @@ public class ShopNPC : MonoBehaviour
     
     [Tooltip("Phím tương tác (mặc định F)")]
     [SerializeField] private KeyCode interactKey = KeyCode.F;
+
+    [Header("Shop Items")]
+    [Tooltip("Danh sách WeaponInfo mà NPC này bán (mỗi NPC có thể có items khác nhau)")]
+    [SerializeField] private List<WeaponInfo> shopWeapons = new List<WeaponInfo>();
 
     [Header("UI Hint (Optional)")]
     [Tooltip("UI hiển thị hint [F] Mở Shop (optional)")]
@@ -96,7 +101,7 @@ public class ShopNPC : MonoBehaviour
     }
 
     /// <summary>
-    /// Mở shop panel
+    /// Mở shop panel với danh sách items của NPC này
     /// </summary>
     private void OpenShop()
     {
@@ -112,9 +117,18 @@ public class ShopNPC : MonoBehaviour
             interactionUI.Hide();
         }
 
-        // Mở shop
-        shopController.OpenShop();
-        Debug.Log($"[ShopNPC] Opened shop from {gameObject.name}.");
+        // Mở shop với danh sách items của NPC này
+        // Nếu NPC không có items riêng, shop sẽ dùng danh sách mặc định
+        if (shopWeapons != null && shopWeapons.Count > 0)
+        {
+            shopController.OpenShop(shopWeapons);
+            Debug.Log($"[ShopNPC] Opened shop from {gameObject.name} with {shopWeapons.Count} items.");
+        }
+        else
+        {
+            shopController.OpenShop();
+            Debug.Log($"[ShopNPC] Opened shop from {gameObject.name} with default items (no custom items set).");
+        }
     }
 
     /// <summary>

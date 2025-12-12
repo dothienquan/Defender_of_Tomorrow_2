@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -148,9 +149,22 @@ public class ShopController : MonoBehaviour
         {
             layoutGroup.spacing = 10f;
             layoutGroup.padding = new RectOffset(10, 10, 10, 10);
-            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup.childAlignment = TextAnchor.UpperCenter; // Top center alignment
             layoutGroup.childForceExpandWidth = true;
             layoutGroup.childForceExpandHeight = false;
+        }
+
+        // QUAN TRỌNG: Set pivot và anchor của content về top để items snap lên top
+        RectTransform contentRectTransform = shopSlotsParent.GetComponent<RectTransform>();
+        if (contentRectTransform != null)
+        {
+            // Set pivot về top-center (0.5, 1.0) để content bắt đầu từ top
+            contentRectTransform.pivot = new Vector2(0.5f, 1f);
+            // Set anchor về top-center
+            contentRectTransform.anchorMin = new Vector2(0.5f, 1f);
+            contentRectTransform.anchorMax = new Vector2(0.5f, 1f);
+            // Reset anchored position về 0 để content bắt đầu từ top
+            contentRectTransform.anchoredPosition = Vector2.zero;
         }
 
         // Setup ScrollRect properties
@@ -215,9 +229,18 @@ public class ShopController : MonoBehaviour
     }
 
     /// <summary>
-    /// Tạo shop slots từ danh sách shopWeapons
+    /// Tạo shop slots từ danh sách shopWeapons mặc định
     /// </summary>
     private void CreateShopSlots()
+    {
+        CreateShopSlots(shopWeapons);
+    }
+
+    /// <summary>
+    /// Tạo shop slots từ danh sách WeaponInfo được truyền vào
+    /// </summary>
+    /// <param name="weaponsToDisplay">Danh sách WeaponInfo để hiển thị</param>
+    private void CreateShopSlots(List<WeaponInfo> weaponsToDisplay)
     {
         if (shopSlotsParent == null)
         {
@@ -231,6 +254,12 @@ public class ShopController : MonoBehaviour
             return;
         }
 
+        if (weaponsToDisplay == null)
+        {
+            Debug.LogWarning("[ShopController] WeaponsToDisplay is null! Cannot create shop slots.");
+            return;
+        }
+
         // Xóa các slot cũ nếu có
         foreach (Transform child in shopSlotsParent)
         {
@@ -238,7 +267,7 @@ public class ShopController : MonoBehaviour
         }
 
         // Tạo slot cho mỗi weapon
-        foreach (WeaponInfo weaponInfo in shopWeapons)
+        foreach (WeaponInfo weaponInfo in weaponsToDisplay)
         {
             if (weaponInfo == null)
             {
@@ -452,12 +481,64 @@ public class ShopController : MonoBehaviour
     }
 
     /// <summary>
-    /// Mở shop panel
+    /// Mở shop panel với danh sách items mặc định
     /// </summary>
     public void OpenShop()
     {
         gameObject.SetActive(true);
         UpdateGoldText();
+        // Đợi một frame để UI được khởi tạo đầy đủ trước khi tạo slots
+        StartCoroutine(CreateShopSlotsDelayed(shopWeapons));
+    }
+
+    /// <summary>
+    /// Mở shop panel với danh sách items tùy chỉnh từ NPC
+    /// </summary>
+    /// <param name="items">Danh sách WeaponInfo để hiển thị trong shop</param>
+    public void OpenShop(List<WeaponInfo> items)
+    {
+        if (items == null || items.Count == 0)
+        {
+            Debug.LogWarning("[ShopController] OpenShop called with null or empty items list. Using default items.");
+            OpenShop();
+            return;
+        }
+
+        gameObject.SetActive(true);
+        UpdateGoldText();
+        // Đợi một frame để UI được khởi tạo đầy đủ trước khi tạo slots
+        StartCoroutine(CreateShopSlotsDelayed(items));
+    }
+
+    /// <summary>
+    /// Coroutine để tạo shop slots sau khi đợi một frame (đảm bảo UI đã được khởi tạo)
+    /// </summary>
+    private IEnumerator CreateShopSlotsDelayed(List<WeaponInfo> weaponsToDisplay)
+    {
+        // Đợi một frame để đảm bảo shop panel đã active và UI đã được khởi tạo
+        yield return null;
+        
+        // Đảm bảo Canvas đã được update
+        Canvas.ForceUpdateCanvases();
+        
+        // Tạo shop slots
+        CreateShopSlots(weaponsToDisplay);
+    }
+
+    /// <summary>
+    /// Set danh sách items cho shop (có thể gọi từ bên ngoài)
+    /// </summary>
+    /// <param name="items">Danh sách WeaponInfo mới</param>
+    public void SetShopItems(List<WeaponInfo> items)
+    {
+        if (items == null)
+        {
+            Debug.LogWarning("[ShopController] SetShopItems called with null list. Ignoring.");
+            return;
+        }
+
+        shopWeapons = new List<WeaponInfo>(items);
+        CreateShopSlots();
     }
 
     /// <summary>
