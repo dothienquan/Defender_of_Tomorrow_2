@@ -43,6 +43,14 @@ public class BossDuplicateManager : MonoBehaviour
     [SerializeField] private Ease fadeInEase = Ease.OutQuad;  // Easing cho fade in
     [SerializeField] private Ease scaleUpEase = Ease.OutBack;  // Easing cho scale up (có bounce effect)
 
+    [Header("Post NPC Spawn - Object Movement")]
+    [SerializeField] private GameObject leftMovingObject;  // Object di chuyển sang trái
+    [SerializeField] private GameObject rightMovingObject;  // Object di chuyển sang phải
+    [SerializeField] private float postSpawnDelay = 7f;  // Delay sau khi NPC spawn xong (giây)
+    [SerializeField] private float moveDistance = 10f;  // Khoảng cách di chuyển (units)
+    [SerializeField] private float moveDuration = 2f;  // Thời gian di chuyển (giây)
+    [SerializeField] private Ease moveEase = Ease.InOutQuad;  // Easing cho di chuyển
+
     private GameObject realVisual;
     private GameObject fakeVisual;
 
@@ -559,8 +567,9 @@ public class BossDuplicateManager : MonoBehaviour
         GameObject coroutineRunner = new GameObject("NPCSpawningCoroutineRunner");
         NPCSpawningHelper helper = coroutineRunner.AddComponent<NPCSpawningHelper>();
         
-        // Gọi coroutine trên helper, truyền reference đến npcToActivate
-        helper.StartSpawnEffect(npcToActivate, spawnDelay, fadeInDuration, scaleUpDuration, fadeInEase, scaleUpEase);
+        // Gọi coroutine trên helper, truyền reference đến npcToActivate và objects để di chuyển
+        helper.StartSpawnEffect(npcToActivate, spawnDelay, fadeInDuration, scaleUpDuration, fadeInEase, scaleUpEase,
+            leftMovingObject, rightMovingObject, postSpawnDelay, moveDistance, moveDuration, moveEase);
     }
     
 }
@@ -571,12 +580,15 @@ public class BossDuplicateManager : MonoBehaviour
 /// </summary>
 public class NPCSpawningHelper : MonoBehaviour
 {
-    public void StartSpawnEffect(GameObject npc, float delay, float fadeDuration, float scaleDuration, DG.Tweening.Ease fadeEase, DG.Tweening.Ease scaleEase)
+    public void StartSpawnEffect(GameObject npc, float delay, float fadeDuration, float scaleDuration, DG.Tweening.Ease fadeEase, DG.Tweening.Ease scaleEase,
+        GameObject leftObject, GameObject rightObject, float postDelay, float moveDist, float moveDur, DG.Tweening.Ease moveEase)
     {
-        StartCoroutine(SpawnEffectCoroutine(npc, delay, fadeDuration, scaleDuration, fadeEase, scaleEase));
+        StartCoroutine(SpawnEffectCoroutine(npc, delay, fadeDuration, scaleDuration, fadeEase, scaleEase,
+            leftObject, rightObject, postDelay, moveDist, moveDur, moveEase));
     }
     
-    private System.Collections.IEnumerator SpawnEffectCoroutine(GameObject npc, float delay, float fadeDuration, float scaleDuration, DG.Tweening.Ease fadeEase, DG.Tweening.Ease scaleEase)
+    private System.Collections.IEnumerator SpawnEffectCoroutine(GameObject npc, float delay, float fadeDuration, float scaleDuration, DG.Tweening.Ease fadeEase, DG.Tweening.Ease scaleEase,
+        GameObject leftObject, GameObject rightObject, float postDelay, float moveDist, float moveDur, DG.Tweening.Ease moveEase)
     {
         Debug.Log($"[NPCSpawningHelper] SpawnEffectCoroutine started. Delay: {delay}s, NPC: {(npc != null ? npc.name : "NULL")}");
         
@@ -670,6 +682,48 @@ public class NPCSpawningHelper : MonoBehaviour
         });
         
         yield return spawnSequence.WaitForCompletion();
+        
+        Debug.Log("[NPCSpawningHelper] NPC spawn effect completed. Waiting for post-spawn delay...");
+        
+        // Đợi delay sau khi NPC spawn xong
+        yield return new WaitForSeconds(postDelay);
+        
+        Debug.Log("[NPCSpawningHelper] Starting object movement sequence...");
+        
+        // Di chuyển 2 objects
+        if (leftObject != null && rightObject != null)
+        {
+            // Lưu vị trí ban đầu
+            Vector3 leftStartPos = leftObject.transform.position;
+            Vector3 rightStartPos = rightObject.transform.position;
+            
+            // Tính toán vị trí đích
+            Vector3 leftTargetPos = leftStartPos + Vector3.left * moveDist;  // Di chuyển sang trái
+            Vector3 rightTargetPos = rightStartPos + Vector3.right * moveDist;  // Di chuyển sang phải
+            
+            // Tạo sequence di chuyển đồng thời
+            DG.Tweening.Sequence moveSequence = DG.Tweening.DOTween.Sequence();
+            
+            // Di chuyển object bên trái sang trái
+            moveSequence.Join(leftObject.transform.DOMove(leftTargetPos, moveDur).SetEase(moveEase));
+            
+            // Di chuyển object bên phải sang phải
+            moveSequence.Join(rightObject.transform.DOMove(rightTargetPos, moveDur).SetEase(moveEase));
+            
+            moveSequence.OnComplete(() =>
+            {
+                Debug.Log("[NPCSpawningHelper] Object movement completed!");
+            });
+            
+            yield return moveSequence.WaitForCompletion();
+        }
+        else
+        {
+            if (leftObject == null)
+                Debug.LogWarning("[NPCSpawningHelper] Left moving object is null!");
+            if (rightObject == null)
+                Debug.LogWarning("[NPCSpawningHelper] Right moving object is null!");
+        }
         
         Debug.Log("[NPCSpawningHelper] SpawnEffectCoroutine finished.");
         
