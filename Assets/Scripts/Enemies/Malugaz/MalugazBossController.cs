@@ -27,6 +27,24 @@ public class MalugazBossController : MonoBehaviour
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Animator animator;
 
+    [Header("Death Activation")]
+    [Tooltip("Object có sẵn trên map, sẽ được kích hoạt sau khi boss chết.")]
+    [SerializeField] private GameObject deathSpawnObject;
+    [Tooltip("Thời gian fade in (giây).")]
+    [SerializeField] private float fadeInDuration = 1f;
+    [Tooltip("Ease type cho fade animation.")]
+    [SerializeField] private Ease fadeEase = Ease.OutQuad;
+
+    [Header("Death Movement")]
+    [Tooltip("Object sẽ được di chuyển sau khi boss chết (delay 7s).")]
+    [SerializeField] private GameObject moveObject;
+    [Tooltip("Offset di chuyển từ vị trí ban đầu.")]
+    [SerializeField] private Vector3 moveOffset = Vector3.zero;
+    [Tooltip("Thời gian di chuyển (giây).")]
+    [SerializeField] private float moveDuration = 2f;
+    [Tooltip("Ease type cho movement animation.")]
+    [SerializeField] private Ease moveEase = Ease.OutQuad;
+
     [Header("Phase 1 - Teleport")]
     [SerializeField] private float teleportInterval = 2f;
     [SerializeField] private float teleportRange = 5f;
@@ -94,6 +112,12 @@ public class MalugazBossController : MonoBehaviour
 
         spawnPosition = transform.position;
         lastHealth = enemyHealth.GetCurrentHealth();
+
+        // Đảm bảo object ban đầu tắt
+        if (deathSpawnObject != null)
+        {
+            deathSpawnObject.SetActive(false);
+        }
 
         if (enemyHealth != null)
         {
@@ -490,6 +514,100 @@ public class MalugazBossController : MonoBehaviour
         currentPhase = BossPhase.Dead;
         StopAllCoroutines();
         rb.linearVelocity = Vector2.zero;
+
+        // Kích hoạt object có sẵn khi boss chết với fade effect
+        if (deathSpawnObject != null)
+        {
+            FadeInObject(deathSpawnObject, fadeInDuration);
+        }
+
+        // Di chuyển object khác sau 7 giây (sử dụng DOTween.Sequence để tránh bị StopAllCoroutines dừng)
+        if (moveObject != null)
+        {
+            Debug.Log($"[MalugazBossController] Scheduling move for object '{moveObject.name}' after 7 seconds.");
+            
+            // Sử dụng DOTween.Sequence thay vì coroutine để tránh bị StopAllCoroutines dừng
+            Sequence moveSequence = DOTween.Sequence();
+            moveSequence.AppendInterval(7f);
+            moveSequence.AppendCallback(() => MoveObjectDelayed());
+        }
+        else
+        {
+            Debug.LogWarning("[MalugazBossController] Move object is not assigned!");
+        }
+    }
+
+    private void MoveObjectDelayed()
+    {
+        if (moveObject == null)
+        {
+            Debug.LogWarning("[MalugazBossController] Move object is null after delay!");
+            return;
+        }
+
+        // Đảm bảo object được active
+        if (!moveObject.activeInHierarchy)
+        {
+            moveObject.SetActive(true);
+            Debug.Log($"[MalugazBossController] Activated move object '{moveObject.name}'.");
+        }
+
+        // Lưu vị trí ban đầu
+        Vector3 startPosition = moveObject.transform.position;
+        Vector3 targetPosition = startPosition + moveOffset;
+
+        Debug.Log($"[MalugazBossController] Moving object '{moveObject.name}' from {startPosition} to {targetPosition} (duration: {moveDuration}s).");
+
+        // Di chuyển object bằng DOTween
+        moveObject.transform.DOMove(targetPosition, moveDuration)
+            .SetEase(moveEase)
+            .OnComplete(() => 
+            {
+                Debug.Log($"[MalugazBossController] Move completed for '{moveObject.name}'.");
+            });
+    }
+
+    private void FadeInObject(GameObject obj, float duration)
+    {
+        if (obj == null) return;
+
+        obj.SetActive(true);
+
+        // Tìm tất cả SpriteRenderer và CanvasGroup để fade in
+        SpriteRenderer[] spriteRenderers = obj.GetComponentsInChildren<SpriteRenderer>(true);
+        CanvasGroup[] canvasGroups = obj.GetComponentsInChildren<CanvasGroup>(true);
+
+        // Fade in tất cả SpriteRenderer
+        foreach (SpriteRenderer sr in spriteRenderers)
+        {
+            if (sr != null)
+            {
+                Color originalColor = sr.color;
+                originalColor.a = 0f;
+                sr.color = originalColor;
+                sr.DOFade(1f, duration).SetEase(fadeEase);
+            }
+        }
+
+        // Fade in tất cả CanvasGroup
+        foreach (CanvasGroup cg in canvasGroups)
+        {
+            if (cg != null)
+            {
+                cg.alpha = 0f;
+                cg.DOFade(1f, duration).SetEase(fadeEase);
+            }
+        }
+
+        // Nếu không có SpriteRenderer hoặc CanvasGroup, log warning
+        if (spriteRenderers.Length == 0 && canvasGroups.Length == 0)
+        {
+            Debug.LogWarning($"[MalugazBossController] Object '{obj.name}' has no SpriteRenderer or CanvasGroup for fade effect.");
+        }
+        else
+        {
+            Debug.Log($"[MalugazBossController] Object '{obj.name}' activated with fade effect.");
+        }
     }
 }
 
