@@ -88762,6 +88762,57 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2.840201, y: 2.8410003}
   m_EdgeRadius: 0
+--- !u!1 &314518276
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 314518278}
+  - component: {fileID: 314518277}
+  m_Layer: 0
+  m_Name: BossTransitionPhasse
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &314518277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 314518276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ba2db450bc71d747b81279fe4c84973, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossPhaseTransition
+  dialogueUI: {fileID: 6330477260405067366}
+  phase1EndDialogue: {fileID: 11400000, guid: 04485109601dcc941b1f07fbb63ab79b, type: 2}
+  bossName: The Ender
+  phase2Prefab: {fileID: 390601336006829342, guid: 2e4bd14f5cb1599458e57ea2a8998507, type: 3}
+  spawnPoint: {fileID: 2095099015}
+  phase2SpawnVfx: {fileID: 9204076619812154061, guid: 3d7b7e1784e905d4699b7f8c53a89ff4, type: 3}
+  spawnDelay: 0.5
+--- !u!4 &314518278
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 314518276}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 290.56985, y: 293.68866, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &315005207
 GameObject:
   m_ObjectHideFlags: 0
@@ -480322,6 +480373,37 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &2095099014
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2095099015}
+  m_Layer: 0
+  m_Name: BossPhase2Spawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 2974397684917235467, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2095099015
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2095099014}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 290.56985, y: 293.68866, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2096999098
 GameObject:
   m_ObjectHideFlags: 0
@@ -487584,3 +487666,5 @@ SceneRoots:
   - {fileID: 1930716057}
   - {fileID: 1077211395}
   - {fileID: 1291916838}
+  - {fileID: 314518278}
+  - {fileID: 2095099015}
