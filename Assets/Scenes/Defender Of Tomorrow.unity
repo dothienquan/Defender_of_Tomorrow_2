@@ -93098,7 +93098,7 @@ GameObject:
   m_Layer: 0
   m_Name: Settarea
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -123968,7 +123968,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a486a0b94038c947822bf552194f839, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MalugazSpawner
-  malugazPrefab: {fileID: 961849257336412909, guid: 7d7085ec99235274ab5ada9fb98a90a5, type: 3}
+  malugazPrefab: {fileID: 5659696123408494454, guid: 1af0054e43cd14c42880594d0212540b, type: 3}
   bossSpawnPoint: {fileID: 73374164}
   miniGameManager: {fileID: 206326014}
 --- !u!4 &479775116
@@ -148539,11 +148539,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!60 &612093623 stripped
-PolygonCollider2D:
-  m_CorrespondingSourceObject: {fileID: 8862254300573934077, guid: a6092feb5a8f2fa48a2dbdf7b8c1876d, type: 3}
-  m_PrefabInstance: {fileID: 453390691985833617}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &612300543
 GameObject:
   m_ObjectHideFlags: 0
@@ -200009,7 +200004,7 @@ GameObject:
   - component: {fileID: 1033905328}
   - component: {fileID: 1033905327}
   m_Layer: 0
-  m_Name: BossRoomTrigger (QVCD)
+  m_Name: BossRoomTrigger (Malugaz)
   m_TagString: Untagged
   m_Icon: {fileID: 2974397684917235467, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -200028,6 +200023,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRoomTrigger
   bossUI: {fileID: 3556044711309611627}
+  bossPrefab: {fileID: 0}
+  bossHealth: {fileID: 5675792369251807545, guid: 1af0054e43cd14c42880594d0212540b, type: 3}
+  bossSpawnPoint: {fileID: 0}
+  bossTag: Boss
+  forceSpawnNew: 0
 --- !u!61 &1033905328
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -200062,7 +200062,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 6.3971443, y: 4.0026283}
+  m_Offset: {x: 17.43438, y: 3.6064148}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -200072,7 +200072,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 37.232536, y: 25.498833}
+  m_Size: {x: 1.1209259, y: 26.29126}
   m_EdgeRadius: 0
 --- !u!4 &1033905329
 Transform:
@@ -200083,7 +200083,7 @@ Transform:
   m_GameObject: {fileID: 1033905326}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 287.6845, y: 293.33298, z: 0}
+  m_LocalPosition: {x: 112.7, y: 277.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -208242,6 +208242,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRoomTrigger
   bossUI: {fileID: 3556044711309611627}
+  bossPrefab: {fileID: 0}
+  bossHealth: {fileID: 133062370}
+  bossSpawnPoint: {fileID: 0}
+  bossTag: Boss
+  forceSpawnNew: 0
 --- !u!1 &1132424206
 GameObject:
   m_ObjectHideFlags: 0
@@ -486480,7 +486485,7 @@ PrefabInstance:
     - target: {fileID: 5894145428171462639, guid: a6092feb5a8f2fa48a2dbdf7b8c1876d, type: 3}
       propertyPath: m_BoundingShape2D
       value: 
-      objectReference: {fileID: 612093623}
+      objectReference: {fileID: 1913739813}
     - target: {fileID: 5901563881500840593, guid: a6092feb5a8f2fa48a2dbdf7b8c1876d, type: 3}
       propertyPath: maxHealth
       value: 50
@@ -486803,11 +486808,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8286426869402452146, guid: a6092feb5a8f2fa48a2dbdf7b8c1876d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1038.5
+      value: 1068.1393
       objectReference: {fileID: 0}
     - target: {fileID: 8286426869402452146, guid: a6092feb5a8f2fa48a2dbdf7b8c1876d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 524.18
+      value: 724.2534
       objectReference: {fileID: 0}
     - target: {fileID: 8351181777176134887, guid: a6092feb5a8f2fa48a2dbdf7b8c1876d, type: 3}
       propertyPath: m_fontStyle

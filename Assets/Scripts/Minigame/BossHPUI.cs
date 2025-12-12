@@ -6,9 +6,9 @@ using TMPro;
 public class BossHPUI : MonoBehaviour
 {
     public Slider hpSlider;
-    public EnemyHealth bossHealth;
-    public TextMeshProUGUI hpText;   // NEW
+    public TextMeshProUGUI hpText;
 
+    private EnemyHealth bossHealth;
     private FieldInfo fi_current;
     private FieldInfo fi_start;
 
@@ -41,8 +41,15 @@ public class BossHPUI : MonoBehaviour
         }
     }
 
-    public void ShowBossHP()
+    public void ShowBossHP(EnemyHealth boss)
     {
+        if (boss == null)
+        {
+            Debug.LogWarning("[BossHPUI] ShowBossHP called with null boss reference", this);
+            return;
+        }
+
+        bossHealth = boss;
         active = true;
         gameObject.SetActive(true);
     }
@@ -50,6 +57,7 @@ public class BossHPUI : MonoBehaviour
     public void HideBossHP()
     {
         active = false;
+        bossHealth = null;
         gameObject.SetActive(false);
     }
 }
