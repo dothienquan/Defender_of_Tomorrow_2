@@ -128,7 +128,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9015f75b026bc3f439ef0172a0cb81af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
-  startingHealth: 20
+  startingHealth: 50
   deathVFXPrefab: {fileID: 0}
   knockBackThrust: 15
   expPickupPrefab: {fileID: 0}
@@ -182,3 +182,9 @@ MonoBehaviour:
   scaleUpDuration: 0.8
   fadeInEase: 6
   scaleUpEase: 27
+  leftMovingObject: {fileID: 0}
+  rightMovingObject: {fileID: 0}
+  postSpawnDelay: 7
+  moveDistance: 10
+  moveDuration: 2
+  moveEase: 7
