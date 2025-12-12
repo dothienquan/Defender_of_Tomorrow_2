@@ -1244,7 +1244,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 557369843307065751, guid: 45781d06761bcc5408fd6682ed525e68, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 210
+      value: 209.93
       objectReference: {fileID: 0}
     - target: {fileID: 557369843307065751, guid: 45781d06761bcc5408fd6682ed525e68, type: 3}
       propertyPath: m_LocalPosition.z
@@ -47182,11 +47182,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32efe2ab44e5f044b930d3709dffb438, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
-  roamChangeDirFloat: 2
+  roamChangeDirFloat: 0
   enemyType: {fileID: 0}
-  attackCooldown: 2
-  stopMovingWhileAttacking: 0
-  inAttackZone: 0
+  attackCooldown: 0
+  stopMovingWhileAttacking: 1
+  inAttackZone: 1
 --- !u!50 &99015769
 Rigidbody2D:
   serializedVersion: 5
@@ -47213,7 +47213,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 4
+  m_Constraints: 7
 --- !u!61 &99015770
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -52777,7 +52777,7 @@ Transform:
   m_GameObject: {fileID: 135651328}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -89.32, y: 136.45, z: 0}
+  m_LocalPosition: {x: -89.24, y: 136.45, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -117884,11 +117884,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32efe2ab44e5f044b930d3709dffb438, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
-  roamChangeDirFloat: 2
+  roamChangeDirFloat: 0
   enemyType: {fileID: 0}
-  attackCooldown: 2
-  stopMovingWhileAttacking: 0
-  inAttackZone: 0
+  attackCooldown: 0
+  stopMovingWhileAttacking: 1
+  inAttackZone: 1
 --- !u!50 &404334060
 Rigidbody2D:
   serializedVersion: 5
@@ -117915,7 +117915,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 4
+  m_Constraints: 7
 --- !u!61 &404334061
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -153557,7 +153557,7 @@ Transform:
   m_GameObject: {fileID: 659617786}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -63.3, y: 108.52, z: 0}
+  m_LocalPosition: {x: -62.85, y: 108.81, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -153663,11 +153663,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32efe2ab44e5f044b930d3709dffb438, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
-  roamChangeDirFloat: 2
+  roamChangeDirFloat: 0
   enemyType: {fileID: 0}
-  attackCooldown: 2
-  stopMovingWhileAttacking: 0
-  inAttackZone: 0
+  attackCooldown: 0
+  stopMovingWhileAttacking: 1
+  inAttackZone: 1
 --- !u!50 &659617795
 Rigidbody2D:
   serializedVersion: 5
@@ -153694,7 +153694,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 4
+  m_Constraints: 7
 --- !u!61 &659617796
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -178100,11 +178100,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32efe2ab44e5f044b930d3709dffb438, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
-  roamChangeDirFloat: 2
+  roamChangeDirFloat: 0
   enemyType: {fileID: 0}
-  attackCooldown: 2
-  stopMovingWhileAttacking: 0
-  inAttackZone: 0
+  attackCooldown: 0
+  stopMovingWhileAttacking: 1
+  inAttackZone: 1
 --- !u!50 &872692684
 Rigidbody2D:
   serializedVersion: 5
@@ -178131,7 +178131,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 4
+  m_Constraints: 7
 --- !u!61 &872692685
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -368156,7 +368156,6 @@ GameObject:
   - component: {fileID: 1442005759}
   - component: {fileID: 1442005758}
   - component: {fileID: 1442005757}
-  - component: {fileID: 1442005761}
   m_Layer: 0
   m_Name: NPC4
   m_TagString: Untagged
@@ -368305,20 +368304,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1442005761
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1442005756}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: beb465503639aa144a86eea3865ff957, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RaftNpcInteraction
-  miniGamePanel: {fileID: 7099897099765509375}
-  interactKey: 102
 --- !u!1 &1442379682
 GameObject:
   m_ObjectHideFlags: 0
@@ -405439,7 +405424,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 4
+  m_Constraints: 7
 --- !u!61 &1599606217
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -426566,11 +426551,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32efe2ab44e5f044b930d3709dffb438, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
-  roamChangeDirFloat: 2
+  roamChangeDirFloat: 0
   enemyType: {fileID: 0}
-  attackCooldown: 2
-  stopMovingWhileAttacking: 0
-  inAttackZone: 0
+  attackCooldown: 0
+  stopMovingWhileAttacking: 1
+  inAttackZone: 1
 --- !u!50 &1799242861
 Rigidbody2D:
   serializedVersion: 5
@@ -426597,7 +426582,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 4
+  m_Constraints: 7
 --- !u!1 &1800150398
 GameObject:
   m_ObjectHideFlags: 0
