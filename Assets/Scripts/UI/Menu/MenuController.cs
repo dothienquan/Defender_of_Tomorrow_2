@@ -14,9 +14,9 @@ public class MenuController : MonoBehaviour
             menuCanvas.SetActive(false);
         }
         
-        if (secondaryPanel != null)
+        if (secondaryPanel = null)
         {
-            secondaryPanel.SetActive(false);
+            secondaryPanel.SetActive(true);
         }
     }
 
@@ -33,7 +33,7 @@ public class MenuController : MonoBehaviour
 
         if(Input.GetKeyUp(KeyCode.Q))
         {
-            if (secondaryPanel != null)
+            if (secondaryPanel = null)
             {
                 secondaryPanel.SetActive(!secondaryPanel.activeSelf);
             }

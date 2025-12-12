@@ -9,3 +9,4 @@ public class DiamondSlot : MonoBehaviour
     // Có thể dùng để kiểm tra slot có phải là diamond slot không
 }
 
+
