@@ -13,7 +13,7 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
     [SerializeField] private Transform playerOverride;
 
     [Header("Vulnerable Window (Orbs)")]
-    [SerializeField] private float vulnerableDuration = 5f; // 5s: khi tất cả orbs đã rơi
+    [SerializeField] private float vulnerableDuration = 5f;
 
     [Header("Orbs")]
     [SerializeField] private BossOrb orbPrefab;
@@ -24,6 +24,9 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
     [SerializeField] private LightningStrikeArea lightningStrikeAreaPrefab;
     [SerializeField] private LightningProjectile lightningProjectilePrefab;
 
+    // ✅ KHÔNG Serialize nữa (prefab không kéo scene object được)
+    private BossPhaseTransition phaseTransition;
+
     private Transform player;
     private readonly List<BossOrb> orbs = new List<BossOrb>();
 
@@ -31,7 +34,6 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
     private bool inVulnerableWindow;
     private bool isAttacking;
 
-    // hack invul: chọc vào EnemyHealth.currentHealth
     private FieldInfo currentHealthField;
     private int lastRecordedHealth;
 
@@ -47,7 +49,6 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
         );
     }
 
-    // ===== ĐĂNG KÝ / HỦY ĐĂNG KÝ SỰ KIỆN CHẾT (giống Phase 2) =====
     private void OnEnable()
     {
         if (enemyHealth == null)
@@ -65,19 +66,22 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
 
     private void Start()
     {
+        // ✅ auto find transition trong scene (spawn prefab vẫn tìm được)
+        phaseTransition = FindObjectOfType<BossPhaseTransition>(true);
+        if (phaseTransition == null)
+            Debug.LogError("[BossPhase1Controller] Không tìm thấy BossPhaseTransition trong scene!");
+
         if (playerOverride != null)
             player = playerOverride;
         else if (PlayerHealth.Instance != null)
             player = PlayerHealth.Instance.transform;
 
         if (enemyHealth != null && currentHealthField != null)
-        {
             lastRecordedHealth = (int)currentHealthField.GetValue(enemyHealth);
-        }
 
         SpawnOrbs();
         groundedOrbCount = 0;
-        inVulnerableWindow = false; // ban đầu có orb bay -> boss không ăn damage
+        inVulnerableWindow = false;
     }
 
     private void LateUpdate()
@@ -85,13 +89,10 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
         if (enemyHealth == null || currentHealthField == null) return;
 
         int current = (int)currentHealthField.GetValue(enemyHealth);
-
-        // chỉ vulnerable khi inVulnerableWindow = true (tất cả orbs đã rơi + đang trong 5s)
         bool bossInvulnerable = !inVulnerableWindow;
 
         if (bossInvulnerable)
         {
-            // rollback damage nếu đang invul (giống Phase 2)
             if (current < lastRecordedHealth)
             {
                 currentHealthField.SetValue(enemyHealth, lastRecordedHealth);
@@ -104,7 +105,6 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
         }
         else
         {
-            // vulnerable -> nhận damage bình thường
             lastRecordedHealth = current;
         }
     }
@@ -112,7 +112,7 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
     public void Attack()
     {
         if (isAttacking) return;
-        if (inVulnerableWindow) return; // Phase 1: đang lộ sơ hở -> không cast skill
+        if (inVulnerableWindow) return;
 
         StartCoroutine(AttackRoutine());
     }
@@ -135,8 +135,6 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
         isAttacking = false;
     }
 
-    #region ORBS + VULNERABLE WINDOW (đồng bộ cơ chế với Phase 2)
-
     private void SpawnOrbs()
     {
         orbs.Clear();
@@ -150,24 +148,17 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
         {
             float angle = i * angleStep;
             BossOrb orb = Instantiate(orbPrefab, transform.position, Quaternion.identity);
-
-            // giống Phase 2: owner, boss, player, góc, bán kính
             orb.Setup(this, transform, player, angle, orbOrbitRadius);
-
             orbs.Add(orb);
         }
     }
 
-    // Gọi bởi BossOrb khi orb chạm đất/hết máu
     public void NotifyOrbGrounded(BossOrb orb)
     {
         groundedOrbCount++;
 
-        // chỉ khi TẤT CẢ orbs rơi -> bắt đầu vulnerable
         if (!inVulnerableWindow && groundedOrbCount >= orbs.Count && orbs.Count > 0)
-        {
             StartCoroutine(VulnerableWindowRoutine());
-        }
     }
 
     private void ResetOrbs()
@@ -186,7 +177,6 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
             orb.ResetToOrbit(startAngle);
         }
 
-        // orbs bay lại -> boss lại invul
         inVulnerableWindow = false;
     }
 
@@ -194,37 +184,29 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
     {
         if (inVulnerableWindow) yield break;
 
-        // bắt đầu 5s vulnerable khi tất cả orbs đã nằm đất
         inVulnerableWindow = true;
 
         yield return new WaitForSeconds(vulnerableDuration);
 
-        // hết 5s -> orbs hồi, boss lại không ăn damage
         ResetOrbs();
     }
 
-    #endregion
-
-    #region BOSS DEATH CLEANUP (thêm giống Phase 2)
-
     private void OnBossDeath()
     {
-        // dừng toàn bộ skill/coroutine
         StopAllCoroutines();
 
-        // dọn toàn bộ orbs
-        for (int i = 0; i < orbs.Count; i++)
-        {
-            if (orbs[i] != null)
-                Destroy(orbs[i].gameObject);
-        }
+        foreach (var orb in orbs)
+            if (orb != null)
+                Destroy(orb.gameObject);
 
         orbs.Clear();
+
+        // ✅ gọi transition (nếu scene có)
+        if (phaseTransition != null)
+            phaseTransition.StartPhaseTransition();
+
+        Destroy(gameObject);
     }
-
-    #endregion
-
-    #region PHASE 1 SKILLS
 
     private IEnumerator CastRandomLightningStrikes()
     {
@@ -292,6 +274,4 @@ public class BossPhase1Controller : MonoBehaviour, IEnemy, IBossOrbOwner
 
         yield return null;
     }
-
-    #endregion
 }

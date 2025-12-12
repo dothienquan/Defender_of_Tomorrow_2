@@ -75,6 +75,8 @@ public class MalugazAI : MonoBehaviour, IEnemy
     [SerializeField] private float minTeleportInterval = 4f;
     [SerializeField] private float maxTeleportInterval = 7f;
 
+
+
     private float teleportTimer;
 
     // ================= PHASE 1 – FIREBALLS & FIRE ZONES =================
