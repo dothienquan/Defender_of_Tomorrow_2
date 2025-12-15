@@ -18,6 +18,8 @@ public class DialogueUI : MonoBehaviour
     bool isTyping;
     string currentLine;
     Coroutine typingRoutine;
+    string defaultSpeakerName = "";
+    Sprite defaultAvatar = null;
 
     // Nếu bạn muốn, có thể để DialoguePanel tắt sẵn trong Hierarchy,
     // script sẽ bật nó khi Show() được gọi.
@@ -34,33 +36,13 @@ public class DialogueUI : MonoBehaviour
         Show(d, speakerName, null);
     }
 
-    // Hàm mới: Show + tên người nói + avatar
+    // Hàm mới: Show + tên người nói + avatar (dùng làm mặc định cho format cũ)
     public void Show(DialogueObject d, string speakerName, Sprite avatar)
     {
         currentDialogue = d;
         index = 0;
-
-        if (nameText != null)
-            nameText.text = speakerName;
-
-        // Hiển thị avatar nếu có
-        if (avatarImage != null)
-        {
-            if (avatar != null)
-            {
-                avatarImage.sprite = avatar;
-                avatarImage.gameObject.SetActive(true);
-                
-                // Đảm bảo image giữ đúng scaling theo sprite gốc
-                avatarImage.preserveAspect = true;
-                avatarImage.SetNativeSize();
-            }
-            else
-            {
-                // Nếu không có avatar, ẩn image
-                avatarImage.gameObject.SetActive(false);
-            }
-        }
+        defaultSpeakerName = speakerName;
+        defaultAvatar = avatar;
 
         gameObject.SetActive(true);
         Next();
@@ -93,7 +75,7 @@ public class DialogueUI : MonoBehaviour
     {
         if (currentDialogue == null) return;
 
-        if (index >= currentDialogue.lines.Length)
+        if (index >= currentDialogue.LineCount)
         {
             // Hết thoại
             currentDialogue = null;
@@ -101,7 +83,33 @@ public class DialogueUI : MonoBehaviour
             return;
         }
 
-        currentLine = currentDialogue.lines[index];
+        // Lấy DialogueLine (hỗ trợ cả format cũ và mới)
+        DialogueLine dialogueLine = currentDialogue.GetLine(index, defaultSpeakerName, defaultAvatar);
+        currentLine = dialogueLine.text;
+
+        // Cập nhật tên người nói
+        if (nameText != null)
+            nameText.text = dialogueLine.speakerName;
+
+        // Cập nhật avatar
+        if (avatarImage != null)
+        {
+            if (dialogueLine.avatar != null)
+            {
+                avatarImage.sprite = dialogueLine.avatar;
+                avatarImage.gameObject.SetActive(true);
+                
+                // Đảm bảo image giữ đúng scaling theo sprite gốc
+                avatarImage.preserveAspect = true;
+                avatarImage.SetNativeSize();
+            }
+            else
+            {
+                // Nếu không có avatar, ẩn image
+                avatarImage.gameObject.SetActive(false);
+            }
+        }
+
         index++;
 
         if (typingRoutine != null) StopCoroutine(typingRoutine);

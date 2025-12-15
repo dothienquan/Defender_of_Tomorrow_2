@@ -265,6 +265,12 @@ public class MainMenuController : MonoBehaviour
         // Reset tất cả NPCDialogue auto-trigger states
         ResetAllNPCDialogueAutoTriggers();
         
+        // Reset tất cả PanelTrigger states
+        PanelTrigger.ResetAllTriggers();
+        
+        // Reset tất cả KeyPickup dialogue triggers
+        ResetAllKeyPickupDialogueTriggers();
+        
         // Xóa tất cả PlayerPrefs keys liên quan đến CutsceneManager để tránh ảnh hưởng khi New Game
         PlayerPrefs.DeleteKey("CutsceneManager_PreviousScene");
         PlayerPrefs.DeleteKey("CutsceneManager_ReturnPointID");
@@ -314,6 +320,27 @@ public class MainMenuController : MonoBehaviour
         }
         
         Debug.Log($"[MainMenuController] Đã reset tất cả CutsceneTrigger states và {triggers.Length} CutsceneTrigger object(s) trong scene.");
+    }
+
+    /// <summary>
+    /// Reset tất cả KeyPickup dialogue trigger states
+    /// </summary>
+    private void ResetAllKeyPickupDialogueTriggers()
+    {
+        // Tìm tất cả KeyPickup trong scene và reset dialogue trigger state
+        KeyPickup[] keyPickups = FindObjectsByType<KeyPickup>(FindObjectsSortMode.None);
+        int resetCount = 0;
+        
+        foreach (var keyPickup in keyPickups)
+        {
+            if (keyPickup != null && keyPickup.showDialogueOnlyOnce)
+            {
+                keyPickup.ResetDialogueTriggerState();
+                resetCount++;
+            }
+        }
+        
+        Debug.Log($"[MainMenuController] Đã reset {resetCount} KeyPickup dialogue trigger state(s).");
     }
 
     /// <summary>

@@ -151,6 +151,87 @@ public class HotbarController : MonoBehaviour
         return hotbarData;
     }
 
+    /// <summary>
+    /// Kiểm tra xem hotbar có chứa item với ID cụ thể không
+    /// </summary>
+    public bool HasItem(int itemID)
+    {
+        if (hotbarPanel == null) return false;
+
+        foreach (Transform slotTransform in hotbarPanel.transform)
+        {
+            Slot slot = slotTransform.GetComponent<Slot>();
+            if (slot != null && slot.currentItem != null)
+            {
+                Item item = slot.currentItem.GetComponent<Item>();
+                if (item != null && item.ID == itemID)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Lấy số lượng item với ID cụ thể trong hotbar
+    /// </summary>
+    public int GetItemCount(int itemID)
+    {
+        if (hotbarPanel == null) return 0;
+
+        int count = 0;
+        foreach (Transform slotTransform in hotbarPanel.transform)
+        {
+            Slot slot = slotTransform.GetComponent<Slot>();
+            if (slot != null && slot.currentItem != null)
+            {
+                Item item = slot.currentItem.GetComponent<Item>();
+                if (item != null && item.ID == itemID)
+                {
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    /// Remove item với ID cụ thể khỏi hotbar (tiêu thụ item)
+    /// </summary>
+    public bool RemoveItem(int itemID)
+    {
+        if (hotbarPanel == null) return false;
+
+        foreach (Transform slotTransform in hotbarPanel.transform)
+        {
+            Slot slot = slotTransform.GetComponent<Slot>();
+            if (slot != null && slot.currentItem != null)
+            {
+                Item item = slot.currentItem.GetComponent<Item>();
+                if (item != null && item.ID == itemID)
+                {
+                    // Destroy item GameObject
+                    if (slot.currentItem != null)
+                    {
+                        Destroy(slot.currentItem);
+                    }
+                    
+                    // Clear slot
+                    slot.currentItem = null;
+                    
+                    Debug.Log($"[HotbarController] Removed item ID {itemID} from hotbar slot {slotTransform.GetSiblingIndex()}.");
+                    return true;
+                }
+            }
+        }
+
+        Debug.LogWarning($"[HotbarController] Item ID {itemID} not found in hotbar to remove.");
+        return false;
+    }
+
     public void SetHotbarItems(List<InventorySaveData> inventorySaveData)
     {
         if (hotbarPanel == null || slotPrefab == null)
