@@ -21,13 +21,57 @@ public class LockedGateUI : MonoBehaviour
     [SerializeField] private string statusFormat = "{0}/{1}"; // Format: "0/1" hoặc "1/1"
     
     [Header("Confirm Animation")]
-    [SerializeField] private float rotationAngle = 45f; // Góc xoay (độ)
-    [SerializeField] private float animationDuration = 3f; // Thời gian animation (giây)
+    [Tooltip("Object sẽ được active và di chuyển trước khi xoay")]
+    [SerializeField] private GameObject animatedObject;
+    
+    [Tooltip("Offset di chuyển của object theo trục Y (local position)")]
+    [SerializeField] private float moveOffsetY = 0f;
+    
+    [Tooltip("Rotation Z mặc định của animated object (độ)")]
+    [SerializeField] private float defaultRotationZ = 45f;
+    
+    [Tooltip("Thời gian di chuyển object (giây)")]
+    [SerializeField] private float moveDuration = 0.5f;
+    
+    [Tooltip("Delay sau khi di chuyển xong trước khi bắt đầu xoay (giây)")]
+    [SerializeField] private float rotationDelay = 0.5f;
+    
+    [Tooltip("Góc xoay (độ) - cả object và button sẽ xoay cùng lúc")]
+    [SerializeField] private float rotationAngle = 45f;
+    
+    [Tooltip("Thời gian xoay (giây)")]
+    [SerializeField] private float rotationDuration = 3f;
+    
+    [Tooltip("Ease type cho di chuyển")]
+    [SerializeField] private Ease moveEase = Ease.OutCubic;
+    
+    [Tooltip("Ease type cho xoay")]
+    [SerializeField] private Ease rotationEase = Ease.Linear;
+
+    [Header("VFX Settings")]
+    [Tooltip("VFX spawn sau khi animated object di chuyển xong")]
+    [SerializeField] private GameObject vfxAfterMove;
+    
+    [Tooltip("Vị trí spawn VFX sau khi di chuyển (để trống sẽ dùng vị trí animated object)")]
+    [SerializeField] private Transform vfxAfterMovePosition;
+    
+    [Tooltip("VFX spawn sau khi cả 2 object xoay xong")]
+    [SerializeField] private GameObject vfxAfterRotation;
+    
+    [Tooltip("Vị trí spawn VFX sau khi xoay (để trống sẽ dùng vị trí animated object)")]
+    [SerializeField] private Transform vfxAfterRotationPosition;
+    
+    [Tooltip("Parent để spawn VFX (thường là Canvas, để trống sẽ tự động tìm Canvas)")]
+    [SerializeField] private Transform vfxParent;
+    
+    [Tooltip("Delay sau VFX thứ 2 trước khi tắt panel (giây)")]
+    [SerializeField] private float delayBeforeClose = 1f;
 
     private LockedGate lockedGate;
     private ItemDictionary itemDictionary;
     private bool isAnimating = false; // Tránh click nhiều lần
-    private Tween rotationTween; // Lưu tween để có thể kill nếu cần
+    private Sequence animationSequence; // Lưu sequence để có thể kill nếu cần
+    private Vector3 animatedObjectOriginalPosition; // Lưu vị trí gốc của object
 
     private void Awake()
     {
@@ -54,6 +98,26 @@ public class LockedGateUI : MonoBehaviour
             cancelButton.onClick.AddListener(OnCancelClicked);
             // Đảm bảo button có thể tương tác
             cancelButton.interactable = true;
+        }
+
+        // Lưu vị trí gốc của animated object
+        if (animatedObject != null)
+        {
+            RectTransform rectTransform = animatedObject.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                animatedObjectOriginalPosition = rectTransform.anchoredPosition;
+            }
+            else
+            {
+                animatedObjectOriginalPosition = animatedObject.transform.localPosition;
+            }
+            
+            // Set rotation ban đầu về defaultRotationZ
+            animatedObject.transform.localEulerAngles = new Vector3(0f, 0f, defaultRotationZ);
+            
+            // Ẩn object ban đầu
+            animatedObject.SetActive(false);
         }
 
         // Ẩn panel ban đầu
@@ -93,26 +157,59 @@ public class LockedGateUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Kill tween khi destroy để tránh memory leak
-        if (rotationTween != null && rotationTween.IsActive())
+        // Kill sequence khi destroy để tránh memory leak
+        if (animationSequence != null && animationSequence.IsActive())
         {
-            rotationTween.Kill();
+            animationSequence.Kill();
         }
     }
 
     private void OnDisable()
     {
-        // Kill tween khi disable
-        if (rotationTween != null && rotationTween.IsActive())
+        // Kill sequence khi disable
+        if (animationSequence != null && animationSequence.IsActive())
         {
-            rotationTween.Kill();
+            animationSequence.Kill();
         }
+        
+        // Reset animated object về trạng thái ban đầu
+        ResetAnimatedObject();
         
         // Reset trạng thái
         isAnimating = false;
         if (confirmButton != null)
         {
             confirmButton.interactable = true;
+        }
+    }
+
+    /// <summary>
+    /// Reset animated object về trạng thái ban đầu
+    /// </summary>
+    private void ResetAnimatedObject()
+    {
+        if (animatedObject != null)
+        {
+            animatedObject.SetActive(false);
+            
+            RectTransform rectTransform = animatedObject.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                rectTransform.anchoredPosition = animatedObjectOriginalPosition;
+            }
+            else
+            {
+                animatedObject.transform.localPosition = animatedObjectOriginalPosition;
+            }
+            
+            // Reset rotation về defaultRotationZ
+            animatedObject.transform.localEulerAngles = new Vector3(0f, 0f, defaultRotationZ);
+        }
+        
+        // Reset confirm button rotation về 0
+        if (confirmButton != null)
+        {
+            confirmButton.transform.localEulerAngles = Vector3.zero;
         }
     }
 
@@ -199,31 +296,350 @@ public class LockedGateUI : MonoBehaviour
         confirmButton.interactable = false;
         isAnimating = true;
 
+        // Kiểm tra animated object
+        if (animatedObject == null)
+        {
+            Debug.LogWarning("[LockedGateUI] AnimatedObject chưa được gán! Sẽ chỉ xoay button.");
+            // Fallback: chỉ xoay button như cũ
+            PlayButtonRotationOnly();
+            return;
+        }
+
+        // Lấy RectTransform hoặc Transform của animated object (phải khai báo trước khi dùng)
+        RectTransform animatedRectTransform = animatedObject.GetComponent<RectTransform>();
+        Transform animatedTransform = animatedObject.transform;
+
         // Lưu rotation ban đầu
+        Vector3 originalButtonRotation = Vector3.zero; // Button luôn bắt đầu từ 0
+        Vector3 originalObjectRotation = new Vector3(0f, 0f, defaultRotationZ); // Object bắt đầu ở 45 độ
+        Vector3 targetObjectRotation = originalObjectRotation + new Vector3(0f, 0f, rotationAngle); // Object xoay từ 45° → 45° + rotationAngle
+        Vector3 targetButtonRotation = originalButtonRotation + new Vector3(0f, 0f, rotationAngle); // Button xoay từ 0° → rotationAngle
+        
+        // Reset rotation: button về 0, object về defaultRotationZ (45 độ)
+        confirmButton.transform.localEulerAngles = originalButtonRotation;
+        animatedTransform.localEulerAngles = originalObjectRotation;
+
+        // Lưu vị trí ban đầu
+        Vector2 startPosition2D = Vector2.zero;
+        Vector2 targetPosition2D = Vector2.zero;
+        Vector3 startPosition3D = Vector3.zero;
+        Vector3 targetPosition3D = Vector3.zero;
+        
+        if (animatedRectTransform != null)
+        {
+            startPosition2D = animatedRectTransform.anchoredPosition;
+            targetPosition2D = startPosition2D + new Vector2(0f, moveOffsetY);
+        }
+        else
+        {
+            startPosition3D = animatedTransform.localPosition;
+            targetPosition3D = startPosition3D + new Vector3(0f, moveOffsetY, 0f);
+        }
+
+        // Tạo sequence animation
+        animationSequence = DOTween.Sequence();
+
+        // Bước 1: Active object và đặt về vị trí ban đầu với rotation Z = 45 độ
+        animatedObject.SetActive(true);
+        if (animatedRectTransform != null)
+        {
+            animatedRectTransform.anchoredPosition = startPosition2D;
+        }
+        else
+        {
+            animatedTransform.localPosition = startPosition3D;
+        }
+        // Set rotation Z = 45 độ ngay khi active
+        animatedTransform.localEulerAngles = originalObjectRotation;
+
+        // Bước 2: Di chuyển object đến vị trí offset
+        Tween moveTween;
+        if (animatedRectTransform != null)
+        {
+            moveTween = animatedRectTransform.DOAnchorPos(targetPosition2D, moveDuration)
+                .SetEase(moveEase);
+        }
+        else
+        {
+            moveTween = animatedTransform.DOLocalMove(targetPosition3D, moveDuration)
+                .SetEase(moveEase);
+        }
+        animationSequence.Append(moveTween);
+
+        // Bước 2.1: Spawn VFX sau khi di chuyển xong
+        animationSequence.AppendCallback(() =>
+        {
+            // Dùng RectTransform position nếu có, nếu không dùng Transform position
+            Vector3 fallbackPos;
+            RectTransform fallbackRectTransform = null;
+            
+            if (animatedRectTransform != null)
+            {
+                fallbackPos = animatedRectTransform.position;
+                fallbackRectTransform = animatedRectTransform;
+            }
+            else
+            {
+                fallbackPos = animatedTransform.position;
+            }
+            
+            SpawnVFX(vfxAfterMove, vfxAfterMovePosition, fallbackPos, fallbackRectTransform);
+        });
+
+        // Bước 2.5: Delay sau khi di chuyển xong
+        animationSequence.AppendInterval(rotationDelay);
+
+        // Bước 3: Xoay cả object và button cùng lúc (song song)
+        Tween objectRotateTween = animatedTransform.DORotate(targetObjectRotation, rotationDuration, RotateMode.FastBeyond360)
+            .SetEase(rotationEase);
+        
+        Tween buttonRotateTween = confirmButton.transform.DORotate(targetButtonRotation, rotationDuration, RotateMode.FastBeyond360)
+            .SetEase(rotationEase);
+        
+        // Join cả 2 rotation vào sequence (chạy song song sau delay)
+        animationSequence.Join(objectRotateTween);
+        animationSequence.Join(buttonRotateTween);
+
+        // Bước 4: Spawn VFX sau khi xoay xong
+        animationSequence.AppendCallback(() =>
+        {
+            // Dùng RectTransform position nếu có, nếu không dùng Transform position
+            Vector3 fallbackPos;
+            RectTransform fallbackRectTransform = null;
+            
+            if (animatedRectTransform != null)
+            {
+                fallbackPos = animatedRectTransform.position;
+                fallbackRectTransform = animatedRectTransform;
+            }
+            else
+            {
+                fallbackPos = animatedTransform.position;
+            }
+            
+            SpawnVFX(vfxAfterRotation, vfxAfterRotationPosition, fallbackPos, fallbackRectTransform);
+        });
+
+        // Bước 5: Delay trước khi tắt panel
+        animationSequence.AppendInterval(delayBeforeClose);
+
+        // Bước 6: Mở khóa, tiêu thụ Key và tắt panel
+        animationSequence.OnComplete(() =>
+        {
+            // Tiêu thụ Key từ hotbar
+            ConsumeKey();
+
+            // Mở khóa
+            if (lockedGate != null)
+            {
+                lockedGate.UnlockGate();
+            }
+            
+            // Reset về trạng thái ban đầu
+            ResetAnimatedObject();
+            
+            // Tắt panel
+            gameObject.SetActive(false);
+            
+            // Reset trạng thái
+            isAnimating = false;
+        });
+    }
+
+    /// <summary>
+    /// Spawn VFX tại vị trí chỉ định
+    /// </summary>
+    private void SpawnVFX(GameObject vfxPrefab, Transform positionTransform, Vector3 fallbackPosition, RectTransform fallbackRectTransform = null)
+    {
+        if (vfxPrefab == null) return;
+
+        // Xác định vị trí spawn
+        Vector3 spawnPosition;
+        Quaternion spawnRotation = Quaternion.identity;
+        RectTransform spawnRectTransform = null;
+        
+        if (positionTransform != null)
+        {
+            // Dùng vị trí từ Transform được chỉ định
+            spawnPosition = positionTransform.position;
+            spawnRotation = positionTransform.rotation;
+            spawnRectTransform = positionTransform.GetComponent<RectTransform>();
+        }
+        else
+        {
+            // Dùng fallback position (vị trí animated object)
+            spawnPosition = fallbackPosition;
+            spawnRectTransform = fallbackRectTransform;
+        }
+
+        // Xác định parent cho VFX
+        Transform parent = vfxParent;
+        Canvas parentCanvas = null;
+        if (parent == null)
+        {
+            // Tự động tìm Canvas
+            parentCanvas = GetComponentInParent<Canvas>();
+            if (parentCanvas != null)
+            {
+                parent = parentCanvas.transform;
+            }
+            else
+            {
+                // Nếu không tìm thấy Canvas, thử tìm trong scene
+                parentCanvas = FindFirstObjectByType<Canvas>();
+                if (parentCanvas != null)
+                {
+                    parent = parentCanvas.transform;
+                }
+            }
+        }
+        else
+        {
+            // Lấy Canvas từ parent đã được gán
+            parentCanvas = parent.GetComponent<Canvas>();
+        }
+
+        // Spawn VFX
+        GameObject vfxInstance;
+        
+        if (parent != null && parentCanvas != null)
+        {
+            // Spawn như child của Canvas
+            vfxInstance = Instantiate(vfxPrefab, parent);
+            
+            // Đảm bảo VFX có RectTransform (nếu là UI element)
+            RectTransform vfxRectTransform = vfxInstance.GetComponent<RectTransform>();
+            if (vfxRectTransform == null)
+            {
+                // Thêm RectTransform nếu chưa có
+                vfxRectTransform = vfxInstance.AddComponent<RectTransform>();
+            }
+            
+            // Set vị trí trên Canvas
+            RectTransform parentRectTransform = parent.GetComponent<RectTransform>();
+            if (parentRectTransform != null)
+            {
+                // Nếu có RectTransform từ positionTransform hoặc fallback, dùng anchoredPosition trực tiếp
+                if (spawnRectTransform != null)
+                {
+                    // Copy anchoredPosition từ RectTransform nguồn
+                    vfxRectTransform.anchoredPosition = spawnRectTransform.anchoredPosition;
+                    Debug.Log($"[LockedGateUI] VFX '{vfxPrefab.name}' spawned at anchored position: {spawnRectTransform.anchoredPosition}");
+                }
+                else
+                {
+                    // Convert world/screen position sang local anchored position
+                    Camera uiCamera = parentCanvas.worldCamera != null ? parentCanvas.worldCamera : Camera.main;
+                    
+                    if (uiCamera != null)
+                    {
+                        // Convert world position sang screen point
+                        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCamera, spawnPosition);
+                        
+                        // Convert screen point sang local point trong Canvas
+                        Vector2 localPoint;
+                        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                            parentRectTransform, screenPoint, uiCamera, out localPoint))
+                        {
+                            vfxRectTransform.anchoredPosition = localPoint;
+                            Debug.Log($"[LockedGateUI] VFX '{vfxPrefab.name}' spawned at converted position: {localPoint}");
+                        }
+                        else
+                        {
+                            // Fallback: dùng vị trí trực tiếp nếu convert không thành công
+                            vfxRectTransform.anchoredPosition = Vector2.zero;
+                            Debug.LogWarning($"[LockedGateUI] Failed to convert position for VFX '{vfxPrefab.name}'. Using zero position.");
+                        }
+                    }
+                    else
+                    {
+                        // Nếu không có camera, dùng vị trí trực tiếp
+                        vfxRectTransform.anchoredPosition = Vector2.zero;
+                        Debug.LogWarning($"[LockedGateUI] No camera found for Canvas. VFX '{vfxPrefab.name}' spawned at zero position.");
+                    }
+                }
+            }
+            
+            // Set rotation
+            vfxRectTransform.localRotation = spawnRotation;
+            
+            // Đảm bảo VFX hiển thị trên cùng (set as last sibling)
+            vfxInstance.transform.SetAsLastSibling();
+            
+            // Set Canvas sorting order cao hơn nếu cần
+            Canvas vfxCanvas = vfxInstance.GetComponent<Canvas>();
+            if (vfxCanvas == null)
+            {
+                vfxCanvas = vfxInstance.AddComponent<Canvas>();
+            }
+            vfxCanvas.overrideSorting = true;
+            vfxCanvas.sortingOrder = parentCanvas.sortingOrder + 100; // Cao hơn Canvas gốc
+            
+            // Đảm bảo có GraphicRaycaster nếu cần
+            if (vfxInstance.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
+            {
+                vfxInstance.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+            }
+        }
+        else if (parent != null)
+        {
+            // Parent không phải Canvas, spawn như child bình thường
+            vfxInstance = Instantiate(vfxPrefab, parent);
+            vfxInstance.transform.position = spawnPosition;
+            vfxInstance.transform.rotation = spawnRotation;
+        }
+        else
+        {
+            // Spawn ở world space
+            vfxInstance = Instantiate(vfxPrefab, spawnPosition, spawnRotation);
+        }
+
+        // Debug log để biết vị trí spawn
+        Debug.Log($"[LockedGateUI] Spawned VFX '{vfxPrefab.name}' at position: {spawnPosition}, Parent: {(parent != null ? parent.name : "World")}");
+        
+        // Nếu VFX có ParticleSystem, tự động destroy sau khi hoàn thành
+        ParticleSystem particles = vfxInstance.GetComponent<ParticleSystem>();
+        if (particles != null)
+        {
+            // Nếu VFX không loop, tự động destroy sau duration
+            if (!particles.main.loop)
+            {
+                float duration = particles.main.duration + particles.main.startLifetime.constantMax;
+                Destroy(vfxInstance, duration);
+            }
+        }
+        else
+        {
+            // Nếu không có ParticleSystem, destroy sau 5 giây (fallback)
+            Destroy(vfxInstance, 5f);
+        }
+    }
+
+    /// <summary>
+    /// Fallback: Chỉ xoay button (nếu không có animated object)
+    /// </summary>
+    private void PlayButtonRotationOnly()
+    {
         Vector3 originalRotation = confirmButton.transform.localEulerAngles;
         Vector3 targetRotation = originalRotation + new Vector3(0f, 0f, rotationAngle);
 
-        // Xoay button 45 độ trong 3 giây
-        rotationTween = confirmButton.transform.DORotate(targetRotation, animationDuration, RotateMode.FastBeyond360)
-            .SetEase(Ease.Linear) // Xoay đều
+        animationSequence = DOTween.Sequence();
+        animationSequence.Append(confirmButton.transform.DORotate(targetRotation, rotationDuration, RotateMode.FastBeyond360)
+            .SetEase(rotationEase))
             .OnComplete(() =>
             {
-                // Sau khi animation xong, mở khóa
                 if (lockedGate != null)
                 {
                     lockedGate.UnlockGate();
                 }
                 
-                // Reset rotation về ban đầu
                 confirmButton.transform.localEulerAngles = originalRotation;
-                
-                // Reset trạng thái
                 isAnimating = false;
             });
     }
 
     /// <summary>
-    /// Kiểm tra xem player có chìa khóa không
+    /// Kiểm tra xem player có chìa khóa không (kiểm tra trong hotbar)
     /// </summary>
     private bool CheckHasKey()
     {
@@ -233,28 +649,24 @@ public class LockedGateUI : MonoBehaviour
             return false;
         }
 
-        InventoryController inventoryController = FindFirstObjectByType<InventoryController>();
-        if (inventoryController == null)
+        HotbarController hotbarController = FindFirstObjectByType<HotbarController>();
+        if (hotbarController == null)
         {
-            Debug.LogWarning("[LockedGateUI] InventoryController not found!");
+            Debug.LogWarning("[LockedGateUI] HotbarController not found!");
             return false;
         }
 
         // Sử dụng public method GetRequiredKeyID() từ LockedGate
         int requiredKeyID = lockedGate.GetRequiredKeyID();
-        bool hasKey = inventoryController.HasItem(requiredKeyID);
+        bool hasKey = hotbarController.HasItem(requiredKeyID);
         
-        Debug.Log($"[LockedGateUI] Checking for key ID {requiredKeyID}: {(hasKey ? "FOUND" : "NOT FOUND")}");
+        Debug.Log($"[LockedGateUI] Checking for key ID {requiredKeyID} in hotbar: {(hasKey ? "FOUND" : "NOT FOUND")}");
         
-        // Debug: In ra tất cả items trong inventory nếu không tìm thấy
+        // Debug: In ra số lượng key trong hotbar nếu không tìm thấy
         if (!hasKey)
         {
-            int itemCount = inventoryController.GetItemCount(requiredKeyID);
-            Debug.LogWarning($"[LockedGateUI] Key ID {requiredKeyID} not found. Item count: {itemCount}");
-            
-            // Debug: In ra tất cả items trong inventory (nếu có thể)
-            // Note: inventoryPanel có thể không public, nên chỉ log item count
-            Debug.Log($"[LockedGateUI] Item count for ID {requiredKeyID}: {itemCount}");
+            int itemCount = hotbarController.GetItemCount(requiredKeyID);
+            Debug.LogWarning($"[LockedGateUI] Key ID {requiredKeyID} not found in hotbar. Item count: {itemCount}");
         }
         
         return hasKey;
@@ -340,16 +752,47 @@ public class LockedGateUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Lấy số lượng Key hiện có trong inventory
+    /// Lấy số lượng Key hiện có trong hotbar
     /// </summary>
     private int GetKeyCount(int keyID)
     {
-        InventoryController inventoryController = FindFirstObjectByType<InventoryController>();
-        if (inventoryController != null)
+        HotbarController hotbarController = FindFirstObjectByType<HotbarController>();
+        if (hotbarController != null)
         {
-            return inventoryController.GetItemCount(keyID);
+            return hotbarController.GetItemCount(keyID);
         }
         return 0;
+    }
+
+    /// <summary>
+    /// Tiêu thụ Key từ hotbar (xóa Key sau khi sử dụng)
+    /// </summary>
+    private void ConsumeKey()
+    {
+        if (lockedGate == null)
+        {
+            Debug.LogWarning("[LockedGateUI] Cannot consume key: LockedGate is null!");
+            return;
+        }
+
+        HotbarController hotbarController = FindFirstObjectByType<HotbarController>();
+        if (hotbarController == null)
+        {
+            Debug.LogWarning("[LockedGateUI] Cannot consume key: HotbarController not found!");
+            return;
+        }
+
+        int requiredKeyID = lockedGate.GetRequiredKeyID();
+        bool removed = hotbarController.RemoveItem(requiredKeyID);
+        
+        if (removed)
+        {
+            Debug.Log($"[LockedGateUI] Successfully consumed key ID {requiredKeyID} from hotbar.");
+        }
+        else
+        {
+            Debug.LogWarning($"[LockedGateUI] Failed to consume key ID {requiredKeyID} from hotbar.");
+        }
     }
 }
 
