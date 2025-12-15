@@ -5,6 +5,8 @@ public class NPCDialogue : MonoBehaviour
 {
     [Header("NPC Info")]
     public string npcName = "Lillia";
+    [Tooltip("Avatar/ảnh đại diện của NPC (hiển thị trong dialogue)")]
+    public Sprite npcAvatar;
 
     [Header("Dialogue")]
     public DialogueObject firstDialogue;     // thoại lần đầu
@@ -77,7 +79,7 @@ public class NPCDialogue : MonoBehaviour
             if (!hasTalked)
                 hasTalked = true; // từ lần sau trở đi sẽ dùng repeatDialogue (nếu có)
 
-            dialogueUI.Show(currentDialogue, npcName);
+            dialogueUI.Show(currentDialogue, npcName, npcAvatar);
         }
     }
 
@@ -163,7 +165,7 @@ public class NPCDialogue : MonoBehaviour
         // Hiển thị dialogue
         if (fHint != null) fHint.gameObject.SetActive(false);
         
-        dialogueUI.Show(dialogueToShow, npcName);
+        dialogueUI.Show(dialogueToShow, npcName, npcAvatar);
         
         // Đánh dấu đã hiển thị (nếu showOnlyOnce = true)
         if (showOnlyOnce)

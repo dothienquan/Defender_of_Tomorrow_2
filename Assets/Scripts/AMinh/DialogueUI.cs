@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 
@@ -7,6 +8,7 @@ public class DialogueUI : MonoBehaviour
     [Header("UI References")]
     public TMP_Text nameText;          // Text hiện tên NPC
     public TMP_Text text;              // Text hiện nội dung thoại
+    public Image avatarImage;          // Image hiển thị avatar của NPC
 
     [Header("Typing Settings")]
     public float typeSpeed = 0.03f;
@@ -23,17 +25,42 @@ public class DialogueUI : MonoBehaviour
     // Hàm cũ (nếu đâu đó vẫn gọi Show(dialogue) không có tên)
     public void Show(DialogueObject d)
     {
-        Show(d, "");
+        Show(d, "", null);
     }
 
-    // Hàm mới: Show + tên người nói
+    // Hàm với tên người nói (backward compatible)
     public void Show(DialogueObject d, string speakerName)
+    {
+        Show(d, speakerName, null);
+    }
+
+    // Hàm mới: Show + tên người nói + avatar
+    public void Show(DialogueObject d, string speakerName, Sprite avatar)
     {
         currentDialogue = d;
         index = 0;
 
         if (nameText != null)
             nameText.text = speakerName;
+
+        // Hiển thị avatar nếu có
+        if (avatarImage != null)
+        {
+            if (avatar != null)
+            {
+                avatarImage.sprite = avatar;
+                avatarImage.gameObject.SetActive(true);
+                
+                // Đảm bảo image giữ đúng scaling theo sprite gốc
+                avatarImage.preserveAspect = true;
+                avatarImage.SetNativeSize();
+            }
+            else
+            {
+                // Nếu không có avatar, ẩn image
+                avatarImage.gameObject.SetActive(false);
+            }
+        }
 
         gameObject.SetActive(true);
         Next();
