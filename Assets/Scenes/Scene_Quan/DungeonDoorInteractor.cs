@@ -1,20 +1,41 @@
+
 using UnityEngine;
+using DG.Tweening;
 
 [RequireComponent(typeof(Collider2D))]
 public class DungeonDoorInteractor : MonoBehaviour
 {
     [Header("References")]
-    public GameObject uiPanel;       // Normal UI panel
-    public DoorClockController door;      // Optional
-    public DungeonDoorDiamondPanel diamondPanel; // Panel quản lý kim cương (optional)
+    public GameObject uiPanel;
+    public DoorClockController door;
+    public DungeonDoorDiamondPanel diamondPanel;
 
     [Header("Settings")]
     public string playerTag = "Player";
-    public KeyCode interactKey = KeyCode.E;
 
     [Header("UI Hint (Optional)")]
     public GameObject hint;
 
+    [Header("On Panel Closed Actions")]
+    [SerializeField] private GameObject activateOnPanelClosed;
+    [SerializeField] private Transform moveTarget;
+    [SerializeField] private Vector3 moveOffset;
+    [SerializeField] private bool moveInLocalSpace = false;
+    [SerializeField] private GameObject vfxPrefab;
+
+    [Tooltip("If true, these actions run only once (first time panel closes).")]
+    [SerializeField] private bool runActionsOnce = true;
+
+    [Header("Move Tween Settings")]
+    [SerializeField] private float moveDuration = 0.6f;
+    [SerializeField] private Ease moveEase = Ease.OutCubic;
+
+    [Header("Shake Settings")]
+    [SerializeField] private float shakeDuration = 0.6f;
+    [SerializeField] private float shakeStrength = 0.08f;
+    [SerializeField] private int shakeVibrato = 20;
+
+    private bool didRunCloseActions = false;
     private bool playerInRange = false;
     private bool panelOpen = false;
 
@@ -36,10 +57,7 @@ public class DungeonDoorInteractor : MonoBehaviour
         {
             playerInRange = true;
             if (!panelOpen)
-            {
-                // Tự động mở panel khi player chạm vào collider
                 OpenPanel();
-            }
         }
     }
 
@@ -49,15 +67,10 @@ public class DungeonDoorInteractor : MonoBehaviour
         {
             playerInRange = false;
             if (hint != null) hint.SetActive(false);
-
-            // Auto-close panel when leaving area
             if (panelOpen)
                 ClosePanel();
         }
     }
-
-    // Removed Update() - panel now opens automatically on trigger enter
-    // Player can still close panel manually if needed via UI button
 
     public void OpenPanel()
     {
@@ -68,34 +81,74 @@ public class DungeonDoorInteractor : MonoBehaviour
 
         if (hint != null) hint.SetActive(false);
 
-        // Khởi tạo slots và cập nhật trạng thái diamond panel nếu có
         if (diamondPanel != null)
         {
-            diamondPanel.InitializeSlots(); // Spawn slots khi panel mở
+            diamondPanel.InitializeSlots();
             diamondPanel.UpdateStatus();
         }
     }
 
     public void ClosePanel()
     {
-        if (uiPanel == null) return;
+        if (uiPanel == null || !panelOpen) return;
 
         uiPanel.SetActive(false);
         panelOpen = false;
+
+        RunOnPanelClosedActions();
 
         if (playerInRange && hint != null)
             hint.SetActive(true);
     }
 
-    // Call this from a UI Button (optional)
-    public void OnMinigameSuccess()
+    private void RunOnPanelClosedActions()
     {
-        ClosePanel();
-        if (door != null)
-            door.OpenDoor();
+        if (runActionsOnce && didRunCloseActions) return;
+        didRunCloseActions = true;
+
+        if (activateOnPanelClosed != null)
+            activateOnPanelClosed.SetActive(true);
+
+        if (moveTarget != null)
+        {
+            moveTarget.DOKill();
+
+            Vector3 startPos = moveInLocalSpace ? moveTarget.localPosition : moveTarget.position;
+            Vector3 targetPos = startPos + moveOffset;
+
+            Tween moveTween = moveInLocalSpace
+                ? moveTarget.DOLocalMove(targetPos, moveDuration)
+                : moveTarget.DOMove(targetPos, moveDuration);
+
+            moveTween.SetEase(moveEase);
+
+            Tween shakeTween = moveTarget.DOShakePosition(
+                shakeDuration,
+                shakeStrength,
+                shakeVibrato,
+                90f,
+                false,
+                false,
+                ShakeRandomnessMode.Harmonic
+            );
+
+            shakeTween.OnComplete(() =>
+            {
+                if (activateOnPanelClosed != null)
+                    activateOnPanelClosed.SetActive(false);
+                if (moveTarget != null)
+                    moveTarget.gameObject.SetActive(false);
+
+                if (vfxPrefab != null)
+                {
+                    Vector3 spawnPosition = moveTarget != null ? moveTarget.position : transform.position;
+                    GameObject vfxInstance = Instantiate(vfxPrefab, spawnPosition, Quaternion.identity);
+                    Destroy(vfxInstance, 2f);
+                }
+            });
+        }
     }
 
-    // Được gọi từ DungeonDoorDiamondPanel khi cổng được mở
     public void OnDoorOpened()
     {
         ClosePanel();
