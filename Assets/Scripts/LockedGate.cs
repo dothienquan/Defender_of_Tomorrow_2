@@ -1,4 +1,5 @@
 using UnityEngine;
+using DG.Tweening;
 
 /// <summary>
 /// Script cho cổng bị khóa, yêu cầu Key để mở
@@ -21,6 +22,13 @@ public class LockedGate : MonoBehaviour
     
     [Header("On Unlock")]
     [SerializeField] private GameObject objectToActivate; // Object sẽ được set active sau khi unlock thành công
+    
+    [Header("Deactivate Object After Unlock")]
+    [Tooltip("Object sẽ được tắt (deactivate) sau khi panel tắt")]
+    [SerializeField] private GameObject objectToDeactivate;
+    
+    [Tooltip("Delay trước khi tắt object (giây)")]
+    [SerializeField] private float deactivateDelay = 0f;
 
     private bool isUnlocked = false;
     private bool playerInRange = false;
@@ -192,7 +200,45 @@ public class LockedGate : MonoBehaviour
             Debug.Log($"[LockedGate] Activated object: {objectToActivate.name}");
         }
 
+        // Tắt object sau khi panel đã tắt
+        DeactivateObjectAfterUnlock();
+
         Debug.Log("[LockedGate] Gate unlocked!");
+    }
+    
+    /// <summary>
+    /// Tắt object sau khi unlock thành công
+    /// </summary>
+    private void DeactivateObjectAfterUnlock()
+    {
+        if (objectToDeactivate == null)
+        {
+            Debug.LogWarning("[LockedGate] Cannot deactivate object: objectToDeactivate is null! Please assign it in Inspector.");
+            return;
+        }
+        
+        Debug.Log($"[LockedGate] Deactivating object '{objectToDeactivate.name}' with delay: {deactivateDelay}s");
+        
+        if (deactivateDelay > 0f)
+        {
+            // Có delay, dùng sequence
+            Sequence deactivateSequence = DOTween.Sequence();
+            deactivateSequence.AppendInterval(deactivateDelay);
+            deactivateSequence.OnComplete(() =>
+            {
+                if (objectToDeactivate != null)
+                {
+                    objectToDeactivate.SetActive(false);
+                    Debug.Log($"[LockedGate] Deactivated object '{objectToDeactivate.name}'");
+                }
+            });
+        }
+        else
+        {
+            // Không có delay, tắt ngay
+            objectToDeactivate.SetActive(false);
+            Debug.Log($"[LockedGate] Deactivated object '{objectToDeactivate.name}'");
+        }
     }
 
     private void UpdateVisuals()
