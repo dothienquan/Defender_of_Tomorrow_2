@@ -23,18 +23,33 @@ public class LockedGate : MonoBehaviour
     [Header("On Unlock")]
     [SerializeField] private GameObject objectToActivate; // Object sẽ được set active sau khi unlock thành công
     
-    [Header("Deactivate Object After Unlock")]
-    [Tooltip("Object sẽ được tắt (deactivate) sau khi panel tắt")]
-    [SerializeField] private GameObject objectToDeactivate;
+    [Header("Move Object After Unlock")]
+    [Tooltip("Object sẽ được di chuyển sau khi panel tắt")]
+    [SerializeField] private GameObject objectToMove;
     
-    [Tooltip("Delay trước khi tắt object (giây)")]
-    [SerializeField] private float deactivateDelay = 0f;
+    [Tooltip("Vị trí ban đầu của object (world space). Nếu để (0,0,0), sẽ tự động lấy từ vị trí hiện tại lần đầu")]
+    [SerializeField] private Vector3 initialObjectPosition = Vector3.zero;
+    
+    [Tooltip("Offset di chuyển (world space)")]
+    [SerializeField] private Vector2 moveOffset = Vector2.zero;
+    
+    [Tooltip("Delay trước khi di chuyển object (giây)")]
+    [SerializeField] private float moveDelay = 0f;
+    
+    [Tooltip("Thời gian di chuyển (giây)")]
+    [SerializeField] private float moveDuration = 1f;
+    
+    [Tooltip("Easing cho di chuyển")]
+    [SerializeField] private Ease moveEase = Ease.InOutQuad;
 
     private bool isUnlocked = false;
     private bool playerInRange = false;
     private InventoryController inventoryController;
     private float lastRefreshTime = 0f;
     private const float refreshInterval = 0.5f; // Refresh mỗi 0.5 giây
+    
+    // Flag để kiểm tra đã lưu vị trí ban đầu chưa
+    private bool hasInitialPosition = false;
 
     private void Awake()
     {
@@ -55,6 +70,59 @@ public class LockedGate : MonoBehaviour
 
         // Setup visual ban đầu
         UpdateVisuals();
+        
+        // Lưu và reset vị trí ban đầu của object để di chuyển
+        if (objectToMove != null)
+        {
+            // Kill tween cũ nếu có
+            objectToMove.transform.DOKill();
+            
+            Vector3 currentPos = objectToMove.transform.position;
+            
+            // Nếu initialObjectPosition chưa được set (là Vector3.zero), cần xác định vị trí ban đầu
+            if (initialObjectPosition == Vector3.zero)
+            {
+                if (moveOffset != Vector2.zero)
+                {
+                    // Tính toán vị trí ban đầu giả định (trừ offset từ vị trí hiện tại)
+                    Vector3 calculatedInitialPos = currentPos - (Vector3)moveOffset;
+                    
+                    // Giả định: nếu object đã di chuyển từ lần chơi trước, 
+                    // vị trí hiện tại sẽ là vị trí đích (initialPosition + offset)
+                    // Vậy vị trí ban đầu = vị trí hiện tại - offset
+                    // Luôn reset về vị trí ban đầu đã tính toán
+                    initialObjectPosition = calculatedInitialPos;
+                    objectToMove.transform.position = initialObjectPosition;
+                    Debug.Log($"[LockedGate] Reset object '{objectToMove.name}' to calculated initial position: {initialObjectPosition}");
+                }
+                else
+                {
+                    // Không có offset, vị trí hiện tại chính là vị trí ban đầu
+                    initialObjectPosition = currentPos;
+                    Debug.Log($"[LockedGate] Saved initial position of '{objectToMove.name}': {initialObjectPosition}");
+                }
+            }
+            else
+            {
+                // Đã có vị trí ban đầu được lưu (từ Inspector)
+                // Luôn reset object về vị trí ban đầu
+                if (moveOffset != Vector2.zero)
+                {
+                    Vector3 expectedTargetPos = initialObjectPosition + (Vector3)moveOffset;
+                    float distanceToTarget = Vector3.Distance(currentPos, expectedTargetPos);
+                    
+                    // Nếu object đang ở vị trí đích hoặc không ở vị trí ban đầu, reset về vị trí ban đầu
+                    float distanceToInitial = Vector3.Distance(currentPos, initialObjectPosition);
+                    if (distanceToTarget < 0.1f || distanceToInitial > 0.1f)
+                    {
+                        objectToMove.transform.position = initialObjectPosition;
+                        Debug.Log($"[LockedGate] Reset object '{objectToMove.name}' from {currentPos} to initial position: {initialObjectPosition}");
+                    }
+                }
+            }
+            
+            hasInitialPosition = true;
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -200,44 +268,72 @@ public class LockedGate : MonoBehaviour
             Debug.Log($"[LockedGate] Activated object: {objectToActivate.name}");
         }
 
-        // Tắt object sau khi panel đã tắt
-        DeactivateObjectAfterUnlock();
+        // Di chuyển object sau khi panel đã tắt
+        MoveObjectAfterUnlock();
 
         Debug.Log("[LockedGate] Gate unlocked!");
     }
     
     /// <summary>
-    /// Tắt object sau khi unlock thành công
+    /// Di chuyển object sau khi unlock thành công
     /// </summary>
-    private void DeactivateObjectAfterUnlock()
+    private void MoveObjectAfterUnlock()
     {
-        if (objectToDeactivate == null)
+        if (objectToMove == null)
         {
-            Debug.LogWarning("[LockedGate] Cannot deactivate object: objectToDeactivate is null! Please assign it in Inspector.");
+            Debug.LogWarning("[LockedGate] Cannot move object: objectToMove is null! Please assign it in Inspector.");
             return;
         }
         
-        Debug.Log($"[LockedGate] Deactivating object '{objectToDeactivate.name}' with delay: {deactivateDelay}s");
+        if (moveOffset == Vector2.zero)
+        {
+            Debug.LogWarning("[LockedGate] moveOffset is zero! Object will not move.");
+            return;
+        }
         
-        if (deactivateDelay > 0f)
+        // Nếu chưa lưu vị trí ban đầu, lưu ngay bây giờ
+        if (!hasInitialPosition)
+        {
+            initialObjectPosition = objectToMove.transform.position;
+            hasInitialPosition = true;
+        }
+        
+        // Tính toán vị trí đích dựa trên vị trí ban đầu (không phải vị trí hiện tại)
+        Vector3 targetPosition = initialObjectPosition + (Vector3)moveOffset;
+        
+        // Kiểm tra xem object đã ở vị trí đích chưa (tolerance nhỏ để tránh floating point errors)
+        float distanceToTarget = Vector3.Distance(objectToMove.transform.position, targetPosition);
+        if (distanceToTarget < 0.01f)
+        {
+            Debug.Log($"[LockedGate] Object '{objectToMove.name}' is already at target position. Skipping move.");
+            return;
+        }
+        
+        Debug.Log($"[LockedGate] Moving object '{objectToMove.name}' from {objectToMove.transform.position} to {targetPosition} (offset: {moveOffset}), delay: {moveDelay}s, duration: {moveDuration}s");
+        
+        // Kill tween cũ nếu có
+        objectToMove.transform.DOKill();
+        
+        if (moveDelay > 0f)
         {
             // Có delay, dùng sequence
-            Sequence deactivateSequence = DOTween.Sequence();
-            deactivateSequence.AppendInterval(deactivateDelay);
-            deactivateSequence.OnComplete(() =>
+            Sequence moveSequence = DOTween.Sequence();
+            moveSequence.AppendInterval(moveDelay);
+            moveSequence.Append(objectToMove.transform.DOMove(targetPosition, moveDuration).SetEase(moveEase));
+            moveSequence.OnComplete(() =>
             {
-                if (objectToDeactivate != null)
-                {
-                    objectToDeactivate.SetActive(false);
-                    Debug.Log($"[LockedGate] Deactivated object '{objectToDeactivate.name}'");
-                }
+                Debug.Log($"[LockedGate] Moved object '{objectToMove.name}' to position: {targetPosition}");
             });
         }
         else
         {
-            // Không có delay, tắt ngay
-            objectToDeactivate.SetActive(false);
-            Debug.Log($"[LockedGate] Deactivated object '{objectToDeactivate.name}'");
+            // Không có delay, di chuyển ngay
+            objectToMove.transform.DOMove(targetPosition, moveDuration)
+                .SetEase(moveEase)
+                .OnComplete(() =>
+                {
+                    Debug.Log($"[LockedGate] Moved object '{objectToMove.name}' to position: {targetPosition}");
+                });
         }
     }
 
