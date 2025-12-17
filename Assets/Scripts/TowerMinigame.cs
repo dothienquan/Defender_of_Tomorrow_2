@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections;
+using DG.Tweening;
 
 [RequireComponent(typeof(Collider2D))]
 public class TowerMinigame : MonoBehaviour
@@ -30,6 +31,15 @@ public class TowerMinigame : MonoBehaviour
     public ParticleSystem activateVfx;
     [Tooltip("Particle/VFX khi hoàn thành mini game - gắn sẵn trong scene, ban đầu tắt")]
     public ParticleSystem completeVfx;
+
+    // ===== PHẦN THÊM: Active object khi complete tower =====
+    [Header("On Tower Completed -> Activate Object")]
+    [SerializeField] private GameObject targetObject;
+    [SerializeField] private ParticleSystem vfxPrefab;
+    [SerializeField] private float appearDuration = 0.25f;
+    [SerializeField] private Ease appearEase = Ease.OutBack;
+    private bool _activatedObject;
+    // ======================================================
 
     public bool IsCompleted { get; private set; }
     public bool IsActive { get; private set; }
@@ -65,6 +75,12 @@ public class TowerMinigame : MonoBehaviour
             completeVfx.gameObject.SetActive(false);
             completeVfx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
+
+        // ===== PHẦN THÊM: đảm bảo object không hiện trước =====
+        if (targetObject != null)
+            targetObject.SetActive(false);
+        _activatedObject = false;
+        // =====================================================
 
         SetIndicator(idleColor);
     }
@@ -213,6 +229,30 @@ public class TowerMinigame : MonoBehaviour
             completeVfx.gameObject.SetActive(true);
             completeVfx.Play();
         }
+
+        // ===== PHẦN THÊM: Active object + VFX prefab + DOTween =====
+        if (!_activatedObject)
+        {
+            _activatedObject = true;
+
+            if (vfxPrefab != null)
+            {
+                Vector3 pos = targetObject != null ? targetObject.transform.position : transform.position;
+                Instantiate(vfxPrefab, pos, Quaternion.identity);
+            }
+
+            if (targetObject != null)
+            {
+                targetObject.transform.DOKill(true);
+                targetObject.transform.localScale = Vector3.zero;
+                targetObject.SetActive(true);
+
+                targetObject.transform
+                    .DOScale(Vector3.one, appearDuration)
+                    .SetEase(appearEase);
+            }
+        }
+        // ===========================================================
 
         OnTowerCompleted?.Invoke(this);
         Debug.Log($"[TowerMinigame] Tower {name} completed.");
