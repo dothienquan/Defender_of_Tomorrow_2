@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1780458535086601013}
   - component: {fileID: 656378256858759245}
   - component: {fileID: 7650004465336929566}
+  - component: {fileID: -9188263408912192402}
   m_Layer: 0
   m_Name: boat
   m_TagString: Untagged
@@ -181,6 +182,28 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2.625, y: 2.0625}
   m_EdgeRadius: 0
+--- !u!95 &-9188263408912192402
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2754058024817561248}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: d55ce65ad025f0949958afb457870359, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &3625829003639784398
 GameObject:
   m_ObjectHideFlags: 0

@@ -13,5 +13,11 @@ public class PickUpSpawner : MonoBehaviour
         {
             Instantiate(healthGlobe, transform.position, Quaternion.identity);
         }
+        
+        // Gold coin always drops (100%)
+        if (goldCoin != null)
+        {
+            Instantiate(goldCoin, transform.position, Quaternion.identity);
+        }
     }
 }
