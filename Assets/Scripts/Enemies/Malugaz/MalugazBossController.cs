@@ -55,6 +55,12 @@ public class MalugazBossController : MonoBehaviour
     [SerializeField] private float zoomOutDuration = 0.3f;
     [SerializeField] private float zoomInScale = 0f;
 
+    [Header("Phase 1 - Teleport Phase")]
+    [Tooltip("Thời gian thực hiện teleport và bắn (giây).")]
+    [SerializeField] private float teleportPhaseDuration = 8f;
+    [Tooltip("Thời gian nghỉ sau teleport phase (giây).")]
+    [SerializeField] private float restAfterTeleportDuration = 2f;
+    
     [Header("Phase 1 - Projectiles")]
     [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private float projectileSpeed = 8f;
@@ -68,6 +74,30 @@ public class MalugazBossController : MonoBehaviour
     [SerializeField] private float phase1BurstRotationAngle = 15f;
     [Tooltip("Thời gian delay giữa các đợt đạn.")]
     [SerializeField] private float phase1BurstDelay = 0.15f;
+
+    [Header("Phase 1 - Attack Pattern 2 (Rectangle Projectiles)")]
+    [Tooltip("Prefab projectile dùng cho attack pattern 2 (hình chữ nhật). Nếu null sẽ dùng projectilePrefab.")]
+    [SerializeField] private GameObject rectangleProjectilePrefab;
+    [Tooltip("Các vị trí boss sẽ di chuyển đến để bắn (tối thiểu 2 vị trí).")]
+    [SerializeField] private Transform[] attackPositions = new Transform[2];
+    [Tooltip("Tốc độ di chuyển đến vị trí attack.")]
+    [SerializeField] private float moveToAttackPositionSpeed = 5f;
+    [Tooltip("Khoảng cách coi như đã đến vị trí attack.")]
+    [SerializeField] private float attackPositionReachDistance = 0.5f;
+    [Tooltip("Số đợt projectile bắn ra tại mỗi vị trí.")]
+    [SerializeField] private int rectangleBurstCount = 5;
+    [Tooltip("Thời gian delay giữa các đợt projectile.")]
+    [SerializeField] private float rectangleBurstDelay = 0.3f;
+    [Tooltip("Kích thước projectile hình chữ nhật (width x height).")]
+    [SerializeField] private Vector2 rectangleProjectileSize = new Vector2(4f, 6f);
+    [Tooltip("Hướng bắn projectile (normalized vector).")]
+    [SerializeField] private Vector2 rectangleShootDirection = Vector2.down;
+    [Tooltip("Khoảng cách spawn projectile từ boss.")]
+    [SerializeField] private float rectangleSpawnDistance = 1f;
+    [Tooltip("Thời gian sống của projectile hình chữ nhật (giây).")]
+    [SerializeField] private float rectangleProjectileLifetime = 5f;
+    [Tooltip("Thời gian nghỉ sau khi hoàn tất attack pattern 2 (giây).")]
+    [SerializeField] private float restAfterPattern2Duration = 2f;
 
     [Header("Phase Transition")]
     [SerializeField] private float transitionMoveSpeed = 2f;
@@ -87,13 +117,24 @@ public class MalugazBossController : MonoBehaviour
     [SerializeField] private float phase2PersistentProjectileLifetime = 10f;
     [SerializeField] private Vector2 phase2PersistentProjectileOffset = Vector2.zero;
 
+    private enum Phase1State
+    {
+        TeleportPhase,
+        RestAfterTeleport,
+        AttackPattern2,
+        RestAfterPattern2
+    }
+
     private BossPhase currentPhase = BossPhase.Phase1;
+    private Phase1State phase1State = Phase1State.TeleportPhase;
     private Transform player;
     private Vector3 spawnPosition;
     private float teleportTimer;
+    private float phase1StateTimer;
     private float phase2IdleTimer;
     private bool isTransitioning = false;
     private bool isJumping = false;
+    private bool isMovingToAttackPosition = false;
     private Vector3 jumpTarget;
     private int lastHealth;
     private Vector3 originalScale;
@@ -160,7 +201,11 @@ public class MalugazBossController : MonoBehaviour
         if (currentPhase == BossPhase.Dead) return;
 
         // Cập nhật animation direction liên tục để idle/run/walk đúng hướng
-        UpdateAnimationDirection();
+        // Chỉ cập nhật khi không đang trong attack animation
+        if (!IsAttackAnimationPlaying())
+        {
+            UpdateAnimationDirection();
+        }
 
         // Kiểm tra health để chuyển phase
         CheckHealthThreshold();
@@ -199,19 +244,201 @@ public class MalugazBossController : MonoBehaviour
     private void StartPhase1()
     {
         currentPhase = BossPhase.Phase1;
+        phase1State = Phase1State.TeleportPhase;
         teleportTimer = 0f;
+        phase1StateTimer = 0f;
         rb.linearVelocity = Vector2.zero;
+        
+        // Set hướng ban đầu để boss quay mặt về phía player khi spawn
+        UpdateAnimationDirection();
+        
+        // Bắt đầu teleport phase
+        StartCoroutine(Phase1TeleportLoop());
     }
 
     private void UpdatePhase1()
     {
-        teleportTimer += Time.deltaTime;
+        // Logic phase 1 được xử lý bởi các coroutines
+        // Không cần update timer ở đây nữa
+    }
 
-        if (teleportTimer >= teleportInterval)
+    private IEnumerator Phase1TeleportLoop()
+    {
+        // Teleport phase: teleport và bắn trong 8 giây
+        float elapsed = 0f;
+        while (elapsed < teleportPhaseDuration && currentPhase == BossPhase.Phase1)
         {
-            teleportTimer = 0f;
-            StartCoroutine(TeleportAndShoot());
+            // Teleport và bắn
+            yield return StartCoroutine(TeleportAndShoot());
+            
+            // Đợi đến lần teleport tiếp theo
+            float waitTime = Mathf.Min(teleportInterval, teleportPhaseDuration - elapsed);
+            elapsed += waitTime;
+            if (waitTime > 0f)
+            {
+                yield return new WaitForSeconds(waitTime);
+            }
         }
+
+        // Nghỉ 2 giây
+        rb.linearVelocity = Vector2.zero;
+        yield return new WaitForSeconds(restAfterTeleportDuration);
+
+        // Bắt đầu Attack Pattern 2
+        if (currentPhase == BossPhase.Phase1)
+        {
+            yield return StartCoroutine(Phase1AttackPattern2());
+        }
+    }
+
+    private IEnumerator Phase1AttackPattern2()
+    {
+        if (attackPositions == null || attackPositions.Length < 2)
+        {
+            Debug.LogWarning("[MalugazBossController] Attack positions not set! Need at least 2 positions.");
+            yield break;
+        }
+
+        // Di chuyển và bắn tại mỗi vị trí
+        for (int posIndex = 0; posIndex < attackPositions.Length; posIndex++)
+        {
+            if (attackPositions[posIndex] == null) continue;
+            if (currentPhase != BossPhase.Phase1) yield break;
+
+            // Di chuyển đến vị trí attack
+            yield return StartCoroutine(MoveToAttackPosition(attackPositions[posIndex].position));
+
+            // Bắn 5 đợt projectile hình chữ nhật về phía player
+            for (int burst = 0; burst < rectangleBurstCount; burst++)
+            {
+                if (currentPhase != BossPhase.Phase1) yield break;
+                
+                // Set attack animation direction về phía player trước khi bắn
+                SetAttackAnimationDirection();
+                
+                // Chơi attack animation
+                enemyAnim.PlayAttack();
+                
+                // Đợi một chút để animation Attack chạy
+                yield return new WaitForSeconds(attackAnimationDelay);
+                
+                // Bắn về phía player
+                ShootRectangleProjectile();
+                
+                if (burst < rectangleBurstCount - 1)
+                {
+                    yield return new WaitForSeconds(rectangleBurstDelay);
+                }
+            }
+        }
+
+        // Nghỉ 2 giây sau khi hoàn tất pattern 2
+        rb.linearVelocity = Vector2.zero;
+        yield return new WaitForSeconds(restAfterPattern2Duration);
+
+        // Lặp lại từ đầu
+        if (currentPhase == BossPhase.Phase1)
+        {
+            StartCoroutine(Phase1TeleportLoop());
+        }
+    }
+
+    private IEnumerator MoveToAttackPosition(Vector3 targetPosition)
+    {
+        isMovingToAttackPosition = true;
+
+        float distance = Vector3.Distance(transform.position, targetPosition);
+        float reachDistanceSqr = attackPositionReachDistance * attackPositionReachDistance;
+
+        // Di chuyển đến vị trí target bằng cách set velocity
+        // EnemyAnim sẽ tự động detect velocity và set animation locomotion đúng hướng
+        while (currentPhase == BossPhase.Phase1)
+        {
+            Vector2 directionToTarget = ((Vector2)targetPosition - (Vector2)transform.position);
+            float distanceSqr = directionToTarget.sqrMagnitude;
+
+            // Kiểm tra xem đã đến gần đủ chưa
+            if (distanceSqr <= reachDistanceSqr)
+            {
+                break;
+            }
+
+            // Set velocity để di chuyển và EnemyAnim sẽ tự động set animation
+            Vector2 moveDirection = directionToTarget.normalized;
+            rb.linearVelocity = moveDirection * moveToAttackPositionSpeed;
+            
+            yield return null;
+        }
+
+        // Đã đến nơi, dừng lại
+        transform.position = targetPosition;
+        rb.linearVelocity = Vector2.zero;
+        
+        isMovingToAttackPosition = false;
+    }
+
+    private void ShootRectangleProjectile()
+    {
+        // Sử dụng rectangleProjectilePrefab nếu có, nếu không thì dùng projectilePrefab
+        GameObject prefabToUse = rectangleProjectilePrefab != null ? rectangleProjectilePrefab : projectilePrefab;
+        
+        if (prefabToUse == null) return;
+
+        // Tính hướng bắn về phía player
+        Vector2 shootDirection;
+        if (player != null)
+        {
+            shootDirection = ((Vector2)player.position - (Vector2)transform.position).normalized;
+        }
+        else
+        {
+            // Fallback: dùng hướng mặc định nếu không có player
+            shootDirection = rectangleShootDirection.normalized;
+        }
+
+        // Spawn projectile từ giữa boss với offset Y = 6
+        Vector3 spawnPos = transform.position + new Vector3(0f, 6f, 0f);
+
+        // Tạo projectile
+        GameObject projectile = Instantiate(prefabToUse, spawnPos, Quaternion.identity);
+        
+        // Set hướng
+        projectile.transform.right = shootDirection;
+        
+        // Scale SpriteRenderer để tạo hình chữ nhật (4x6)
+        // Lấy kích thước gốc của sprite để tính scale chính xác
+        SpriteRenderer spriteRenderer = projectile.GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null && spriteRenderer.sprite != null)
+        {
+            // Lấy kích thước gốc của sprite (trong world units)
+            float spriteWidth = spriteRenderer.sprite.bounds.size.x;
+            float spriteHeight = spriteRenderer.sprite.bounds.size.y;
+            
+            // Tính scale để đạt kích thước mong muốn
+            float scaleX = rectangleProjectileSize.x / spriteWidth;
+            float scaleY = rectangleProjectileSize.y / spriteHeight;
+            
+            projectile.transform.localScale = new Vector3(scaleX, scaleY, 1f);
+        }
+        else
+        {
+            // Fallback: scale trực tiếp nếu không có SpriteRenderer
+            projectile.transform.localScale = new Vector3(
+                rectangleProjectileSize.x,
+                rectangleProjectileSize.y,
+                1f
+            );
+        }
+
+        // Cấu hình projectile
+        if (projectile.TryGetComponent(out Projectile proj))
+        {
+            proj.UpdateMoveSpeed(projectileSpeed);
+            proj.SetIsEnemyProjectile(true);
+        }
+
+        // Tự hủy sau vài giây
+        StartCoroutine(DestroyProjectileAfterTime(projectile, rectangleProjectileLifetime));
     }
 
     private IEnumerator TeleportAndShoot()
@@ -290,7 +517,8 @@ public class MalugazBossController : MonoBehaviour
                     baseDir.x * Mathf.Sin(rotationRad) + baseDir.y * Mathf.Cos(rotationRad)
                 );
 
-                Vector3 spawnPos = transform.position + (Vector3)(rotatedDir * projectileSpawnDistance + phase1ProjectileOffset);
+                // Spawn projectile từ giữa boss với offset Y = 6
+                Vector3 spawnPos = transform.position + new Vector3(0f, 6f, 0f);
 
                 GameObject projectile = Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
                 projectile.transform.right = rotatedDir;
@@ -474,7 +702,53 @@ public class MalugazBossController : MonoBehaviour
 
     private void SetAttackAnimationDirection()
     {
-        UpdateAnimationDirection();
+        if (animator == null) return;
+
+        Vector2 directionToPlayer;
+        
+        // Nếu có player, dùng hướng tới player
+        if (player != null)
+        {
+            directionToPlayer = ((Vector2)player.position - (Vector2)transform.position).normalized;
+        }
+        else
+        {
+            // Nếu không có player, dùng hướng di chuyển hiện tại hoặc hướng mặc định (xuống)
+            Vector2 velocity = rb.linearVelocity;
+            if (velocity.magnitude > 0.001f)
+            {
+                directionToPlayer = velocity.normalized;
+            }
+            else
+            {
+                directionToPlayer = Vector2.down; // Mặc định hướng xuống
+            }
+        }
+
+        // Set LastX và LastY để animation biết hướng
+        // Đảo ngược X để fix animation trái/phải bị ngược
+        // KHÔNG đảo ngược Y cho attack animation (giống FrozenSlimeController và GolemController)
+        animator.SetFloat("LastX", -directionToPlayer.x);
+        animator.SetFloat("LastY", directionToPlayer.y);
+    }
+
+    private bool IsAttackAnimationPlaying()
+    {
+        if (animator == null) return false;
+        
+        // Kiểm tra xem có đang trong attack state không
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        
+        // Kiểm tra bằng tag (nếu animator có tag "Attack")
+        if (stateInfo.IsTag("Attack"))
+            return true;
+        
+        // Kiểm tra bằng tên state - kiểm tra các tên phổ biến
+        return stateInfo.IsName("Attack") || stateInfo.IsName("AttackUp") || 
+               stateInfo.IsName("AttackDown") || stateInfo.IsName("AttackLeft") || 
+               stateInfo.IsName("AttackRight") || stateInfo.IsName("Base Layer.Attack") ||
+               stateInfo.IsName("Base Layer.AttackUp") || stateInfo.IsName("Base Layer.AttackDown") ||
+               stateInfo.IsName("Base Layer.AttackLeft") || stateInfo.IsName("Base Layer.AttackRight");
     }
 
     private void UpdateAnimationDirection()
@@ -504,9 +778,9 @@ public class MalugazBossController : MonoBehaviour
 
         // Set LastX và LastY để animation biết hướng
         // Đảo ngược X để fix animation trái/phải bị ngược
-        // Đảo ngược Y để đồng bộ với EnemyAnim (giống như trong EnemyAnim.cs)
+        // KHÔNG đảo ngược Y để boss quay mặt về phía player (giống attack animation)
         animator.SetFloat("LastX", -directionToPlayer.x);
-        animator.SetFloat("LastY", -directionToPlayer.y);
+        animator.SetFloat("LastY", directionToPlayer.y);
     }
 
     private void HandleDeath()
