@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 4951955227833698750}
   - component: {fileID: 6485928801896153193}
   - component: {fileID: 2327760349714204538}
+  - component: {fileID: 2301567821876735140}
   m_Layer: 0
   m_Name: Malugaz (Real)
   m_TagString: Enemy
@@ -303,3 +304,17 @@ MonoBehaviour:
   phase2PersistentProjectilePrefab: {fileID: 4965476519442243931, guid: 6dae319551a1db7479807af619167481, type: 3}
   phase2PersistentProjectileLifetime: 4
   phase2PersistentProjectileOffset: {x: 0, y: 0}
+--- !u!114 &2301567821876735140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8315737787098333192}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daf66747bb749754286fe107165dd4bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossSpawnAnnouncer
+  enemyHealth: {fileID: 4951955227833698750}
+  uiProfile: {fileID: 11400000, guid: d26285a873bd36943a681a7acf9a2687, type: 2}
