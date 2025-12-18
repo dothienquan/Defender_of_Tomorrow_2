@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 4745548132883126394}
   - component: {fileID: 4642743613605500753}
   - component: {fileID: 2142274783133131600}
+  - component: {fileID: 8166069977652555715}
   m_Layer: 0
   m_Name: FinalBossPhase1
   m_TagString: Enemy
@@ -324,3 +325,17 @@ MonoBehaviour:
   floatHeight: 0.8
   floatDuration: 1.5
   floatEase: 4
+--- !u!114 &8166069977652555715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651635359998628667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daf66747bb749754286fe107165dd4bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossSpawnAnnouncer
+  enemyHealth: {fileID: 4809025712449278709}
+  uiProfile: {fileID: 11400000, guid: 1a663886a03ab8c469c2372eac5fb670, type: 2}
