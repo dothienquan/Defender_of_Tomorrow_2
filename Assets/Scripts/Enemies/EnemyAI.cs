@@ -13,12 +13,14 @@ public class EnemyAI : MonoBehaviour
 
     private bool canAttack = true;
     public bool inAttackZone = false;
+    public bool inChaseZone = false;
 
-    private enum State { Roaming, Attacking }
+    private enum State { Roaming, Chasing, Attacking }
     private State state;
 
     private Vector2 roamPosition;
     private float timeRoaming = 0f;
+    private Transform playerTarget;
 
     private EnemyPathfinding enemyPathfinding;
 
@@ -30,6 +32,13 @@ public class EnemyAI : MonoBehaviour
         enemyPathfinding = GetComponent<EnemyPathfinding>();
         enemyAnimator = GetComponentInChildren<EnemyAnimator>();   // <-- thêm animator
         state = State.Roaming;
+        
+        // Cache player reference
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            playerTarget = playerObj.transform;
+        }
     }
 
     private void Start()
@@ -51,6 +60,10 @@ public class EnemyAI : MonoBehaviour
                 Roaming();
                 break;
 
+            case State.Chasing:
+                Chasing();
+                break;
+
             case State.Attacking:
                 Attacking();
                 break;
@@ -68,6 +81,11 @@ public class EnemyAI : MonoBehaviour
         {
             state = State.Attacking;
         }
+        else if (inChaseZone)
+        {
+            state = State.Chasing;
+            return;
+        }
 
         // đổi hướng roam định kỳ
         if (timeRoaming > roamChangeDirFloat)
@@ -76,11 +94,45 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
+    private void Chasing()
+    {
+        // Nếu vào attack zone, chuyển sang attack
+        if (inAttackZone)
+        {
+            state = State.Attacking;
+            return;
+        }
+
+        // Nếu ra khỏi chase zone, quay về roam
+        if (!inChaseZone)
+        {
+            state = State.Roaming;
+            roamPosition = GetRoamingPosition();
+            return;
+        }
+
+        // Đuổi theo player
+        if (playerTarget != null)
+        {
+            Vector2 dirToPlayer = (playerTarget.position - transform.position);
+            if (dirToPlayer.sqrMagnitude > 0.0001f)
+            {
+                enemyPathfinding.MoveTo(dirToPlayer.normalized);
+            }
+        }
+        else
+        {
+            // Nếu không tìm thấy player, quay về roam
+            state = State.Roaming;
+        }
+    }
+
     private void Attacking()
     {
         if (!inAttackZone)
         {
-            state = State.Roaming;
+            // Nếu vẫn trong chase zone thì tiếp tục chase, không thì roam
+            state = inChaseZone ? State.Chasing : State.Roaming;
             return;
         }
 
@@ -136,7 +188,34 @@ public class EnemyAI : MonoBehaviour
     public void SetInAttackZone(bool value)
     {
         inAttackZone = value;
-        state = value ? State.Attacking : State.Roaming;
+        if (value)
+        {
+            state = State.Attacking;
+        }
+        else
+        {
+            // Nếu đang attack và ra khỏi attack zone, chuyển về chase hoặc roam
+            if (state == State.Attacking)
+            {
+                state = inChaseZone ? State.Chasing : State.Roaming;
+            }
+        }
     }
     public bool IsInAttackZone() => inAttackZone;
+
+    // ==== ChaseZone API ====
+    public void SetInChaseZone(bool value)
+    {
+        inChaseZone = value;
+        if (value && state == State.Roaming)
+        {
+            state = State.Chasing;
+        }
+        else if (!value && state == State.Chasing)
+        {
+            state = State.Roaming;
+            roamPosition = GetRoamingPosition();
+        }
+    }
+    public bool IsInChaseZone() => inChaseZone;
 }

@@ -20,7 +20,6 @@ GameObject:
   - component: {fileID: 6529496288286658544}
   - component: {fileID: 2476325194235743195}
   - component: {fileID: 8042066719312026206}
-  - component: {fileID: 6873122384418438912}
   - component: {fileID: 1976658067555987027}
   - component: {fileID: 3282029011543163015}
   m_Layer: 0
@@ -145,6 +144,7 @@ MonoBehaviour:
   attackCooldown: 2
   stopMovingWhileAttacking: 0
   inAttackZone: 0
+  inChaseZone: 0
 --- !u!114 &3911520178677140419
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -157,7 +157,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f2c2e5b0e13fe74f82147b3f38d4c09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyPathfinding
-  moveSpeed: 2
+  moveSpeed: 3
 --- !u!114 &1346027328266111251
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -297,25 +297,6 @@ CapsuleCollider2D:
   m_Offset: {x: -0.13168335, y: 2.097107}
   m_Size: {x: 1.5686646, y: 2.2075195}
   m_Direction: 0
---- !u!114 &6873122384418438912
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 676182719828648293}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7e80e4f64ca63d045ad54411e0084391, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Summoner
-  summonPrefabs:
-  - {fileID: 2200932645803366277, guid: bdb6406709dd1f348b721ef15333e39c, type: 3}
-  summonCount: 3
-  summonRadius: 1
-  summonOnce: 1
-  thresholdPercent: 0.5
-  checkInterval: 0.1
 --- !u!114 &1976658067555987027
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -772,7 +753,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &8853182354387667126
 Transform:
   m_ObjectHideFlags: 0
