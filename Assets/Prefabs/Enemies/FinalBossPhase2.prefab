@@ -183,6 +183,7 @@ MonoBehaviour:
   attackCooldown: 2
   stopMovingWhileAttacking: 1
   inAttackZone: 1
+  inChaseZone: 0
 --- !u!114 &5858924589076716094
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -284,6 +285,9 @@ MonoBehaviour:
   voidCastWavePrefab: {fileID: 1674452009617720182, guid: 8e6aa1ff5158f0449afe611c6f4e625a, type: 3}
   voidFieldDuration: 10
   voidRadius: 30
+  cutsceneSceneNameOverride: FinalCutscene
+  deathVfxPrefab: {fileID: 1348390491135638, guid: d7d554880214e644bbbbfc89aa884b26, type: 3}
+  deathCutsceneDelay: 1
 --- !u!114 &2706228267536220449
 MonoBehaviour:
   m_ObjectHideFlags: 0
