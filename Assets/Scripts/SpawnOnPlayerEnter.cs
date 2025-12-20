@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
 public class SpawnOnPlayerEnter : MonoBehaviour
@@ -18,16 +18,18 @@ public class SpawnOnPlayerEnter : MonoBehaviour
     private void Awake()
     {
         _trigger = GetComponent<Collider2D>();
-        if (_trigger != null)
-        {
-            _trigger.isTrigger = true;
-        }
+        if (_trigger != null) _trigger.isTrigger = true;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.CompareTag(playerTag)) return;
-        
+        SpawnNow();
+    }
+
+    // ✅ gọi bằng code sau dialog 2
+    public void SpawnNow()
+    {
         if (spawnOnce && _hasSpawned) return;
 
         SpawnPrefab();
@@ -47,6 +49,3 @@ public class SpawnOnPlayerEnter : MonoBehaviour
         Instantiate(prefabToSpawn, spawnPosition, Quaternion.identity);
     }
 }
-
-
-
