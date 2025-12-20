@@ -35,6 +35,32 @@ public class BossDuplicateManager : MonoBehaviour
     [SerializeField] private float shrinkDuration = 0.2f;  // Thời gian thu nhỏ
     [SerializeField] private float expandDuration = 0.2f;  // Thời gian phục hồi kích thước
 
+    [Header("Phase 1 - Real Hit VFX")]
+    [SerializeField] private GameObject realHitVFXPrefab;  // VFX spawn khi đánh trúng bản thể thật
+
+    [Header("Phase 1 - Fake Hit Beam")]
+    [SerializeField] private bool useBeamPrefab = false;  // Nếu true, dùng beamPrefab. Nếu false, tạo LineRenderer động
+    [SerializeField] private GameObject beamPrefab;  // Prefab beam/ray (tùy chọn)
+    [SerializeField] private Material beamMaterial;  // Material cho LineRenderer (để tạo hiệu ứng sấm sét)
+    [SerializeField] private float beamDuration = 0.3f;  // Thời gian beam tồn tại
+    [SerializeField] private float beamWidth = 0.2f;  // Độ rộng của beam
+    [SerializeField] private Color beamColor = Color.white;  // Màu của beam
+    [SerializeField] private int beamPoints = 10;  // Số điểm để tạo hiệu ứng zigzag (sấm sét)
+    [SerializeField] private float beamZigzagAmount = 0.3f;  // Độ lệch zigzag
+    [SerializeField] private int beamDamage = 1;  // Sát thương của beam
+    [SerializeField] private bool enableBeamCollider = true;  // Bật collider để gây damage
+    [SerializeField] private float beamExpandTime = 0.1f;  // Thời gian tia mở rộng từ đầu đến cuối (nhanh hơn)
+    [SerializeField] private float beamBlinkInterval = 0.05f;  // Khoảng thời gian giữa các lần nhấp nháy
+    [SerializeField] private float beamBlinkMinAlpha = 0.6f;  // Alpha tối thiểu khi nhấp nháy
+    [SerializeField] private float beamBlinkMaxAlpha = 1f;  // Alpha tối đa khi nhấp nháy
+
+    [Header("Phase 2 - Circular Shooting")]
+    [SerializeField] private GameObject projectilePrefab;  // Prefab projectile để bắn ở phase 2
+    [SerializeField] private int phase2ProjectileCount = 8;  // Số lượng projectile trong pattern vòng tròn
+    [SerializeField] private float phase2ProjectileSpeed = 5f;  // Tốc độ projectile phase 2
+    [SerializeField] private float phase2ShootInterval = 2f;  // Khoảng thời gian giữa các lần bắn
+    [SerializeField] private float phase2ProjectileSpawnDistance = 0.5f;  // Khoảng cách spawn từ boss
+
     [Header("On Death - NPC Spawn")]
     [SerializeField] private GameObject npcToActivate;  // NPC GameObject cần active khi boss chết
     [SerializeField] private float spawnDelay = 1f;  // Delay trước khi spawn NPC (sau khi boss chết)
@@ -68,6 +94,9 @@ public class BossDuplicateManager : MonoBehaviour
 
     // Hiệu ứng boss bị đánh (tránh spam)
     private bool isHitAnimating = false;
+
+    // Phase 2 shooting
+    private Coroutine phase2ShootingCoroutine;
 
     private void Awake()
     {
@@ -113,6 +142,12 @@ public class BossDuplicateManager : MonoBehaviour
         if (realHealth != null)
         {
             realHealth.OnDeath -= OnBossDeath;
+        }
+        
+        // Dừng shooting coroutine
+        if (phase2ShootingCoroutine != null)
+        {
+            StopCoroutine(phase2ShootingCoroutine);
         }
         
         // Kill tất cả DOTween sequences để tránh lỗi khi object bị destroy
@@ -187,32 +222,53 @@ public class BossDuplicateManager : MonoBehaviour
     {
         realHealth.TakeDamage(damage);
 
-        // Kiểm tra phase switch nhưng KHÔNG dừng coroutine đang chạy
-        // Chỉ đánh dấu để phase 2 được kích hoạt sau khi swap xong
+        // Kiểm tra phase switch
         bool shouldEnterPhase2 = !isPhaseTwo && HPPercent() <= 0.5f;
 
-        // Nếu đã ở phase 2, không cần swap nữa
+        // Lấy Flash component một lần
+        Flash flash = realVisual != null ? realVisual.GetComponent<Flash>() : null;
+
+        // Nếu đã ở phase 2, chỉ flash
         if (isPhaseTwo)
         {
-            // Trigger flash on REAL VISUAL (phase 2 không swap)
-            Flash flash = realVisual.GetComponent<Flash>();
             if (flash != null)
                 StartCoroutine(flash.FlashRoutine());
             return;
         }
 
-        // Phase 1: nhấp nháy với Flash và đổi chỗ
+        // Phase 1: Spawn VFX, flash, và swap
         if (swapOnHit)
         {
-            StartCoroutine(RealHitBlinkThenSwap(shouldEnterPhase2));
+            StartCoroutine(RealHitVFXThenSwap(shouldEnterPhase2));
         }
         else
         {
-            // Nếu không swap, chỉ flash và kiểm tra phase switch
-            Flash flash = realVisual.GetComponent<Flash>();
+            // Nếu không swap, chỉ spawn VFX và flash
+            if (realHitVFXPrefab != null)
+            {
+                GameObject vfxInstance = Instantiate(realHitVFXPrefab, realVisual.transform.position, Quaternion.identity);
+                // Auto-destroy VFX sau khi hoàn thành
+                ParticleSystem particles = vfxInstance.GetComponent<ParticleSystem>();
+                if (particles != null)
+                {
+                    if (!particles.main.loop)
+                    {
+                        float duration = particles.main.duration + particles.main.startLifetime.constantMax;
+                        Destroy(vfxInstance, duration);
+                    }
+                }
+                else
+                {
+                    // Fallback: destroy sau 5 giây nếu không có ParticleSystem
+                    Destroy(vfxInstance, 5f);
+                }
+            }
+
+            // Flash effect
             if (flash != null)
                 StartCoroutine(flash.FlashRoutine());
-            
+
+            // Kiểm tra phase switch
             if (shouldEnterPhase2)
             {
                 CheckPhaseSwitch();
@@ -283,6 +339,11 @@ public class BossDuplicateManager : MonoBehaviour
 
         PlaceInArea(realVisual.transform);
         PlaceInArea(fakeVisual.transform);
+
+        // Bắt đầu circular shooting pattern
+        if (phase2ShootingCoroutine != null)
+            StopCoroutine(phase2ShootingCoroutine);
+        phase2ShootingCoroutine = StartCoroutine(Phase2CircularShooting());
     }
 
     private void PlaceInArea(Transform t)
@@ -331,7 +392,7 @@ public class BossDuplicateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Khi fake body bị đánh ở phase 1: cả hai bản thể đứng yên và nhấp nháy trong 2 giây, sau đó đổi vị trí
+    /// Khi fake body bị đánh ở phase 1: bắn projectile về player, nhấp nháy, sau đó đổi vị trí
     /// </summary>
     private IEnumerator FakeHitBlinkThenSwap()
     {
@@ -350,6 +411,97 @@ public class BossDuplicateManager : MonoBehaviour
             fakeVisual.transform.DOKill();
             BossMover fakeMover = fakeVisual.GetComponent<BossMover>();
             if (fakeMover != null) fakeMover.enabled = false;
+        }
+
+        // Bắn tia về player
+        if (PlayerController.Instance != null)
+        {
+            Vector3 playerPos = PlayerController.Instance.transform.position;
+            Vector3 shootPosition = fakeVisual != null ? fakeVisual.transform.position : transform.position;
+            Vector2 directionToPlayer = (playerPos - shootPosition).normalized;
+            float distance = Vector2.Distance(shootPosition, playerPos);
+
+            GameObject beam = null;
+            LineRenderer lr = null;
+
+            // Nếu dùng prefab
+            if (useBeamPrefab && beamPrefab != null)
+            {
+                beam = Instantiate(beamPrefab, shootPosition, Quaternion.identity);
+                beam.transform.right = directionToPlayer;
+                lr = beam.GetComponent<LineRenderer>();
+            }
+            else
+            {
+                // Tạo LineRenderer động
+                beam = new GameObject("BossBeam");
+                beam.transform.position = shootPosition;
+                beam.transform.right = directionToPlayer;
+                
+                lr = beam.AddComponent<LineRenderer>();
+                lr.material = beamMaterial != null ? beamMaterial : new Material(Shader.Find("Sprites/Default"));
+                lr.startColor = beamColor;
+                lr.endColor = beamColor;
+                lr.startWidth = beamWidth;
+                lr.endWidth = beamWidth;
+                lr.useWorldSpace = true;
+                lr.sortingOrder = 10;  // Đảm bảo hiển thị trên các sprite khác
+            }
+
+            // Tạo hiệu ứng sấm sét (zigzag) nếu beamPoints > 2
+            if (lr != null)
+            {
+                Vector3 start = shootPosition;
+                Vector3 end = playerPos;
+                Vector3 direction = (end - start).normalized;
+                Vector3 perpendicular = new Vector3(-direction.y, direction.x, 0f);
+                
+                // Tính toán tất cả các điểm trước
+                Vector3[] allPoints;
+                int totalPoints;
+                
+                if (beamPoints > 2)
+                {
+                    // Tạo đường zigzag để giống sấm sét
+                    totalPoints = beamPoints;
+                    allPoints = new Vector3[totalPoints];
+                    
+                    for (int i = 0; i < totalPoints; i++)
+                    {
+                        float t = (float)i / (totalPoints - 1);
+                        Vector3 basePos = Vector3.Lerp(start, end, t);
+                        
+                        // Thêm zigzag ngẫu nhiên
+                        float zigzag = Mathf.Sin(t * Mathf.PI * 3f) * beamZigzagAmount * (1f - Mathf.Abs(t - 0.5f) * 2f);
+                        Vector3 offset = perpendicular * zigzag;
+                        
+                        allPoints[i] = basePos + offset;
+                    }
+                }
+                else
+                {
+                    // Đường thẳng đơn giản
+                    totalPoints = 2;
+                    allPoints = new Vector3[] { start, end };
+                }
+
+                // Thêm component để animate việc mở rộng tia
+                BeamExpander expander = beam.AddComponent<BeamExpander>();
+                expander.Initialize(lr, allPoints, beamExpandTime, beamWidth, enableBeamCollider, beamDamage, transform,
+                    beamBlinkInterval, beamBlinkMinAlpha, beamBlinkMaxAlpha, beamDuration);
+            }
+            else
+            {
+                // Nếu dùng SpriteRenderer (như MagicLaser), scale theo khoảng cách
+                SpriteRenderer sr = beam.GetComponent<SpriteRenderer>();
+                if (sr != null)
+                {
+                    sr.size = new Vector2(distance, beamWidth);
+                }
+            }
+
+            // Tự động destroy beam sau thời gian cố định (không phụ thuộc vào việc hit player)
+            // Beam sẽ tồn tại đúng beamDuration giây
         }
 
         // Lấy SpriteRenderer components
@@ -422,6 +574,97 @@ public class BossDuplicateManager : MonoBehaviour
         yield return new WaitForSeconds(expandDuration);
 
         isHitAnimating = false;
+    }
+
+    /// <summary>
+    /// Khi real body bị đánh ở phase 1: spawn VFX, flash, sau đó đổi vị trí (KHÔNG bắn projectile)
+    /// </summary>
+    private IEnumerator RealHitVFXThenSwap(bool shouldEnterPhase2AfterSwap = false)
+    {
+        if (isHitAnimating || isPhaseTwo) yield break;
+        isHitAnimating = true;
+
+        // Dừng mọi movement nếu đang di chuyển
+        if (realVisual != null)
+        {
+            realVisual.transform.DOKill();
+            BossMover realMover = realVisual.GetComponent<BossMover>();
+            if (realMover != null) realMover.enabled = false;
+        }
+        if (fakeVisual != null)
+        {
+            fakeVisual.transform.DOKill();
+            BossMover fakeMover = fakeVisual.GetComponent<BossMover>();
+            if (fakeMover != null) fakeMover.enabled = false;
+        }
+
+        // Spawn VFX
+        if (realHitVFXPrefab != null)
+        {
+            GameObject vfxInstance = Instantiate(realHitVFXPrefab, realVisual.transform.position, Quaternion.identity);
+            // Auto-destroy VFX sau khi hoàn thành
+            ParticleSystem particles = vfxInstance.GetComponent<ParticleSystem>();
+            if (particles != null)
+            {
+                if (!particles.main.loop)
+                {
+                    float duration = particles.main.duration + particles.main.startLifetime.constantMax;
+                    Destroy(vfxInstance, duration);
+                }
+            }
+            else
+            {
+                // Fallback: destroy sau 5 giây nếu không có ParticleSystem
+                Destroy(vfxInstance, 5f);
+            }
+        }
+
+        // Flash effect
+        Flash flash = realVisual != null ? realVisual.GetComponent<Flash>() : null;
+        if (flash != null)
+            StartCoroutine(flash.FlashRoutine());
+
+        // Nếu đã chuyển phase 2, không swap nữa
+        if (isPhaseTwo)
+        {
+            isHitAnimating = false;
+            yield break;
+        }
+
+        // Lưu scale ban đầu
+        Vector3 originalRealScale = realVisual.transform.localScale;
+        Vector3 originalFakeScale = fakeVisual.transform.localScale;
+        Vector3 shrinkVector = Vector3.one * shrinkScale;
+
+        // Dừng mọi tween scale cũ
+        realVisual.transform.DOKill();
+        fakeVisual.transform.DOKill();
+
+        // Thu nhỏ cả hai bản thể trước khi đổi chỗ
+        realVisual.transform.DOScale(shrinkVector, shrinkDuration).SetEase(Ease.InBack);
+        fakeVisual.transform.DOScale(shrinkVector, shrinkDuration).SetEase(Ease.InBack);
+
+        yield return new WaitForSeconds(shrinkDuration);
+
+        // Đổi vị trí (trong khi đang nhỏ)
+        SwapPositions();
+
+        // Đợi swap hoàn tất
+        yield return new WaitForSeconds(swapMoveDuration);
+
+        // Phục hồi kích thước bình thường
+        realVisual.transform.DOScale(originalRealScale, expandDuration).SetEase(Ease.OutBack);
+        fakeVisual.transform.DOScale(originalFakeScale, expandDuration).SetEase(Ease.OutBack);
+
+        yield return new WaitForSeconds(expandDuration);
+
+        isHitAnimating = false;
+
+        // Sau khi swap xong, nếu cần chuyển phase 2 thì kích hoạt
+        if (shouldEnterPhase2AfterSwap && !isPhaseTwo)
+        {
+            CheckPhaseSwitch();
+        }
     }
 
     /// <summary>
@@ -553,6 +796,53 @@ public class BossDuplicateManager : MonoBehaviour
         fakeVisual.transform.DOMove(p1, swapMoveDuration).SetEase(swapEase);
     }
     
+    // ======================
+    //   PHASE 2 CIRCULAR SHOOTING
+    // ======================
+
+    /// <summary>
+    /// Bắn đạn theo pattern vòng tròn ở phase 2
+    /// </summary>
+    private IEnumerator Phase2CircularShooting()
+    {
+        while (isPhaseTwo && realHealth != null && realHealth.GetCurrentHealth() > 0)
+        {
+            if (projectilePrefab == null)
+            {
+                Debug.LogWarning("[BossDuplicateManager] Projectile prefab is missing for phase 2 shooting!");
+                yield break;
+            }
+
+            // Bắn từ vị trí của real visual (hoặc transform nếu realVisual null)
+            Vector3 shootPosition = realVisual != null ? realVisual.transform.position : transform.position;
+
+            // Tính toán các hướng chia đều 360 độ
+            float angleStep = 360f / phase2ProjectileCount;
+
+            // Bắn các projectile
+            for (int i = 0; i < phase2ProjectileCount; i++)
+            {
+                // Tính góc (bắt đầu từ hướng lên - 90 độ)
+                float angle = (i * angleStep - 90f) * Mathf.Deg2Rad;
+                Vector2 direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+
+                Vector3 spawnPos = shootPosition + (Vector3)(direction * phase2ProjectileSpawnDistance);
+
+                GameObject projectile = Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
+                projectile.transform.right = direction;
+
+                if (projectile.TryGetComponent(out Projectile proj))
+                {
+                    proj.UpdateMoveSpeed(phase2ProjectileSpeed);
+                    proj.SetIsEnemyProjectile(true);
+                }
+            }
+
+            // Đợi trước khi bắn lần tiếp theo
+            yield return new WaitForSeconds(phase2ShootInterval);
+        }
+    }
+
     // ======================
     //   BOSS DEATH HANDLER
     // ======================
@@ -851,5 +1141,186 @@ public class NPCSpawningHelper : MonoBehaviour
         
         // Tự destroy helper GameObject sau khi hoàn thành
         Destroy(gameObject);
+    }
+}
+
+/// <summary>
+/// Component để animate việc mở rộng tia từ đầu đến cuối
+/// </summary>
+public class BeamExpander : MonoBehaviour
+{
+    private LineRenderer lineRenderer;
+    private Vector3[] allPoints;
+    private float expandTime;
+    private float beamWidth;
+    private bool enableCollider;
+    private int damage;
+    private Transform attacker;
+    private EdgeCollider2D edgeCollider;
+    private BeamDamageDealer damageDealer;
+    private float blinkInterval;
+    private float blinkMinAlpha;
+    private float blinkMaxAlpha;
+    private float totalDuration;
+    private Color originalStartColor;
+    private Color originalEndColor;
+
+    public void Initialize(LineRenderer lr, Vector3[] points, float time, float width, bool enableCol, int dmg, Transform attackerTransform,
+        float blinkInt, float blinkMin, float blinkMax, float duration)
+    {
+        lineRenderer = lr;
+        allPoints = points;
+        expandTime = time;
+        beamWidth = width;
+        enableCollider = enableCol;
+        damage = dmg;
+        attacker = attackerTransform;
+        blinkInterval = blinkInt;
+        blinkMinAlpha = blinkMin;
+        blinkMaxAlpha = blinkMax;
+        totalDuration = duration;
+
+        // Lưu màu gốc
+        originalStartColor = lineRenderer.startColor;
+        originalEndColor = lineRenderer.endColor;
+
+        // Khởi tạo với 0 điểm
+        lineRenderer.positionCount = 0;
+
+        // Thêm collider nếu cần
+        if (enableCollider)
+        {
+            edgeCollider = gameObject.AddComponent<EdgeCollider2D>();
+            edgeCollider.isTrigger = true;
+            edgeCollider.edgeRadius = beamWidth * 0.5f;
+            
+            damageDealer = gameObject.AddComponent<BeamDamageDealer>();
+            damageDealer.Initialize(damage, attacker);
+        }
+
+        // Bắt đầu animation
+        StartCoroutine(ExpandBeamCoroutine());
+    }
+
+    private IEnumerator ExpandBeamCoroutine()
+    {
+        float elapsed = 0f;
+        int totalPoints = allPoints.Length;
+        float blinkTimer = 0f;
+        bool isBlinking = false;
+
+        // Phase 1: Mở rộng tia
+        while (elapsed < expandTime)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / expandTime);
+            
+            // Tính số điểm hiện tại dựa trên progress
+            int currentPointCount = Mathf.CeilToInt(totalPoints * progress);
+            if (currentPointCount < 1) currentPointCount = 1;
+            if (currentPointCount > totalPoints) currentPointCount = totalPoints;
+
+            // Cập nhật LineRenderer
+            lineRenderer.positionCount = currentPointCount;
+            for (int i = 0; i < currentPointCount; i++)
+            {
+                lineRenderer.SetPosition(i, allPoints[i]);
+            }
+
+            // Cập nhật EdgeCollider2D
+            if (enableCollider && edgeCollider != null && currentPointCount > 1)
+            {
+                Vector2[] colliderPoints = new Vector2[currentPointCount];
+                for (int i = 0; i < currentPointCount; i++)
+                {
+                    colliderPoints[i] = transform.InverseTransformPoint(allPoints[i]);
+                }
+                edgeCollider.points = colliderPoints;
+            }
+
+            yield return null;
+        }
+
+        // Đảm bảo tia đã mở rộng hoàn toàn
+        lineRenderer.positionCount = totalPoints;
+        for (int i = 0; i < totalPoints; i++)
+        {
+            lineRenderer.SetPosition(i, allPoints[i]);
+        }
+
+        // Cập nhật collider cuối cùng
+        if (enableCollider && edgeCollider != null)
+        {
+            Vector2[] finalColliderPoints = new Vector2[totalPoints];
+            for (int i = 0; i < totalPoints; i++)
+            {
+                finalColliderPoints[i] = transform.InverseTransformPoint(allPoints[i]);
+            }
+            edgeCollider.points = finalColliderPoints;
+        }
+
+        // Phase 2: Nhấp nháy và tồn tại
+        float remainingTime = totalDuration - expandTime;
+        elapsed = 0f;
+
+        while (elapsed < remainingTime)
+        {
+            elapsed += Time.deltaTime;
+            blinkTimer += Time.deltaTime;
+
+            // Nhấp nháy
+            if (blinkTimer >= blinkInterval)
+            {
+                blinkTimer = 0f;
+                isBlinking = !isBlinking;
+
+                // Thay đổi alpha
+                float alpha = isBlinking ? blinkMinAlpha : blinkMaxAlpha;
+                Color startColor = originalStartColor;
+                Color endColor = originalEndColor;
+                startColor.a = alpha;
+                endColor.a = alpha;
+                lineRenderer.startColor = startColor;
+                lineRenderer.endColor = endColor;
+            }
+
+            yield return null;
+        }
+
+        // Khôi phục màu trước khi destroy
+        lineRenderer.startColor = originalStartColor;
+        lineRenderer.endColor = originalEndColor;
+
+        // Destroy beam sau thời gian cố định (không phụ thuộc vào việc hit player)
+        Destroy(gameObject);
+    }
+}
+
+/// <summary>
+/// Component để beam gây damage cho player
+/// </summary>
+public class BeamDamageDealer : MonoBehaviour
+{
+    private int damage;
+    private Transform attacker;
+    private bool hasHitPlayer = false;  // Tránh hit nhiều lần trong cùng một frame
+
+    public void Initialize(int dmg, Transform attackerTransform)
+    {
+        damage = dmg;
+        attacker = attackerTransform;
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (hasHitPlayer) return;
+        if (!other.CompareTag("Player")) return;
+
+        PlayerHealth playerHealth = other.GetComponent<PlayerHealth>();
+        if (playerHealth == null) return;
+
+        // Gây damage cho player
+        playerHealth.TakeDamage(damage, attacker != null ? attacker : transform);
+        hasHitPlayer = true;  // Đánh dấu đã hit để tránh hit nhiều lần
     }
 }
