@@ -1,14 +1,6 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
-/// <summary>
-/// Phase0 flow:
-/// Player enters trigger -> Dialog 1 -> Summon enemy (with VFX) -> wait enemy death -> Dialog 2 ->
-/// (same frame) deactivate Phase0 + activate Phase1.
-/// 
-/// This script integrates with your NPCDialogue/DialogueUI usage pattern: DialogueUI.Show(...)
-/// and waits for DialogueUI GameObject activeSelf to go true then false (dialog closed).
-/// </summary>
 [RequireComponent(typeof(Collider2D))]
 public class BossPhase0Sequence : MonoBehaviour
 {
@@ -19,17 +11,18 @@ public class BossPhase0Sequence : MonoBehaviour
     [SerializeField] private string bossName = "Boss";
     [SerializeField] private Sprite bossAvatar;
 
-    [Header("Summon")]
+    [Header("Summon (phase 0 enemy)")]
     [SerializeField] private GameObject summonedEnemyPrefab;
     [SerializeField] private Transform summonSpawnPoint;
     [SerializeField] private GameObject summonVfxPrefab;
     [SerializeField] private float summonDelay = 0.35f;
 
-    [Header("Phase Switch (same frame)")]
-    [Tooltip("These objects will be activated when phase 0 ends (enable all in same frame).")]
-    [SerializeField] private GameObject[] phase1ObjectsToActivate;
+    [Header("Phase 1 Spawn (spawn immediately after dialog 2)")]
+    [Tooltip("Kéo object có SpawnOnPlayerEnter (spawner phase 1) vào đây.")]
+    [SerializeField] private SpawnOnPlayerEnter phase1Spawner;
 
-    [Tooltip("These objects will be deactivated when phase 0 ends (disable all in same frame).")]
+    [Header("Phase Switch (same frame)")]
+    [SerializeField] private GameObject[] phase1ObjectsToActivate;
     [SerializeField] private GameObject[] phase0ObjectsToDeactivate;
 
     [Header("Trigger Settings")]
@@ -98,13 +91,25 @@ public class BossPhase0Sequence : MonoBehaviour
             yield return WaitDialogueClose();
         }
 
+        // ✅ Spawn phase 1 right after dialog 2 ends
+        if (phase1Spawner != null)
+        {
+            if (!phase1Spawner.gameObject.activeInHierarchy)
+                phase1Spawner.gameObject.SetActive(true);
+
+            phase1Spawner.SpawnNow();
+        }
+        else
+        {
+            Debug.LogWarning($"[{name}] phase1Spawner is NULL - phase 1 will not spawn automatically.", this);
+        }
+
         // -------- Switch phase (same frame) --------
         ActivatePhase1DeactivatePhase0SameFrame();
     }
 
     private IEnumerator WaitDialogueClose()
     {
-        // Wait until dialogue UI becomes active (if Show activates it next frame)
         int safety = 0;
         while (!dialogueUI.gameObject.activeSelf && safety < 10)
         {
@@ -112,7 +117,6 @@ public class BossPhase0Sequence : MonoBehaviour
             yield return null;
         }
 
-        // Wait until dialogue UI closes
         while (dialogueUI.gameObject.activeSelf)
             yield return null;
     }
@@ -123,7 +127,6 @@ public class BossPhase0Sequence : MonoBehaviour
 
         bool died = false;
 
-        // Prefer EnemyHealth.OnDeath if present
         var health = enemy.GetComponentInChildren<EnemyHealth>();
         if (health != null)
         {
@@ -137,7 +140,6 @@ public class BossPhase0Sequence : MonoBehaviour
         }
         else
         {
-            // Fallback: wait until object destroyed
             while (enemy != null)
                 yield return null;
         }
@@ -145,7 +147,6 @@ public class BossPhase0Sequence : MonoBehaviour
 
     private void ActivatePhase1DeactivatePhase0SameFrame()
     {
-        // Enable Phase 1 objects first
         if (phase1ObjectsToActivate != null)
         {
             for (int i = 0; i < phase1ObjectsToActivate.Length; i++)
@@ -155,7 +156,6 @@ public class BossPhase0Sequence : MonoBehaviour
             }
         }
 
-        // Then disable Phase 0 objects
         if (phase0ObjectsToDeactivate != null)
         {
             for (int i = 0; i < phase0ObjectsToDeactivate.Length; i++)

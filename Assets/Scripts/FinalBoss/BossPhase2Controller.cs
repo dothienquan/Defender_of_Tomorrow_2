@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(EnemyHealth))]
 public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
@@ -30,6 +31,10 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
     [SerializeField] private GameObject voidCastWavePrefab;
     [SerializeField] private float voidFieldDuration = 10f;
     [SerializeField] private float voidRadius = 7f; // radius gameplay
+
+    [Header("Cutscene")]
+    [Tooltip("Nếu để trống: sẽ load scene có tên = <CurrentSceneName> + \"_Cutscene\"")]
+    [SerializeField] private string cutsceneSceneNameOverride = "";
 
     private Transform player;
     private bool isAttacking;
@@ -230,7 +235,7 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
 
     #endregion
 
-    #region BOSS DEATH CLEANUP
+    #region BOSS DEATH CLEANUP + CUTSCENE
 
     private void OnBossDeath()
     {
@@ -265,6 +270,16 @@ public class BossPhase2Controller : MonoBehaviour, IEnemy, IBossOrbOwner
 
             SafeZone.ActiveZones.Clear();
         }
+
+        // ===== CHUYỂN SANG CUTSCENE NGAY LẬP TỨC =====
+        string gameplaySceneName = SceneManager.GetActiveScene().name;
+
+        // Default: <CurrentSceneName>_Cutscene (ví dụ: "BossRoom" -> "BossRoom_Cutscene")
+        string cutsceneName = string.IsNullOrWhiteSpace(cutsceneSceneNameOverride)
+            ? gameplaySceneName + "_Cutscene"
+            : cutsceneSceneNameOverride;
+
+        SceneManager.LoadScene(cutsceneName);
     }
 
     #endregion
