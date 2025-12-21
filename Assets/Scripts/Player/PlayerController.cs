@@ -1,18 +1,40 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio; // Cần thư viện này cho AudioMixer
 
 public class PlayerController : Singleton<PlayerController>
 {
     public bool FacingLeft { get { return facingLeft; } }
-
 
     [SerializeField] private float moveSpeed = 1f;
     [SerializeField] private float dashSpeed = 4f;
     [SerializeField] private TrailRenderer myTrailRenderer;
     [SerializeField] private Transform weaponCollider;
 
-    // WIND: vận tốc gió hiện tại tác dụng lên player (world space, units/second)
+    // --- NEW: AUDIO SETTINGS ---
+    [Header("Audio Settings")]
+    [Tooltip("Âm thanh bước chân")]
+    [SerializeField] private AudioClip footstepSound;
+    
+    [Tooltip("Âm thanh khi lướt (Dash)")]
+    [SerializeField] private AudioClip dashSound;
+
+    [Tooltip("Gán SFX Mixer Group để chỉnh volume chung")]
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
+
+    [Header("Audio Params")]
+    [Tooltip("Khoảng cách thời gian giữa các tiếng bước chân (giây). Số càng lớn tiếng càng thưa.")]
+    [SerializeField] private float footstepInterval = 0.35f; 
+    
+    [Range(0f, 1f)]
+    [SerializeField] private float sfxVolume = 1f;
+
+    private AudioSource audioSource;
+    private float nextStepTime = 0f; // Biến canh thời gian bước chân tiếp theo
+    // ---------------------------
+
+    // WIND: vận tốc gió hiện tại
     private Vector2 currentWind = Vector2.zero;
 
     private PlayerControls playerControls;
@@ -26,7 +48,7 @@ public class PlayerController : Singleton<PlayerController>
     private bool facingLeft = false;
     private bool isDashing = false;
     private float dashCooldownRemaining = 0f;
-    private float dashCooldownTotal = 0.45f; // dashTime (0.2) + dashCD (0.25)
+    private float dashCooldownTotal = 0.45f;
 
     protected override void Awake()
     {
@@ -37,6 +59,18 @@ public class PlayerController : Singleton<PlayerController>
         myAnimator = GetComponent<Animator>();
         mySpriteRender = GetComponent<SpriteRenderer>();
         knockback = GetComponent<Knockback>();
+
+        // --- NEW: Setup AudioSource ---
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        if (sfxMixerGroup != null)
+        {
+            audioSource.outputAudioMixerGroup = sfxMixerGroup;
+        }
     }
 
     private void Start()
@@ -63,7 +97,6 @@ public class PlayerController : Singleton<PlayerController>
 
     private void OnDestroy()
     {
-        // Đảm bảo PlayerControls được disable trước khi destroy
         if (playerControls != null)
         {
             playerControls.Disable();
@@ -75,6 +108,9 @@ public class PlayerController : Singleton<PlayerController>
     {
         PlayerInput();
         UpdateDashCooldown();
+        
+        // --- NEW: Xử lý âm thanh bước chân ---
+        HandleFootstepAudio();
     }
 
     private void FixedUpdate()
@@ -82,6 +118,38 @@ public class PlayerController : Singleton<PlayerController>
         AdjustPlayerFacingDirection();
         Move();
     }
+
+    // --- NEW: Hàm xử lý tiếng bước chân ---
+    private void HandleFootstepAudio()
+    {
+        // 1. Kiểm tra xem có đang di chuyển không (magnitude > 0)
+        // 2. Kiểm tra xem có đang Dash không (Dash thì dùng tiếng Dash riêng)
+        // 3. Kiểm tra xem đã đến lúc phát tiếng tiếp theo chưa (Time.time >= nextStepTime)
+        if (movement.sqrMagnitude > 0.01f && !isDashing)
+        {
+            if (Time.time >= nextStepTime)
+            {
+                PlaySound(footstepSound, true); // true = random pitch
+                
+                // Đặt thời gian cho bước tiếp theo
+                nextStepTime = Time.time + footstepInterval;
+            }
+        }
+    }
+
+    // Hàm helper để phát âm thanh
+    private void PlaySound(AudioClip clip, bool randomPitch = false)
+    {
+        if (clip == null || audioSource == null) return;
+
+        if (randomPitch)
+             audioSource.pitch = Random.Range(0.9f, 1.1f); // Thay đổi cao độ chút cho tự nhiên
+        else
+             audioSource.pitch = 1f;
+
+        audioSource.PlayOneShot(clip, sfxVolume);
+    }
+    // --------------------------------------
 
     public Transform GetWeaponCollider()
     {
@@ -100,10 +168,7 @@ public class PlayerController : Singleton<PlayerController>
     {
         if (knockback.GettingKnockedBack || PlayerHealth.Instance.isDead) { return; }
 
-        // vận tốc do input
         Vector2 inputVelocity = movement * moveSpeed;
-
-        // tổng: input + gió
         Vector2 finalVelocity = inputVelocity + currentWind;
 
         rb.MovePosition(rb.position + finalVelocity * Time.fixedDeltaTime);
@@ -132,9 +197,14 @@ public class PlayerController : Singleton<PlayerController>
         {
             Stamina.Instance.UseStamina();
             isDashing = true;
-            dashCooldownRemaining = dashCooldownTotal; // Bắt đầu cooldown
+            dashCooldownRemaining = dashCooldownTotal;
             moveSpeed *= dashSpeed;
             myTrailRenderer.emitting = true;
+            
+            // --- NEW: Phát tiếng Dash ---
+            PlaySound(dashSound, true); 
+            // ---------------------------
+
             StartCoroutine(EndDashRoutine());
         }
     }
@@ -150,9 +220,6 @@ public class PlayerController : Singleton<PlayerController>
         isDashing = false;
     }
 
-    /// <summary>
-    /// Update dash cooldown timer
-    /// </summary>
     private void UpdateDashCooldown()
     {
         if (dashCooldownRemaining > 0f)
@@ -165,48 +232,32 @@ public class PlayerController : Singleton<PlayerController>
         }
     }
 
-    /// <summary>
-    /// Lấy thời gian cooldown còn lại của dash
-    /// </summary>
     public float GetDashCooldownRemaining()
     {
         return dashCooldownRemaining;
     }
 
-    /// <summary>
-    /// Lấy tổng thời gian cooldown của dash
-    /// </summary>
     public float GetDashCooldownTotal()
     {
         return dashCooldownTotal;
     }
 
-    /// <summary>
-    /// Kiểm tra dash có đang trong cooldown không
-    /// </summary>
     public bool IsDashOnCooldown()
     {
         return dashCooldownRemaining > 0f;
     }
 
-    // WIND: hàm cho vùng gió gọi vào
     public void SetWind(Vector2 wind)
     {
         currentWind = wind;
     }
 
-    /// <summary>
-    /// Nâng cấp movement speed (dùng cho upgrade system)
-    /// </summary>
     public void UpgradeMovementSpeed(float amount)
     {
         moveSpeed += amount;
-        startingMoveSpeed += amount; // Cập nhật cả starting speed để dash vẫn đúng
+        startingMoveSpeed += amount;
     }
 
-    /// <summary>
-    /// Lấy movement speed hiện tại
-    /// </summary>
     public float GetMovementSpeed()
     {
         return moveSpeed;
