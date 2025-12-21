@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio; // Cần thư viện này để dùng AudioMixer
 
 public class Pickup : MonoBehaviour
 {
@@ -22,12 +23,25 @@ public class Pickup : MonoBehaviour
     [Header("Gold Coin Settings")]
     [Tooltip("Giá trị gold của coin này (chỉ áp dụng cho GoldCoin). Nếu = 0, sẽ random từ 50-200")]
     [SerializeField] private int goldValue = 0;
-
-    [Tooltip("Giá trị gold tối thiểu khi random (chỉ dùng khi goldValue = 0)")]
     [SerializeField] private int minGoldValue = 50;
-
-    [Tooltip("Giá trị gold tối đa khi random (chỉ dùng khi goldValue = 0)")]
     [SerializeField] private int maxGoldValue = 200;
+
+    // --- AUDIO SETTINGS ---
+    [Header("Audio Settings")]
+    [Tooltip("File âm thanh khi nhặt")]
+    [SerializeField] private AudioClip pickupSound;
+    
+    [Tooltip("Mixer Group (SFX)")]
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
+    
+    [Range(0f, 1f)]
+    [SerializeField] private float soundVolume = 1f;
+
+    // Biến static: Chia sẻ chung cho TẤT CẢ các object Pickup
+    // Lưu thời điểm tiếp theo được phép phát âm thanh
+    private static float nextSoundTime = 0f;
+    private const float SOUND_COOLDOWN = 1f; // Thời gian chờ 1 giây như yêu cầu
+    // ----------------------
 
     private Vector3 moveDir;
     private Rigidbody2D rb;
@@ -37,10 +51,9 @@ public class Pickup : MonoBehaviour
     }
 
     private void Start() {
-        // Random gold value cho GoldCoin nếu chưa được set
         if (pickUpType == PickUpType.GoldCoin && goldValue == 0)
         {
-            goldValue = Random.Range(minGoldValue, maxGoldValue + 1); // +1 vì Random.Range int exclusive max
+            goldValue = Random.Range(minGoldValue, maxGoldValue + 1); 
         }
 
         StartCoroutine(AnimCurveSpawnRoutine());
@@ -64,8 +77,42 @@ public class Pickup : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D other) {
         if (other.gameObject.GetComponent<PlayerController>()) {
+            // Xử lý logic game
             DetectPickupType();
+            
+            // Xử lý âm thanh trước khi destroy
+            PlayPickupSound();
+
             Destroy(gameObject);
+        }
+    }
+
+    private void PlayPickupSound()
+    {
+        if (pickupSound == null) return;
+
+        // Kiểm tra xem đã hết thời gian chờ chưa (Time.time là thời gian hiện tại của game)
+        if (Time.time >= nextSoundTime)
+        {
+            // Nếu được phép phát, tạo object âm thanh tạm thời
+            GameObject audioObj = new GameObject("TempAudio_Pickup");
+            audioObj.transform.position = transform.position;
+
+            AudioSource source = audioObj.AddComponent<AudioSource>();
+            source.clip = pickupSound;
+            source.volume = soundVolume;
+            
+            if (sfxMixerGroup != null)
+            {
+                source.outputAudioMixerGroup = sfxMixerGroup;
+            }
+
+            source.Play();
+            Destroy(audioObj, pickupSound.length);
+
+            // Cập nhật thời gian chờ cho lần tiếp theo (hiện tại + 1 giây)
+            // Vì biến này là static, nó sẽ chặn tất cả các Pickup khác trong 1s tới
+            nextSoundTime = Time.time + SOUND_COOLDOWN;
         }
     }
 
@@ -94,21 +141,18 @@ public class Pickup : MonoBehaviour
         switch (pickUpType)
         {
             case PickUpType.GoldCoin:
-                // Sử dụng goldValue đã được random hoặc set sẵn
                 if (goldValue > 0)
                 {
                     EconomyManager.Instance.AddGold(goldValue);
                 }
                 else
                 {
-                    // Fallback: nếu goldValue vẫn = 0, random ngay tại đây
                     int randomGold = Random.Range(minGoldValue, maxGoldValue + 1);
                     EconomyManager.Instance.AddGold(randomGold);
                 }
                 break;
             case PickUpType.HealthGlobe:
                 PlayerHealth.Instance.HealPlayer();
-                
                 break;
             case PickUpType.StaminaGlobe:
                 Stamina.Instance.RefreshStamina();

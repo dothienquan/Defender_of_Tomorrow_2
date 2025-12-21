@@ -61,6 +61,11 @@ MonoBehaviour:
   projectilesPerShot: 3
   spreadAngle: 30
   perProjectileHomingDelayStep: 0.05
+  fireSound: {fileID: 8300000, guid: fe027a033fd9b3f458738e61eb341c23, type: 3}
+  sfxMixerGroup: {fileID: -8525910376065103769, guid: 7def438bda41420418c1915432301a9c, type: 2}
+  soundVolume: 1
+  minSoundInterval: 0.1
+  randomizePitch: 1
 --- !u!212 &5687609414931543080
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -227,6 +232,9 @@ MonoBehaviour:
   Name: Frost Bow
   isRaftMaterial: 0
   weaponInfo: {fileID: 11400000, guid: 290a438ce4e8e07418dda7deb7b22b20, type: 2}
+  pickupSound: {fileID: 0}
+  sfxMixerGroup: {fileID: 0}
+  soundVolume: 1
 --- !u!1 &7007428255817775201
 GameObject:
   m_ObjectHideFlags: 0
