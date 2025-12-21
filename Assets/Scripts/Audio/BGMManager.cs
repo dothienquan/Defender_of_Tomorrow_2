@@ -8,12 +8,12 @@ public class BGMManager : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private AudioMixerGroup bgmMixerGroup;
-    [SerializeField] private float crossfadeDuration = 1f;
+    [Tooltip("Thời gian chuyển nhạc (giây)")]
+    [SerializeField] private float crossfadeDuration = 1.5f; // Tăng lên xíu cho mượt
     [Range(0f, 1f)] [SerializeField] private float maxVolume = 1f;
 
     [Header("Default BGM")]
-    [Tooltip("Nhạc nền mặc định của màn chơi (sẽ tự động phát khi vào game)")]
-    [SerializeField] private AudioClip defaultMusic; // --- NEW: Nhạc mặc định
+    [SerializeField] private AudioClip defaultMusic;
 
     private AudioSource mainSource;
     private AudioSource overrideSource;
@@ -35,10 +35,12 @@ public class BGMManager : MonoBehaviour
 
     private void Start()
     {
-        // --- NEW: Tự động phát nhạc nền mặc định nếu có ---
         if (defaultMusic != null)
         {
-            PlayMainBGM(defaultMusic);
+            // Lúc mới vào game thì play luôn, không cần fade
+            mainSource.clip = defaultMusic;
+            mainSource.volume = maxVolume;
+            mainSource.Play();
         }
     }
 
@@ -53,22 +55,37 @@ public class BGMManager : MonoBehaviour
         return source;
     }
 
+    // --- UPDATED: Hàm này giờ đây hỗ trợ Fade Out/In ---
     public void PlayMainBGM(AudioClip clip)
     {
         if (clip == null) return;
-        
-        // Nếu clip mới khác clip cũ thì mới đổi
-        if (mainSource.clip != clip)
+        if (mainSource.clip == clip) return; // Nếu nhạc giống hệt thì không làm gì
+
+        // TRƯỜNG HỢP 1: Đang đánh Boss (Override đang chiếm sóng)
+        // Chỉ cần tráo đĩa nhạc nền một cách im lặng, để khi Boss chết thì nhạc nền mới tự vang lên
+        if (overrideSource.isPlaying && overrideSource.volume > 0.05f)
         {
             mainSource.clip = clip;
-            mainSource.volume = maxVolume; // Reset volume về max
-            mainSource.Play();
-        }
-        else
-        {
-            // Nếu clip giống nhau nhưng đang bị tắt/pause thì play lại
             if (!mainSource.isPlaying) mainSource.Play();
+            return;
         }
+
+        // TRƯỜNG HỢP 2: Chuyển vùng bình thường (Area A -> Area B)
+        // Quy trình: Fade Out (50% thời gian) -> Đổi Clip -> Fade In (50% thời gian)
+        mainSource.DOKill();
+        
+        float halfDuration = crossfadeDuration * 0.5f;
+
+        // Bước 1: Giảm volume bài cũ xuống 0
+        mainSource.DOFade(0f, halfDuration).SetEase(Ease.Linear).OnComplete(() =>
+        {
+            // Bước 2: Đổi bài nhạc
+            mainSource.clip = clip;
+            mainSource.Play();
+
+            // Bước 3: Tăng volume bài mới lên Max
+            mainSource.DOFade(maxVolume, halfDuration).SetEase(Ease.Linear);
+        });
     }
 
     public void StartOverrideMusic(AudioClip clip)
@@ -76,10 +93,10 @@ public class BGMManager : MonoBehaviour
         if (clip == null) return;
 
         overrideSource.clip = clip;
-        overrideSource.volume = 0f; // Bắt đầu từ 0 để fade in
+        overrideSource.volume = 0f;
         overrideSource.Play();
 
-        // Crossfade
+        // Crossfade: Main giảm 0, Override tăng Max
         mainSource.DOKill();
         overrideSource.DOKill();
 
@@ -89,7 +106,6 @@ public class BGMManager : MonoBehaviour
 
     public void StopOverrideMusic()
     {
-        // --- NEW: Đảm bảo nhạc chính đang chạy trước khi fade in ---
         if (mainSource.clip != null && !mainSource.isPlaying)
         {
             mainSource.Play();
