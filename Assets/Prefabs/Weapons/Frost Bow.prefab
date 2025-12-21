@@ -16,7 +16,6 @@ GameObject:
   - component: {fileID: 2449808656411854544}
   - component: {fileID: 5603119244527624794}
   - component: {fileID: 8935676016812210902}
-  - component: {fileID: -8778927504375455127}
   m_Layer: 0
   m_Name: Frost Bow
   m_TagString: Item
@@ -59,7 +58,7 @@ MonoBehaviour:
   weaponInfo: {fileID: 11400000, guid: 290a438ce4e8e07418dda7deb7b22b20, type: 2}
   arrowPrefab: {fileID: 2573412402603837176, guid: ba67ddff12e9f1042a09a31130c0a8c7, type: 3}
   arrowSpawnPoint: {fileID: 2177664111667578506}
-  projectilesPerShot: 2
+  projectilesPerShot: 3
   spreadAngle: 30
   perProjectileHomingDelayStep: 0.05
 --- !u!212 &5687609414931543080
@@ -228,24 +227,6 @@ MonoBehaviour:
   Name: Frost Bow
   isRaftMaterial: 0
   weaponInfo: {fileID: 11400000, guid: 290a438ce4e8e07418dda7deb7b22b20, type: 2}
---- !u!114 &-8778927504375455127
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5230466394355095501}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 90526a818b3790e41a25d71267e5b74f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ItemDropEffect
-  highlightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  highlightDuration: 2
-  highlightIntensity: 0.5
-  floatHeight: 0.3
-  floatDuration: 1
-  floatEase: 4
 --- !u!1 &7007428255817775201
 GameObject:
   m_ObjectHideFlags: 0
