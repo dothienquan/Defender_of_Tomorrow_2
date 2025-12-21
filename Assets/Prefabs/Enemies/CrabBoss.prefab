@@ -325,7 +325,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.5794525, y: 0.30351257}
+  m_Offset: {x: -0.99053955, y: 0.1290741}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -335,7 +335,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 28.537872, y: 6.021942}
+  m_Size: {x: 37.539185, y: 20.186737}
   m_EdgeRadius: 0
 --- !u!1001 &2421165727527148157
 PrefabInstance:
@@ -348,6 +348,22 @@ PrefabInstance:
     - target: {fileID: 3679497549315771656, guid: 9a4c7e1a50bf51c47928fc9f564ca8bf, type: 3}
       propertyPath: m_Name
       value: RockZone
+      objectReference: {fileID: 0}
+    - target: {fileID: 5312865787370985530, guid: 9a4c7e1a50bf51c47928fc9f564ca8bf, type: 3}
+      propertyPath: m_Size.x
+      value: 37.539185
+      objectReference: {fileID: 0}
+    - target: {fileID: 5312865787370985530, guid: 9a4c7e1a50bf51c47928fc9f564ca8bf, type: 3}
+      propertyPath: m_Size.y
+      value: 20.186737
+      objectReference: {fileID: 0}
+    - target: {fileID: 5312865787370985530, guid: 9a4c7e1a50bf51c47928fc9f564ca8bf, type: 3}
+      propertyPath: m_Offset.x
+      value: -0.99053955
+      objectReference: {fileID: 0}
+    - target: {fileID: 5312865787370985530, guid: 9a4c7e1a50bf51c47928fc9f564ca8bf, type: 3}
+      propertyPath: m_Offset.y
+      value: 0.1290741
       objectReference: {fileID: 0}
     - target: {fileID: 6667826698492676029, guid: 9a4c7e1a50bf51c47928fc9f564ca8bf, type: 3}
       propertyPath: m_LocalPosition.x
@@ -411,11 +427,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RockZone
   rockHitboxPrefab: {fileID: 8378648546881499446, guid: 867c572a5be680d42a042d2349f10143, type: 3}
   rockVfxPrefab: {fileID: 8378648546881499446, guid: 867c572a5be680d42a042d2349f10143, type: 3}
-  rockCountPerWave: 3
-  timeBetweenRocks: 1
+  rockCountPerWave: 33
+  timeBetweenRocks: 0.92
   waveCooldown: 1.2
-  spawnHeightAboveZone: 6
-  randomizeX: 1
+  spawnHeightAboveZone: 6.38
+  randomizeX: 0
   fallingSpeed: 10
   rockDamage: 1
   hitMask:
