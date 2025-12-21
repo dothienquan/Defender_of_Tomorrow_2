@@ -148,6 +148,11 @@ MonoBehaviour:
   projectilesPerShot: 3
   spreadAngle: 90
   perProjectileHomingDelayStep: 0.05
+  fireSound: {fileID: 8300000, guid: a652877b012108e41871f867ada9f176, type: 3}
+  sfxMixerGroup: {fileID: -8525910376065103769, guid: 7def438bda41420418c1915432301a9c, type: 2}
+  soundVolume: 1
+  minSoundInterval: 0.1
+  randomizePitch: 1
 --- !u!212 &5687609414931543080
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -268,6 +273,9 @@ MonoBehaviour:
   Name: Fire Bow
   isRaftMaterial: 0
   weaponInfo: {fileID: 11400000, guid: ce81bca7c1e7bc14ba0973b4c5e39005, type: 2}
+  pickupSound: {fileID: 8300000, guid: fe027a033fd9b3f458738e61eb341c23, type: 3}
+  sfxMixerGroup: {fileID: -8525910376065103769, guid: 7def438bda41420418c1915432301a9c, type: 2}
+  soundVolume: 1
 --- !u!222 &-6304660545611264017
 CanvasRenderer:
   m_ObjectHideFlags: 0

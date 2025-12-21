@@ -145,6 +145,11 @@ MonoBehaviour:
   damageLayers:
     serializedVersion: 2
     m_Bits: 512
+  attackSound: {fileID: 8300000, guid: f1cb5d83282f2904a85f73111d068616, type: 3}
+  sfxMixerGroup: {fileID: -8525910376065103769, guid: 7def438bda41420418c1915432301a9c, type: 2}
+  soundVolume: 1
+  minSoundInterval: 0.1
+  randomizePitch: 1
 --- !u!225 &9213494508194247195
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -181,7 +186,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc010e7939db7b24ea7750ce186a48e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Item
-  ID: 0
+  ID: 5
   Name: Lighting Sword
   isRaftMaterial: 0
   weaponInfo: {fileID: 11400000, guid: 829c189f79a1b6442aef3eca7b3ff847, type: 2}
+  pickupSound: {fileID: 0}
+  sfxMixerGroup: {fileID: 0}
+  soundVolume: 1
