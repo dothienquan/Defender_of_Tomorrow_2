@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System.IO; // Thư viện cần thiết để kiểm tra file save
 
 public class NPCDialogue : MonoBehaviour
 {
@@ -46,6 +47,35 @@ public class NPCDialogue : MonoBehaviour
             // Sử dụng triggerID nếu có, nếu không thì dùng GameObject name
             string id = !string.IsNullOrEmpty(triggerID) ? triggerID : gameObject.name;
             autoTriggerKey = $"NPCDialogue_AutoTrigger_{id}";
+
+            // --- QUAN TRỌNG: Kiểm tra và Reset nếu là New Game ---
+            CheckAndResetStateIfNewGame();
+        }
+    }
+
+    /// <summary>
+    /// Kiểm tra xem file save có tồn tại không. 
+    /// Nếu không có (New Game/Delete Data) mà PlayerPrefs vẫn còn lưu trạng thái cũ -> Reset ngay.
+    /// </summary>
+    private void CheckAndResetStateIfNewGame()
+    {
+        // Đường dẫn file save (phải khớp với SaveController)
+        string savePath = Path.Combine(Application.persistentDataPath, "saveData.json");
+
+        // Nếu File Save KHÔNG tồn tại (đã bị xóa hoặc chơi lần đầu)
+        if (!File.Exists(savePath))
+        {
+            // Nhưng PlayerPrefs lại CÓ key này (tàn dư của lần chơi trước)
+            if (PlayerPrefs.HasKey(autoTriggerKey))
+            {
+                // Reset trạng thái auto-trigger
+                ResetAutoTriggerState();
+                
+                // Reset biến hasTalked để NPC nói lại câu thoại đầu tiên
+                hasTalked = false; 
+                
+                Debug.Log($"[NPCDialogue] Phát hiện New Game (Không thấy file Save). Đã reset trạng thái cho '{gameObject.name}'");
+            }
         }
     }
 
@@ -64,14 +94,10 @@ public class NPCDialogue : MonoBehaviour
             fHint.gameObject.SetActive(true);
         }
 
-        // Nếu không có dialogue nào → nhấn F cũng không làm gì, nhưng có log
-        if (currentDialogue == null)
-        {
-            // Chỉ log 1 lần cho NPC này
-            return;
-        }
+        // Nếu không có dialogue nào -> return
+        if (currentDialogue == null) return;
 
-        // ---- NHẤN F → MỞ THOẠI ----
+        // ---- NHẤN F -> MỞ THOẠI ----
         if (Input.GetKeyDown(key))
         {
             if (fHint != null) fHint.gameObject.SetActive(false);
@@ -85,7 +111,7 @@ public class NPCDialogue : MonoBehaviour
 
     DialogueObject GetCurrentDialogue()
     {
-        // Ưu tiên: lần đầu → first, về sau → repeat
+        // Ưu tiên: lần đầu -> first, về sau -> repeat
         if (!hasTalked)
         {
             if (firstDialogue != null) return firstDialogue;
@@ -128,10 +154,7 @@ public class NPCDialogue : MonoBehaviour
         }
 
         // Kiểm tra xem dialogue đang active không (tránh trigger nhiều lần)
-        if (dialogueUI.gameObject.activeSelf)
-        {
-            return; // Dialogue đang hiển thị, không trigger lại
-        }
+        if (dialogueUI.gameObject.activeSelf) return;
 
         // Kiểm tra xem dialogue đã được hiển thị chưa (nếu showOnlyOnce = true)
         if (showOnlyOnce)
@@ -139,7 +162,7 @@ public class NPCDialogue : MonoBehaviour
             bool hasShown = PlayerPrefs.GetInt(autoTriggerKey, 0) == 1;
             if (hasShown)
             {
-                Debug.Log($"[NPCDialogue] Auto-trigger dialogue already shown for '{gameObject.name}'. Skipping...");
+                // Đã hiện rồi thì thôi
                 return;
             }
         }
@@ -149,13 +172,9 @@ public class NPCDialogue : MonoBehaviour
         
         // Ưu tiên autoTriggerDialogue, nếu không có thì dùng firstDialogue
         if (autoTriggerDialogue != null)
-        {
             dialogueToShow = autoTriggerDialogue;
-        }
         else if (firstDialogue != null)
-        {
             dialogueToShow = firstDialogue;
-        }
         else
         {
             Debug.LogWarning($"[NPCDialogue] No dialogue assigned for auto-trigger on '{gameObject.name}'!");
