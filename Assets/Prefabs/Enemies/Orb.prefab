@@ -178,7 +178,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossOrb
   orbitRadius: 2.5
-  orbitSpeed: 40
+  orbitSpeed: 50
   pentagonProjectilePrefab: {fileID: 8550363903010464905, guid: 292c7136c9c5fa44aa9ba291e8862a4c, type: 3}
   pentagonShootInterval: 1.2
   returnToOrbitTime: 5
@@ -245,6 +245,7 @@ MonoBehaviour:
   attackCooldown: 2
   stopMovingWhileAttacking: 0
   inAttackZone: 0
+  inChaseZone: 0
 --- !u!114 &-3809146051402247218
 MonoBehaviour:
   m_ObjectHideFlags: 0
