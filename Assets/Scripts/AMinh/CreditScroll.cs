@@ -27,8 +27,13 @@ You ❤️
 
     Tween scrollTween;
 
-    public void PlayCredit()   // ← Timeline sẽ gọi hàm này
+    public void PlayCredit()
     {
+        // --- THÊM DÒNG NÀY ---
+        // Đưa text xuống cuối hierarchy để nó hiển thị đè lên mọi thứ khác cùng cấp
+        creditText.transform.SetAsLastSibling(); 
+        // ---------------------
+
         creditText.text = creditContent;
 
         RectTransform rt = creditText.rectTransform;
