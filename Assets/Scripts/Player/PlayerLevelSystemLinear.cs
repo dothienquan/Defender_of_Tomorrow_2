@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
 using System;
+using UnityEngine.Audio; // Cần thư viện này để dùng AudioMixer
 
 /// <summary>
 /// Level hệ tuyến tính (linear):
 /// - Max level = 30
-/// - XP lên cấp: L1 -> 2 = 100, còn lại = 200
+/// - XP lên cấp: L1 -> 2 = 30, còn lại = 200
 /// - Gọi AddXP(x) để cộng XP; tự xử lý lên cấp.
 /// </summary>
 public class PlayerLevelSystemLinear : MonoBehaviour
@@ -23,6 +24,20 @@ public class PlayerLevelSystemLinear : MonoBehaviour
     [SerializeField] private GameObject levelUpTextPrefab; // prefab with DOTween animation
     [SerializeField] private Transform textSpawnPoint;     // optional, spawn above player if null
 
+    // --- NEW: AUDIO SETTINGS ---
+    [Header("Audio Settings")]
+    [Tooltip("Âm thanh khi lên cấp")]
+    [SerializeField] private AudioClip levelUpSound;
+
+    [Tooltip("Gán SFX Mixer Group")]
+    [SerializeField] private AudioMixerGroup sfxMixerGroup;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float sfxVolume = 1f;
+
+    private AudioSource audioSource;
+    // ---------------------------
+
     public event Action<int> OnLevelUp;
 
     // --- Properties for UI (PlayerLevelUI uses these) ---
@@ -33,6 +48,18 @@ public class PlayerLevelSystemLinear : MonoBehaviour
     private void Awake()
     {
         currentLevel = Mathf.Clamp(currentLevel, 1, maxLevel);
+
+        // --- NEW: Setup AudioSource ---
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        if (sfxMixerGroup != null)
+        {
+            audioSource.outputAudioMixerGroup = sfxMixerGroup;
+        }
     }
 
     /// <summary> XP cần để lên cấp TIẾP THEO từ cấp hiện tại. </summary>
@@ -63,9 +90,10 @@ public class PlayerLevelSystemLinear : MonoBehaviour
                 // --- Level up event ---
                 OnLevelUp?.Invoke(currentLevel);
 
-                // --- Spawn VFX + text on level up ---
+                // --- Spawn VFX + text + SOUND on level up ---
                 SpawnLevelUpVfx();
                 SpawnLevelUpText();
+                PlayLevelUpSound(); // Gọi hàm phát âm thanh
             }
             else break;
         }
@@ -81,7 +109,18 @@ public class PlayerLevelSystemLinear : MonoBehaviour
         OnLevelUp?.Invoke(currentLevel);
         SpawnLevelUpVfx();
         SpawnLevelUpText();
+        PlayLevelUpSound(); // Gọi hàm phát âm thanh
     }
+
+    // --- NEW: Hàm phát âm thanh ---
+    private void PlayLevelUpSound()
+    {
+        if (levelUpSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(levelUpSound, sfxVolume);
+        }
+    }
+    // ------------------------------
 
     private void SpawnLevelUpVfx()
     {
