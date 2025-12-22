@@ -25,6 +25,9 @@ public class EnemyDetector : MonoBehaviour
     private bool wavesStarted = false;
     private int currentWaveIndex = -1;
     private int aliveInCurrentWave = 0;
+    
+    // Biến mới: Đánh dấu đã dọn dẹp xong
+    private bool isCleared = false;
 
     private List<GameObject> enemiesInRoom = new List<GameObject>();
     private Transform player;
@@ -34,13 +37,11 @@ public class EnemyDetector : MonoBehaviour
     {
         if (other.CompareTag("Enemy"))
         {
-            // Only add if not already in list (avoid duplicates from spawned enemies)
             if (!enemiesInRoom.Contains(other.gameObject))
             {
                 enemyCount++;
                 enemiesInRoom.Add(other.gameObject);
 
-                // If player already inside, new enemy should start chasing immediately
                 if (playerInside)
                     StartChase(other.gameObject);
             }
@@ -52,8 +53,8 @@ public class EnemyDetector : MonoBehaviour
             player = other.transform;
             ActivateAllChase();
             
-            // Start wave spawning if not started yet
-            if (!wavesStarted && waves != null && waves.Length > 0)
+            // CHỈNH SỬA: Kiểm tra thêm !isCleared
+            if (!isCleared && !wavesStarted && waves != null && waves.Length > 0)
             {
                 wavesStarted = true;
                 StartWaveSpawning();
@@ -67,7 +68,6 @@ public class EnemyDetector : MonoBehaviour
         {
             enemyCount--;
             enemiesInRoom.Remove(other.gameObject);
-
             StopChase(other.gameObject);
         }
 
@@ -77,24 +77,35 @@ public class EnemyDetector : MonoBehaviour
             player = null;
             StopAllChase();
             
-            // Reset wave spawning when player leaves
-            if (spawnCoroutine != null)
+            // CHỈNH SỬA: Chỉ reset wave nếu chưa dọn dẹp xong
+            if (!isCleared)
             {
-                StopCoroutine(spawnCoroutine);
-                spawnCoroutine = null;
+                if (spawnCoroutine != null)
+                {
+                    StopCoroutine(spawnCoroutine);
+                    spawnCoroutine = null;
+                }
+                wavesStarted = false;
+                currentWaveIndex = -1;
+                
+                // Mở cửa tạm thời nếu người chơi bỏ chạy (reset phòng)
+                if (doorObject != null) doorObject.SetActive(false);
             }
-            wavesStarted = false;
-            currentWaveIndex = -1;
         }
     }
 
     private void Update()
     {
-        // Door stays closed while there are enemies or waves are active
         if (doorObject != null)
         {
+            // Cửa đóng khi có enemy hoặc đang chạy wave (và chưa clear)
             bool hasEnemies = enemyCount > 0 || (wavesStarted && currentWaveIndex < waves.Length - 1);
-            doorObject.SetActive(hasEnemies);
+            
+            // Nếu đã clear thì cửa luôn mở (SetActive false)
+            if (isCleared) 
+                doorObject.SetActive(false);
+            else
+                doorObject.SetActive(hasEnemies);
         }
     }
 
@@ -134,15 +145,18 @@ public class EnemyDetector : MonoBehaviour
     {
         currentWaveIndex++;
         
-        // All waves completed, open door
+        // Tất cả wave đã hoàn thành
         if (currentWaveIndex >= waves.Length)
         {
+            // CHỈNH SỬA: Đánh dấu hoàn thành
+            isCleared = true;
+            wavesStarted = false;
+
             if (doorObject != null)
                 doorObject.SetActive(false);
             return;
         }
 
-        // Spawn current wave
         if (spawnCoroutine != null)
             StopCoroutine(spawnCoroutine);
         
@@ -165,15 +179,12 @@ public class EnemyDetector : MonoBehaviour
             Vector3 spawnPos = GetSpawnPosition();
             GameObject enemy = Instantiate(wave.enemyPrefab, spawnPos, Quaternion.identity);
             
-            // Add to tracking
             enemiesInRoom.Add(enemy);
             enemyCount++;
             aliveInCurrentWave++;
 
-            // Setup death reporting
             SetupEnemyDeathReporting(enemy);
 
-            // Start chase if player is inside
             if (playerInside)
                 StartChase(enemy);
 
@@ -184,7 +195,6 @@ public class EnemyDetector : MonoBehaviour
 
     private void SetupEnemyDeathReporting(GameObject enemy)
     {
-        // Try to use EnemyHealth.OnDeath event
         EnemyHealth enemyHealth = enemy.GetComponent<EnemyHealth>();
         if (enemyHealth != null)
         {
@@ -192,7 +202,6 @@ public class EnemyDetector : MonoBehaviour
         }
         else
         {
-            // Fallback: use AutoReportOnDestroy or create a simple component
             var reporter = enemy.GetComponent<EnemyDeathReporter>();
             if (reporter == null)
                 reporter = enemy.AddComponent<EnemyDeathReporter>();
@@ -205,18 +214,15 @@ public class EnemyDetector : MonoBehaviour
     {
         if (enemy == null) return;
 
-        // Only process if enemy is in our list
         if (enemiesInRoom.Contains(enemy))
         {
             enemyCount--;
             enemiesInRoom.Remove(enemy);
 
-            // If this enemy was part of current wave, decrease counter
             if (wavesStarted && currentWaveIndex >= 0 && currentWaveIndex < waves.Length)
             {
                 aliveInCurrentWave = Mathf.Max(0, aliveInCurrentWave - 1);
                 
-                // If all enemies in current wave are dead, spawn next wave
                 if (aliveInCurrentWave == 0)
                 {
                     NextWave();
@@ -233,14 +239,13 @@ public class EnemyDetector : MonoBehaviour
             return spawnPoint.position;
         }
 
-        // Spawn in circle around detector
         float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
         Vector3 offset = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * spawnRadius;
         return transform.position + offset;
     }
 }
 
-// Helper component to report enemy death to EnemyDetector
+// Giữ nguyên class phụ trợ
 public class EnemyDeathReporter : MonoBehaviour
 {
     public EnemyDetector detector;
