@@ -113914,7 +113914,7 @@ MonoBehaviour:
   dialogueUI: {fileID: 6330477260405067366}
   dialog1: {fileID: 11400000, guid: 45b21de6bc86b6a41950d50a5067cd00, type: 2}
   dialog2: {fileID: 11400000, guid: 81f96b271f2d5d24fbed4682be405299, type: 2}
-  bossName: Boss
+  bossName: The Ender
   bossAvatar: {fileID: 5644315928673015539, guid: 02e33342fe4195e408872eb9844741af, type: 3}
   summonedEnemyPrefab: {fileID: 3924420797687925264, guid: e7f517d5532af824994556f6f8731d8b, type: 3}
   summonSpawnPoint: {fileID: 412997168}
@@ -485147,11 +485147,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7003138899433712503, guid: 9e9af18c42b690a4c82f2c0ceefad1cc, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 309.44794
+      value: 292.51
       objectReference: {fileID: 0}
     - target: {fileID: 7003138899433712503, guid: 9e9af18c42b690a4c82f2c0ceefad1cc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 251.85797
+      value: 261.21
       objectReference: {fileID: 0}
     - target: {fileID: 7003138899433712503, guid: 9e9af18c42b690a4c82f2c0ceefad1cc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -498678,7 +498678,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialogue
   npcName: Crab
-  npcAvatar: {fileID: -7195870760257654713, guid: f34440bb71a683b48a3d8c2f0bdaec3c, type: 3}
+  npcAvatar: {fileID: 5161574741886177875, guid: 2e8f77739ba6ed14e90e654bae0a23e3, type: 3}
   firstDialogue: {fileID: 11400000, guid: 42e07fd1318da6c49a4749676c449798, type: 2}
   repeatDialogue: {fileID: 0}
   autoTriggerDialogue: {fileID: 11400000, guid: 42e07fd1318da6c49a4749676c449798, type: 2}
@@ -508763,190 +508763,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0caf9d14786c1d94cbd081554ee13492, type: 3}
---- !u!1 &1807071031
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1807071034}
-  - component: {fileID: 1807071033}
-  - component: {fileID: 1807071032}
-  - component: {fileID: 1807071036}
-  - component: {fileID: 1807071035}
-  m_Layer: 0
-  m_Name: NPC_Miner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!95 &1807071032
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1807071031}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 0825be8d943820045b4407d265b3500b, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
---- !u!212 &1807071033
-SpriteRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1807071031}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 8479860386073227312, guid: 104d00fe44e14be40b28619fbb927362, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 0.9375, y: 1.375}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
-  m_SpriteSortPoint: 0
---- !u!4 &1807071034
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1807071031}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 316.86, y: 253.58, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1807071035
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1807071031}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b83c97872e4fbd5488d18b7a29f6d893, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NPCDialogue
-  npcName: Ken
-  npcAvatar: {fileID: 0}
-  firstDialogue: {fileID: 11400000, guid: f62fbf80f34d12240a8e5073883b64f5, type: 2}
-  repeatDialogue: {fileID: 11400000, guid: f62fbf80f34d12240a8e5073883b64f5, type: 2}
-  autoTriggerDialogue: {fileID: 0}
-  dialogueUI: {fileID: 6330477260405067366}
-  fHint: {fileID: 3091624084974176952}
-  key: 102
-  enableAutoTrigger: 0
-  showOnlyOnce: 1
-  triggerID: 
---- !u!61 &1807071036
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1807071031}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.9375, y: 1.375}
-    newSize: {x: 0.9375, y: 1.375}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 0.9375, y: 1.375}
-  m_EdgeRadius: 0
 --- !u!1 &1808815012
 GameObject:
   m_ObjectHideFlags: 0
@@ -567812,7 +567628,6 @@ SceneRoots:
   - {fileID: 538615372}
   - {fileID: 477605704}
   - {fileID: 1594927961}
-  - {fileID: 1807071034}
   - {fileID: 699885293}
   - {fileID: 299346864}
   - {fileID: 878390634}
