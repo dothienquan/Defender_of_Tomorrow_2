@@ -4198,6 +4198,30 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5516487406859467972, guid: 45e0f06c750176947862c10346226439, type: 3}
   m_PrefabInstance: {fileID: 717626641}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &60321426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 60321420}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcded2a00009ad64b8c78f840526aed1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapTransition
+  mapBoundry: {fileID: 1913739813}
+  transitionType: 0
+  direction: 4
+  teleportTargetPosition: {fileID: 63811966}
+  suckDuration: 0.4
+  waitDuration: 1.5
+  zoomOutDuration: 0.35
+  useFadeEffect: 1
+  fadeInDuration: 0.5
+  fadeOutDuration: 0.5
+  waitBetweenFades: 0.3
+  confiner: {fileID: 0}
 --- !u!1001 &60674366
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -45349,11 +45373,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7043373800090884744, guid: a543f17419a04f049b517dfc420fdae7, type: 3}
       propertyPath: waves.Array.data[0].count
-      value: 6
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7043373800090884744, guid: a543f17419a04f049b517dfc420fdae7, type: 3}
       propertyPath: waves.Array.data[1].count
-      value: 6
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7043373800090884744, guid: a543f17419a04f049b517dfc420fdae7, type: 3}
       propertyPath: waves.Array.data[0].enemyPrefab
@@ -48053,11 +48077,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7043373800090884744, guid: a543f17419a04f049b517dfc420fdae7, type: 3}
       propertyPath: waves.Array.data[0].count
-      value: 5
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7043373800090884744, guid: a543f17419a04f049b517dfc420fdae7, type: 3}
       propertyPath: waves.Array.data[1].count
-      value: 7
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7043373800090884744, guid: a543f17419a04f049b517dfc420fdae7, type: 3}
       propertyPath: waves.Array.data[0].enemyPrefab
@@ -56439,7 +56463,7 @@ Transform:
   m_GameObject: {fileID: 181524447}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 118.74, y: 282.87582, z: 0}
+  m_LocalPosition: {x: 127.4, y: 282.87582, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -111499,7 +111523,6 @@ GameObject:
   m_Component:
   - component: {fileID: 406116311}
   - component: {fileID: 406116313}
-  - component: {fileID: 406116312}
   - component: {fileID: 406116314}
   m_Layer: 0
   m_Name: Quest Trigger 6 (Dungeon To Mountain)
@@ -111517,36 +111540,12 @@ Transform:
   m_GameObject: {fileID: 406116310}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 179.48, y: 14.05, z: 0}
+  m_LocalPosition: {x: 181.21, y: 14.05, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &406116312
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 406116310}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bcded2a00009ad64b8c78f840526aed1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MapTransition
-  mapBoundry: {fileID: 1913739813}
-  transitionType: 0
-  direction: 4
-  teleportTargetPosition: {fileID: 63811966}
-  suckDuration: 0.4
-  waitDuration: 1.5
-  zoomOutDuration: 0.35
-  useFadeEffect: 1
-  fadeInDuration: 0.5
-  fadeOutDuration: 0.5
-  waitBetweenFades: 0.3
-  confiner: {fileID: 0}
 --- !u!61 &406116313
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -144018,6 +144017,10 @@ PrefabInstance:
       propertyPath: 'attackPositions.Array.data[1]'
       value: 
       objectReference: {fileID: 1097951424}
+    - target: {fileID: 4951955227833698750, guid: 01f0dcc263b12814c8bf266b0279c0cc, type: 3}
+      propertyPath: startingHealth
+      value: 150
+      objectReference: {fileID: 0}
     - target: {fileID: 6503055439182933669, guid: 01f0dcc263b12814c8bf266b0279c0cc, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.8
@@ -144032,11 +144035,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6503055439182933669, guid: 01f0dcc263b12814c8bf266b0279c0cc, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 119.3
+      value: 128.4
       objectReference: {fileID: 0}
     - target: {fileID: 6503055439182933669, guid: 01f0dcc263b12814c8bf266b0279c0cc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 272.4
+      value: 279
       objectReference: {fileID: 0}
     - target: {fileID: 6503055439182933669, guid: 01f0dcc263b12814c8bf266b0279c0cc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -155554,7 +155557,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5516487406859467972, guid: 45e0f06c750176947862c10346226439, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1993211259}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5607819269926399345, guid: 45e0f06c750176947862c10346226439, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 60321426}
   m_SourcePrefab: {fileID: 100100000, guid: 45e0f06c750176947862c10346226439, type: 3}
 --- !u!1 &719217472
 GameObject:
@@ -282568,7 +282574,6 @@ MonoBehaviour:
   interactKey: 102
   shopWeapons:
   - {fileID: 11400000, guid: 23c118496b8d1fe499fd9a272cf1c426, type: 2}
-  - {fileID: 11400000, guid: 704fd1462da447646bd1790c44897502, type: 2}
   interactionUI: {fileID: 3301021513876607252}
   interactionText: "Th\u01B0\u01A1ng gia"
   autoFindShop: 0
@@ -283298,8 +283303,8 @@ Transform:
   m_GameObject: {fileID: 1022223175}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.73, y: 9.21, z: 0}
-  m_LocalScale: {x: 0.74488944, y: 0.68302435, z: 0.66}
+  m_LocalPosition: {x: 1.5481, y: 9.4393, z: 0}
+  m_LocalScale: {x: 0.8488696, y: 0.76279527, z: 0.66}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 42505783}
@@ -440265,8 +440270,8 @@ Transform:
   m_GameObject: {fileID: 1360016996}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -27.33, y: 194.58, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -27.4362, y: 194.3967, z: 0}
+  m_LocalScale: {x: 1.0336964, y: 1.1087227, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1685646588}
@@ -443595,8 +443600,8 @@ Transform:
   m_GameObject: {fileID: 1373520160}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -27.31, y: 192.14, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -27.5224, y: 192.37, z: 0}
+  m_LocalScale: {x: 1.1833797, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1685646588}
@@ -507066,7 +507071,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 23c118496b8d1fe499fd9a272cf1c426, type: 2}
   - {fileID: 11400000, guid: 704fd1462da447646bd1790c44897502, type: 2}
   - {fileID: 11400000, guid: 290a438ce4e8e07418dda7deb7b22b20, type: 2}
-  - {fileID: 11400000, guid: 829c189f79a1b6442aef3eca7b3ff847, type: 2}
   interactionUI: {fileID: 3301021513876607252}
   interactionText: "Th\u01B0\u01A1ng nh\xE2n"
   autoFindShop: 1
@@ -559079,11 +559083,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7043373800090884744, guid: a543f17419a04f049b517dfc420fdae7, type: 3}
       propertyPath: waves.Array.data[0].count
-      value: 5
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7043373800090884744, guid: a543f17419a04f049b517dfc420fdae7, type: 3}
       propertyPath: waves.Array.data[1].count
-      value: 4
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7043373800090884744, guid: a543f17419a04f049b517dfc420fdae7, type: 3}
       propertyPath: waves.Array.data[2].count
