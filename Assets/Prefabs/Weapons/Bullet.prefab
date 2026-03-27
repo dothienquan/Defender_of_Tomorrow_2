@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 7815369401539116099}
   m_Layer: 0
   m_Name: Bullet
-  m_TagString: Untagged
+  m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27,13 +27,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2964017956643342995}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.78, y: -2.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &8672268040679908647
 SpriteRenderer:
@@ -52,6 +52,11 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -73,6 +78,7 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
@@ -89,7 +95,7 @@ SpriteRenderer:
   m_SpriteSortPoint: 0
 --- !u!50 &8066460873925080755
 Rigidbody2D:
-  serializedVersion: 4
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -100,8 +106,8 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
-  m_LinearDrag: 0
-  m_AngularDrag: 0.05
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
   m_GravityScale: 0
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -121,7 +127,8 @@ CircleCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2964017956643342995}
-  m_Enabled: 1
+  m_Enabled: 0
+  serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -145,9 +152,9 @@ CircleCollider2D:
     m_Bits: 4294967295
   m_IsTrigger: 1
   m_UsedByEffector: 0
-  m_UsedByComposite: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0.004280567}
-  serializedVersion: 2
   m_Radius: 0.20464897
 --- !u!114 &7815369401539116099
 MonoBehaviour:
@@ -161,7 +168,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34169115a5ca93446956c1d61f742369, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  damageMode: 0
+  directDamage: 1
+  dotDamagePerTick: 1
+  dotTickInterval: 0.5
+  dotDuration: 3
+  dotStackable: 0
+  applySlowOnHit: 0
+  slowMultiplier: 0.5
+  slowDuration: 2
+  slowStackable: 0
   moveSpeed: 8
+  projectileRange: 30
+  useHoming: 1
+  turnRateDegPerSec: 360
+  homingStartDelay: 0.05
+  homingRampTime: 0.25
+  targetHitRadius: 0.2
+  destroyOnReachTarget: 1
+  useMaxLifetime: 1
+  maxLifetimeSeconds: 0
+  orbitGuardRadius: 0.4
+  orbitGuardTime: 0.5
   particleOnHitPrefabVFX: {fileID: 2948048360338672110, guid: 91271c323c5cf1146a48a21f77e1ab51, type: 3}
   isEnemyProjectile: 1
-  projectileRange: 30

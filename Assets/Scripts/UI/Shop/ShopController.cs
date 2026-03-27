@@ -1,0 +1,654 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using UnityEngine.EventSystems;
+using DG.Tweening;
+
+/// <summary>
+/// Controller cho shop panel - quản lý việc mua bán vũ khí
+/// </summary>
+public class ShopController : MonoBehaviour
+{
+    [Header("Shop UI References")]
+    [Tooltip("Panel chứa shop slots (nên là Content của ScrollRect)")]
+    [SerializeField] private Transform shopSlotsParent;
+    
+    [Tooltip("Prefab cho shop slot (có ShopSlot component)")]
+    [SerializeField] private GameObject shopSlotPrefab;
+    
+    [Tooltip("Text hiển thị gold hiện tại")]
+    [SerializeField] private TMP_Text goldText;
+    
+    [Tooltip("Button đóng shop")]
+    [SerializeField] private Button closeButton;
+    
+    [Tooltip("ScrollRect component (optional, nếu có sẽ tự động setup)")]
+    [SerializeField] private ScrollRect scrollRect;
+
+    [Header("Purchase Success Message")]
+    [Tooltip("Text hiển thị thông báo mua thành công (mặc định ẩn, sẽ fade in/out khi mua thành công)")]
+    [SerializeField] private TextMeshProUGUI purchaseSuccessText;
+
+    [Tooltip("Thời gian fade in (giây)")]
+    [SerializeField] private float fadeInDuration = 0.3f;
+
+    [Tooltip("Thời gian hiển thị text (giây)")]
+    [SerializeField] private float displayDuration = 1.5f;
+
+    [Tooltip("Thời gian fade out (giây)")]
+    [SerializeField] private float fadeOutDuration = 0.5f;
+
+    private Color originalTextColor;
+    private Tween currentMessageTween;
+
+    [Header("Shop Items")]
+    [Tooltip("Danh sách WeaponInfo của các vũ khí có thể mua trong shop")]
+    [SerializeField] private List<WeaponInfo> shopWeapons = new List<WeaponInfo>();
+
+    private InventoryController inventoryController;
+    private ItemDictionary itemDictionary;
+    private SaveController saveController;
+
+    private void Awake()
+    {
+        // Tìm InventoryController và ItemDictionary
+        inventoryController = FindFirstObjectByType<InventoryController>();
+        if (itemDictionary == null && ItemDictionary.Instance != null)
+        {
+            itemDictionary = ItemDictionary.Instance;
+        }
+        else if (itemDictionary == null)
+        {
+            itemDictionary = FindFirstObjectByType<ItemDictionary>();
+        }
+
+        if (inventoryController == null)
+        {
+            Debug.LogError("[ShopController] InventoryController not found! Shop cannot add items to inventory.");
+        }
+
+        if (itemDictionary == null)
+        {
+            Debug.LogError("[ShopController] ItemDictionary not found! Shop cannot find item prefabs.");
+        }
+
+        // Tìm SaveController để save game sau khi mua
+        saveController = FindFirstObjectByType<SaveController>();
+        if (saveController == null)
+        {
+            Debug.LogWarning("[ShopController] SaveController not found! Game will not auto-save after purchase.");
+        }
+
+        // Tự động tìm ScrollRect nếu chưa được gán
+        if (scrollRect == null)
+        {
+            scrollRect = GetComponentInChildren<ScrollRect>();
+            if (scrollRect != null)
+            {
+                Debug.Log("[ShopController] Found ScrollRect automatically.");
+            }
+        }
+
+        // Setup close button
+        if (closeButton != null)
+        {
+            closeButton.onClick.AddListener(CloseShop);
+        }
+    }
+
+    /// <summary>
+    /// Setup ScrollRect để list items không bị tràn
+    /// </summary>
+    private void SetupScrollRect()
+    {
+        if (scrollRect == null)
+        {
+            Debug.LogWarning("[ShopController] ScrollRect is null. Skipping ScrollRect setup.");
+            return;
+        }
+
+        if (shopSlotsParent == null)
+        {
+            Debug.LogWarning("[ShopController] ShopSlotsParent is null. Cannot setup ScrollRect.");
+            return;
+        }
+
+        // Đảm bảo shopSlotsParent là Content của ScrollRect
+        RectTransform contentRect = shopSlotsParent.GetComponent<RectTransform>();
+        if (contentRect == null)
+        {
+            Debug.LogError("[ShopController] ShopSlotsParent does not have RectTransform component!");
+            return;
+        }
+
+        if (scrollRect.content != contentRect)
+        {
+            scrollRect.content = contentRect;
+            Debug.Log("[ShopController] Set shopSlotsParent as ScrollRect content.");
+        }
+
+        // QUAN TRỌNG: Đảm bảo Content có Content Size Fitter để tự động tính size
+        ContentSizeFitter sizeFitter = shopSlotsParent.GetComponent<ContentSizeFitter>();
+        if (sizeFitter == null)
+        {
+            sizeFitter = shopSlotsParent.gameObject.AddComponent<ContentSizeFitter>();
+            Debug.Log("[ShopController] Added ContentSizeFitter to shopSlotsParent.");
+        }
+        
+        // Setup ContentSizeFitter
+        if (sizeFitter != null)
+        {
+            sizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize; // Tự động tăng height theo children
+        }
+        
+        // Đảm bảo có Layout Group để sắp xếp items
+        VerticalLayoutGroup layoutGroup = shopSlotsParent.GetComponent<VerticalLayoutGroup>();
+        if (layoutGroup == null)
+        {
+            layoutGroup = shopSlotsParent.gameObject.AddComponent<VerticalLayoutGroup>();
+            Debug.Log("[ShopController] Added VerticalLayoutGroup to shopSlotsParent.");
+        }
+        
+        // Setup LayoutGroup properties
+        if (layoutGroup != null)
+        {
+            layoutGroup.spacing = 10f;
+            layoutGroup.padding = new RectOffset(10, 10, 10, 10);
+            layoutGroup.childAlignment = TextAnchor.UpperCenter; // Top center alignment
+            layoutGroup.childForceExpandWidth = true;
+            layoutGroup.childForceExpandHeight = false;
+        }
+
+        // QUAN TRỌNG: Set pivot và anchor của content về top để items snap lên top
+        RectTransform contentRectTransform = shopSlotsParent.GetComponent<RectTransform>();
+        if (contentRectTransform != null)
+        {
+            // Set pivot về top-center (0.5, 1.0) để content bắt đầu từ top
+            contentRectTransform.pivot = new Vector2(0.5f, 1f);
+            // Set anchor về top-center
+            contentRectTransform.anchorMin = new Vector2(0.5f, 1f);
+            contentRectTransform.anchorMax = new Vector2(0.5f, 1f);
+            // Reset anchored position về 0 để content bắt đầu từ top
+            contentRectTransform.anchoredPosition = Vector2.zero;
+        }
+
+        // Setup ScrollRect properties
+        scrollRect.horizontal = false; // Chỉ scroll dọc
+        scrollRect.vertical = true;    // Scroll dọc
+        scrollRect.movementType = ScrollRect.MovementType.Clamped; // Giới hạn scroll không vượt quá bounds
+        scrollRect.elasticity = 0f; // Không có bounce effect
+        scrollRect.inertia = true;
+        scrollRect.decelerationRate = 0.135f;
+        scrollRect.scrollSensitivity = 40f; // Độ nhạy mouse wheel
+
+        // QUAN TRỌNG: Đảm bảo ScrollRect có thể nhận input
+        // Kiểm tra xem có GraphicRaycaster không (cần để nhận mouse input)
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas != null)
+        {
+            GraphicRaycaster raycaster = canvas.GetComponent<GraphicRaycaster>();
+            if (raycaster == null)
+            {
+                raycaster = canvas.gameObject.AddComponent<GraphicRaycaster>();
+                Debug.Log("[ShopController] Added GraphicRaycaster to Canvas for ScrollRect input.");
+            }
+        }
+
+        // Force update layout sau khi setup
+        if (shopSlotsParent != null)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(shopSlotsParent.GetComponent<RectTransform>());
+        }
+
+        // Clamp scroll position sau khi setup
+        ClampScrollPosition();
+
+        Debug.Log("[ShopController] ScrollRect setup complete.");
+    }
+
+    private void Start()
+    {
+        // Setup ScrollRect nếu có
+        SetupScrollRect();
+        
+        // Tạo shop slots
+        CreateShopSlots();
+        
+        // Update gold text
+        UpdateGoldText();
+        
+        // Subscribe to gold changes
+        if (EconomyManager.Instance != null)
+        {
+            // Refresh gold text khi gold thay đổi
+            InvokeRepeating(nameof(UpdateGoldText), 0f, 0.5f);
+        }
+
+        // Setup purchase success text (ẩn mặc định)
+        SetupPurchaseSuccessText();
+    }
+
+    private void OnEnable()
+    {
+        UpdateGoldText();
+    }
+
+    /// <summary>
+    /// Tạo shop slots từ danh sách shopWeapons mặc định
+    /// </summary>
+    private void CreateShopSlots()
+    {
+        CreateShopSlots(shopWeapons);
+    }
+
+    /// <summary>
+    /// Tạo shop slots từ danh sách WeaponInfo được truyền vào
+    /// </summary>
+    /// <param name="weaponsToDisplay">Danh sách WeaponInfo để hiển thị</param>
+    private void CreateShopSlots(List<WeaponInfo> weaponsToDisplay)
+    {
+        if (shopSlotsParent == null)
+        {
+            Debug.LogError("[ShopController] ShopSlotsParent is null! Cannot create shop slots.");
+            return;
+        }
+
+        if (shopSlotPrefab == null)
+        {
+            Debug.LogError("[ShopController] ShopSlotPrefab is null! Cannot create shop slots.");
+            return;
+        }
+
+        if (weaponsToDisplay == null)
+        {
+            Debug.LogWarning("[ShopController] WeaponsToDisplay is null! Cannot create shop slots.");
+            return;
+        }
+
+        // Xóa các slot cũ nếu có
+        foreach (Transform child in shopSlotsParent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        // Tạo slot cho mỗi weapon
+        foreach (WeaponInfo weaponInfo in weaponsToDisplay)
+        {
+            if (weaponInfo == null)
+            {
+                Debug.LogWarning("[ShopController] Found null WeaponInfo in shopWeapons list. Skipping...");
+                continue;
+            }
+
+            // Chỉ tạo slot cho weapons có price > 0
+            if (weaponInfo.shopPrice <= 0)
+            {
+                Debug.Log($"[ShopController] Weapon '{weaponInfo.itemName}' has price 0 or negative. Skipping...");
+                continue;
+            }
+
+            // Tạo shop slot
+            GameObject slotObj = Instantiate(shopSlotPrefab, shopSlotsParent);
+            ShopSlot shopSlot = slotObj.GetComponent<ShopSlot>();
+            
+            if (shopSlot == null)
+            {
+                Debug.LogError($"[ShopController] ShopSlotPrefab does not have ShopSlot component! Adding component...");
+                shopSlot = slotObj.AddComponent<ShopSlot>();
+            }
+
+            // Setup shop slot
+            shopSlot.SetupSlot(weaponInfo, this);
+        }
+
+        Debug.Log($"[ShopController] Created {shopSlotsParent.childCount} shop slots.");
+
+        // QUAN TRỌNG: Force rebuild layout sau khi tạo tất cả slots
+        // Để Content Size Fitter tính toán đúng size
+        if (shopSlotsParent != null)
+        {
+            RectTransform contentRect = shopSlotsParent.GetComponent<RectTransform>();
+            if (contentRect != null)
+            {
+                // Force rebuild layout
+                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+                
+                // Đảm bảo Content size được tính toán đúng
+                ContentSizeFitter sizeFitter = shopSlotsParent.GetComponent<ContentSizeFitter>();
+                if (sizeFitter != null)
+                {
+                    // Trigger layout update
+                    Canvas.ForceUpdateCanvases();
+                }
+            }
+        }
+
+        // Reset scroll position về đầu và clamp để tránh khoảng trắng
+        if (scrollRect != null)
+        {
+            scrollRect.verticalNormalizedPosition = 1f; // 1 = top, 0 = bottom
+            ClampScrollPosition();
+        }
+    }
+
+    /// <summary>
+    /// Clamp scroll position để không scroll quá item đầu tiên hoặc cuối cùng
+    /// Được gọi sau khi content được rebuild để đảm bảo scroll position hợp lệ
+    /// </summary>
+    private void ClampScrollPosition()
+    {
+        if (scrollRect == null || shopSlotsParent == null) return;
+
+        RectTransform contentRect = shopSlotsParent.GetComponent<RectTransform>();
+        RectTransform viewportRect = scrollRect.viewport != null ? scrollRect.viewport : scrollRect.GetComponent<RectTransform>();
+        
+        if (contentRect == null || viewportRect == null) return;
+
+        // Tính toán bounds
+        float contentHeight = contentRect.rect.height;
+        float viewportHeight = viewportRect.rect.height;
+
+        // Nếu content nhỏ hơn viewport, không cần scroll - giữ ở top
+        if (contentHeight <= viewportHeight)
+        {
+            scrollRect.verticalNormalizedPosition = 1f; // 1 = top
+            return;
+        }
+
+        // Clamp normalized position (0 = bottom, 1 = top)
+        // MovementType.Clamped sẽ tự động clamp, nhưng gọi thêm để đảm bảo
+        float normalizedPos = scrollRect.verticalNormalizedPosition;
+        scrollRect.verticalNormalizedPosition = Mathf.Clamp01(normalizedPos);
+    }
+
+    /// <summary>
+    /// Mua weapon từ shop
+    /// </summary>
+    public bool BuyWeapon(WeaponInfo weaponInfo)
+    {
+        if (weaponInfo == null)
+        {
+            Debug.LogError("[ShopController] Cannot buy: WeaponInfo is null!");
+            return false;
+        }
+
+        if (weaponInfo.shopPrice <= 0)
+        {
+            Debug.LogWarning($"[ShopController] Cannot buy '{weaponInfo.itemName}': Price is {weaponInfo.shopPrice}!");
+            return false;
+        }
+
+        // Kiểm tra gold
+        if (EconomyManager.Instance == null)
+        {
+            Debug.LogError("[ShopController] EconomyManager.Instance is null! Cannot check gold.");
+            return false;
+        }
+
+        if (!EconomyManager.Instance.HasEnoughGold(weaponInfo.shopPrice))
+        {
+            Debug.LogWarning($"[ShopController] Not enough gold to buy '{weaponInfo.itemName}'. Need {weaponInfo.shopPrice}, have {EconomyManager.Instance.CurrentGold}.");
+            return false;
+        }
+
+        // Tìm item prefab từ ItemDictionary
+        if (itemDictionary == null)
+        {
+            Debug.LogError("[ShopController] ItemDictionary is null! Cannot find item prefab.");
+            return false;
+        }
+
+        // Tìm item prefab có WeaponInfo này
+        GameObject itemPrefab = null;
+        
+        // Tìm trong ItemDictionary
+        for (int i = 0; i < itemDictionary.itemPrefabs.Count; i++)
+        {
+            GameObject prefab = itemDictionary.itemPrefabs[i];
+            if (prefab == null) continue;
+
+            Item item = prefab.GetComponent<Item>();
+            if (item != null && item.weaponInfo == weaponInfo)
+            {
+                itemPrefab = prefab;
+                break;
+            }
+        }
+
+        if (itemPrefab == null)
+        {
+            Debug.LogError($"[ShopController] Cannot find item prefab for weapon '{weaponInfo.itemName}' in ItemDictionary!");
+            return false;
+        }
+
+        // Thêm vào inventory
+        if (inventoryController == null)
+        {
+            Debug.LogError("[ShopController] InventoryController is null! Cannot add item to inventory.");
+            return false;
+        }
+
+        bool itemAdded = inventoryController.AddItem(itemPrefab);
+        
+        if (itemAdded)
+        {
+            // Trừ gold
+            bool goldSpent = EconomyManager.Instance.SpendGold(weaponInfo.shopPrice);
+            
+            if (goldSpent)
+            {
+                UpdateGoldText();
+                Debug.Log($"[ShopController] Successfully bought '{weaponInfo.itemName}' for {weaponInfo.shopPrice} gold!");
+                
+                // Hiển thị thông báo mua thành công
+                ShowPurchaseSuccessMessage(weaponInfo.itemName);
+                
+                // Save game sau khi mua thành công
+                SaveGame();
+                
+                return true;
+            }
+            else
+            {
+                // Nếu không trừ được gold, remove item khỏi inventory (rollback)
+                Debug.LogError($"[ShopController] Failed to spend gold after adding item! This should not happen.");
+                // TODO: Remove item from inventory if needed
+                return false;
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[ShopController] Cannot add '{weaponInfo.itemName}' to inventory. Inventory may be full.");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Cập nhật gold text
+    /// </summary>
+    private void UpdateGoldText()
+    {
+        if (goldText == null) return;
+
+        if (EconomyManager.Instance != null)
+        {
+            goldText.text = EconomyManager.Instance.CurrentGold.ToString("D3");
+        }
+        else
+        {
+            goldText.text = "000";
+        }
+    }
+
+    /// <summary>
+    /// Đóng shop panel
+    /// </summary>
+    public void CloseShop()
+    {
+        gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Mở shop panel với danh sách items mặc định
+    /// </summary>
+    public void OpenShop()
+    {
+        gameObject.SetActive(true);
+        UpdateGoldText();
+        // Đợi một frame để UI được khởi tạo đầy đủ trước khi tạo slots
+        StartCoroutine(CreateShopSlotsDelayed(shopWeapons));
+    }
+
+    /// <summary>
+    /// Mở shop panel với danh sách items tùy chỉnh từ NPC
+    /// </summary>
+    /// <param name="items">Danh sách WeaponInfo để hiển thị trong shop</param>
+    public void OpenShop(List<WeaponInfo> items)
+    {
+        if (items == null || items.Count == 0)
+        {
+            Debug.LogWarning("[ShopController] OpenShop called with null or empty items list. Using default items.");
+            OpenShop();
+            return;
+        }
+
+        gameObject.SetActive(true);
+        UpdateGoldText();
+        // Đợi một frame để UI được khởi tạo đầy đủ trước khi tạo slots
+        StartCoroutine(CreateShopSlotsDelayed(items));
+    }
+
+    /// <summary>
+    /// Coroutine để tạo shop slots sau khi đợi một frame (đảm bảo UI đã được khởi tạo)
+    /// </summary>
+    private IEnumerator CreateShopSlotsDelayed(List<WeaponInfo> weaponsToDisplay)
+    {
+        // Đợi một frame để đảm bảo shop panel đã active và UI đã được khởi tạo
+        yield return null;
+        
+        // Đảm bảo Canvas đã được update
+        Canvas.ForceUpdateCanvases();
+        
+        // Tạo shop slots
+        CreateShopSlots(weaponsToDisplay);
+    }
+
+    /// <summary>
+    /// Set danh sách items cho shop (có thể gọi từ bên ngoài)
+    /// </summary>
+    /// <param name="items">Danh sách WeaponInfo mới</param>
+    public void SetShopItems(List<WeaponInfo> items)
+    {
+        if (items == null)
+        {
+            Debug.LogWarning("[ShopController] SetShopItems called with null list. Ignoring.");
+            return;
+        }
+
+        shopWeapons = new List<WeaponInfo>(items);
+        CreateShopSlots();
+    }
+
+    /// <summary>
+    /// Setup purchase success text - ẩn mặc định
+    /// </summary>
+    private void SetupPurchaseSuccessText()
+    {
+        if (purchaseSuccessText == null) return;
+
+        // Lưu màu gốc
+        originalTextColor = purchaseSuccessText.color;
+
+        // Ẩn text ban đầu (alpha = 0)
+        Color hiddenColor = originalTextColor;
+        hiddenColor.a = 0f;
+        purchaseSuccessText.color = hiddenColor;
+    }
+
+    /// <summary>
+    /// Hiển thị thông báo mua thành công với fade in/out
+    /// </summary>
+    private void ShowPurchaseSuccessMessage(string itemName)
+    {
+        if (purchaseSuccessText == null) return;
+
+        // Dừng animation hiện tại nếu có
+        KillCurrentMessageTween();
+
+        // Set text
+        purchaseSuccessText.text = $"Đã mua {itemName}!";
+
+        // Đảm bảo GameObject đang active
+        if (!purchaseSuccessText.gameObject.activeSelf)
+        {
+            purchaseSuccessText.gameObject.SetActive(true);
+        }
+
+        // Set alpha về 0 để bắt đầu fade in
+        Color fadeInColor = originalTextColor;
+        fadeInColor.a = 0f;
+        purchaseSuccessText.color = fadeInColor;
+
+        // Tạo sequence animation
+        Sequence sequence = DOTween.Sequence();
+        
+        // Fade in
+        sequence.Append(purchaseSuccessText.DOFade(originalTextColor.a, fadeInDuration)
+            .SetEase(Ease.OutQuad));
+
+        // Giữ nguyên độ trong suốt trong thời gian hiển thị
+        sequence.AppendInterval(displayDuration);
+
+        // Fade out
+        sequence.Append(purchaseSuccessText.DOFade(0f, fadeOutDuration)
+            .SetEase(Ease.InQuad));
+
+        currentMessageTween = sequence;
+    }
+
+    /// <summary>
+    /// Dừng animation thông báo hiện tại
+    /// </summary>
+    private void KillCurrentMessageTween()
+    {
+        if (currentMessageTween != null && currentMessageTween.IsActive())
+        {
+            currentMessageTween.Kill();
+            currentMessageTween = null;
+        }
+    }
+
+    /// <summary>
+    /// Save game (gọi SaveController nếu có)
+    /// </summary>
+    private void SaveGame()
+    {
+        // Tìm lại SaveController nếu chưa có (tránh null reference)
+        if (saveController == null)
+        {
+            saveController = FindFirstObjectByType<SaveController>();
+        }
+
+        if (saveController != null)
+        {
+            saveController.SaveGame();
+            Debug.Log("[ShopController] Game saved after purchase.");
+        }
+        else
+        {
+            Debug.LogWarning("[ShopController] Cannot save game: SaveController not found!");
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Unsubscribe
+        CancelInvoke(nameof(UpdateGoldText));
+        
+        // Kill tween nếu còn
+        KillCurrentMessageTween();
+    }
+}
